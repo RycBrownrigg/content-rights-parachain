@@ -32,7 +32,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn impl_version() -> String {
-		env!("SUBSTRATE_CLI_IMPL_VERSION").into()
+		env!("CARGO_PKG_VERSION").into()
 	}
 
 	fn description() -> String {
@@ -68,7 +68,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn impl_version() -> String {
-		env!("SUBSTRATE_CLI_IMPL_VERSION").into()
+		env!("CARGO_PKG_VERSION").into()
 	}
 
 	fn description() -> String {

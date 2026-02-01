@@ -63,6 +63,11 @@ A Polkadot SDK based project such as this one consists of:
 - 🛠️ Depending on your operating system and Rust version, there might be additional
   packages required to compile this template - please take note of the Rust compiler output.
 
+- **WASM target (required for runtime build):**  
+  - **Rust 1.84+:** `rustup target add wasm32v1-none`  
+  - **Older Rust:** `rustup target add wasm32-unknown-unknown`  
+  After adding a new target, run `cargo clean` before building.
+
 Fetch parachain template code:
 
 ```sh

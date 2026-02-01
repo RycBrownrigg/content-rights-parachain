@@ -10,6 +10,7 @@ use polkadot_sdk::{staging_xcm as xcm, *};
 use cumulus_primitives_core::ParaId;
 use frame_support::build_struct_json_patch;
 use parachains_common::AuraId;
+#[cfg(feature = "std")]
 use serde_json::Value;
 use sp_genesis_builder::PresetId;
 use sp_keyring::Sr25519Keyring;
@@ -27,6 +28,7 @@ pub fn template_session_keys(keys: AuraId) -> SessionKeys {
 	SessionKeys { aura: keys }
 }
 
+#[cfg(feature = "std")]
 fn testnet_genesis(
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<AccountId>,
@@ -63,6 +65,7 @@ fn testnet_genesis(
 	})
 }
 
+#[cfg(feature = "std")]
 fn local_testnet_genesis() -> Value {
 	testnet_genesis(
 		// initial collators.
@@ -76,6 +79,7 @@ fn local_testnet_genesis() -> Value {
 	)
 }
 
+#[cfg(feature = "std")]
 fn development_config_genesis() -> Value {
 	testnet_genesis(
 		// initial collators.
@@ -90,6 +94,7 @@ fn development_config_genesis() -> Value {
 }
 
 /// Provides the JSON representation of predefined genesis config for given `id`.
+#[cfg(feature = "std")]
 pub fn get_preset(id: &PresetId) -> Option<vec::Vec<u8>> {
 	let patch = match id.as_ref() {
 		sp_genesis_builder::LOCAL_TESTNET_RUNTIME_PRESET => local_testnet_genesis(),
@@ -101,6 +106,12 @@ pub fn get_preset(id: &PresetId) -> Option<vec::Vec<u8>> {
 			.expect("serialization to json is expected to work. qed.")
 			.into_bytes(),
 	)
+}
+
+/// Provides the JSON representation of predefined genesis config for given `id`.
+#[cfg(not(feature = "std"))]
+pub fn get_preset(_id: &PresetId) -> Option<vec::Vec<u8>> {
+	None
 }
 
 /// List of supported presets.
