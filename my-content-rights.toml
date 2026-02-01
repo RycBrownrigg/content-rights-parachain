@@ -1,0 +1,34 @@
+[settings]
+node_verifier = "None"
+prometheus = true
+
+# Paths are relative to this config file's directory (repo root).
+# Requires: polkadot-sdk/ and zombienet/ inside this repo. Build polkadot first:
+#   cd polkadot-sdk && cargo build --release -p polkadot
+# See POLKADOT-WORKERS-FIX.md for details.
+[relaychain]
+default_command = "polkadot-sdk/target/release/polkadot"
+default_args = [ "-lparachain=debug", "--rpc-external", "--workers-path", "polkadot-sdk/target/release" ]
+chain = "rococo-local"
+
+[[relaychain.nodes]]
+name = "alice"
+
+[[relaychain.nodes]]
+name = "bob"
+
+[[parachains]]
+id = 100
+command = "target/release/parachain-template-node"
+args = [
+  "--rpc-external",
+  "--rpc-cors=all",
+  "--rpc-methods=unsafe",
+  "--force-authoring"
+]
+name = "content-rights-parachain"
+
+[[parachains.collators]]
+name = "collator01"
+# NO args= here — inherit from the parachain level
+# If you need collator-specific flags, add them here only

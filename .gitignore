@@ -1,1 +1,6 @@
 target/
+
+# Optional: uncomment to ignore zombienet and polkadot-sdk if you copy them in
+# (or use git submodules instead; see MOVE-SETUP.md)
+# /zombienet/
+# /polkadot-sdk/
