@@ -9763,6 +9763,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-staking-reward-curve"
+version = "12.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db5e6b1d8ee9d3f6894c5abd8c3e17737ed738c9854f87bfd16239741b7f4d5d"
+dependencies = [
+ "proc-macro-crate 3.4.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.114",
+]
+
+[[package]]
 name = "pallet-staking-reward-fn"
 version = "22.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11727,6 +11739,8 @@ dependencies = [
  "pallet-collective-content",
  "pallet-contracts",
  "pallet-contracts-mock-network",
+ "pallet-contracts-proc-macro",
+ "pallet-contracts-uapi",
  "pallet-conviction-voting",
  "pallet-core-fellowship",
  "pallet-delegated-staking",
@@ -11771,6 +11785,8 @@ dependencies = [
  "pallet-revive",
  "pallet-revive-eth-rpc",
  "pallet-revive-mock-network",
+ "pallet-revive-proc-macro",
+ "pallet-revive-uapi",
  "pallet-root-offences",
  "pallet-root-testing",
  "pallet-safe-mode",
@@ -11782,6 +11798,7 @@ dependencies = [
  "pallet-skip-feeless-payment",
  "pallet-society",
  "pallet-staking",
+ "pallet-staking-reward-curve",
  "pallet-staking-reward-fn",
  "pallet-staking-runtime-api",
  "pallet-state-trie-migration",
@@ -11859,6 +11876,7 @@ dependencies = [
  "sc-basic-authorship",
  "sc-block-builder",
  "sc-chain-spec",
+ "sc-chain-spec-derive",
  "sc-cli",
  "sc-client-api",
  "sc-client-db",
@@ -11904,6 +11922,7 @@ dependencies = [
  "sc-sysinfo",
  "sc-telemetry",
  "sc-tracing",
+ "sc-tracing-proc-macro",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
  "sc-utils",
@@ -11980,7 +11999,9 @@ dependencies = [
  "substrate-wasm-builder",
  "testnet-parachains-constants",
  "tracing-gum",
+ "tracing-gum-proc-macro",
  "xcm-emulator",
+ "xcm-procedural",
  "xcm-runtime-apis",
  "xcm-simulator",
 ]

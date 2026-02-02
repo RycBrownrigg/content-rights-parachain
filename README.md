@@ -218,6 +218,43 @@ Development parachains:
 
 ## Runtime development
 
+### After adding or changing runtime pallets (e.g. pallet-contracts)
+
+When you add or remove pallets in the runtime and rebuild the node, **any already-running network (e.g. Zombienet) is still using the old runtime WASM** that was baked into genesis when it was first spawned. To see the new pallets (e.g. **contracts** in the Chain State dropdown):
+
+1. **Rebuild** the parachain node:  
+   `cargo build --release -p parachain-template-node`
+2. **Stop** the current Zombienet (or dev chain).
+3. **Respawn** the network so it starts from a **fresh genesis** using the new binary (and its embedded WASM).  
+   Example: run your usual spawn command again (e.g. `./zombienet-spawn.sh my-content-rights.toml --provider native`). Do not reuse old chain data; let Zombienet create a new temp dir so the new runtime is used from block 0.
+
+If you keep using the same chain data directory, the chain will keep executing the old runtime.
+
+**If you still don’t see the new pallets (e.g. contracts):** make sure you’re connected to the **parachain** RPC, not the relay chain. The relay (alice/bob) has a different runtime and won’t show your parachain’s pallets. In `my-content-rights.toml` the parachain collator uses `rpc_port = 9990`; in Polkadot.js Apps connect to **`ws://127.0.0.1:9990`** to get the parachain (with contracts). You can confirm you’re on the parachain: Developer → Chain state → **parachainInfo** → **parachainId()** should return your para id (e.g. 100).
+
+**If Polkadot.js Apps shows “Initializing connection” forever when using `ws://127.0.0.1:9990`:** the parachain collator may be on a different port. In the zombienet spawn output, after “Network launched”, check the **collator01** row: **Direct Link (pjs)** shows the actual RPC URL (e.g. `ws://127.0.0.1:9989`). Use that port in Polkadot.js Apps. This repo is configured for `rpc_port = 9990`; if Zombienet still used 9989, a patch in `zombienet/javascript` was applied so it respects `rpc_port`. Rebuild zombienet after pulling: `cd zombienet/javascript && npm run build`, then spawn again. If nothing is listening on the port shown, run `./scripts/check-parachain-port.sh <port>` and check the collator log path from the spawn terminal.
+
+**If you’re on the parachain (9990) and contracts still don’t appear**, the chain was almost certainly created with an older binary. Do a **clean rebuild and fresh spawn** from the repo root:
+
+1. **Stop** Zombienet completely (Ctrl+C or kill the process).
+2. **Clean and rebuild** so the runtime WASM is definitely regenerated:
+   ```sh
+   cargo clean -p parachain-template-runtime -p parachain-template-node
+   cargo build --release -p parachain-template-node
+   ```
+3. **Spawn from repo root** (so the script resolves the binary path correctly):
+   ```sh
+   cd /path/to/content-rights-parachain
+   ./zombienet-spawn.sh my-content-rights.toml --provider native
+   ```
+4. After the network is running (blocks in explorers), connect to **`ws://127.0.0.1:9990`** and check the Chain State pallet list for **contracts**.
+
+Do **not** pass `--dir` to the spawn script when testing; let Zombienet create a new temp dir so the chain spec is generated from the binary you just built.
+
+**Verify your binary:** From repo root, run `./scripts/verify-runtime-has-contracts.sh` after building. If it prints "Contracts pallet: FOUND", your binary is correct and the running chain was created with an older one; do a full stop and respawn (no `--dir`). If it prints "NOT FOUND", run `./scripts/clean-runtime-wasm.sh` then `cargo build --release -p parachain-template-node` and verify again (the runtime uses `runtime-full` so pallet-contracts is included; a stale build can omit it).
+
+**"Contracts" still not in the list?** You are in the right place: **Developer → Chain state**; the pallet list is the left dropdown. Run `./scripts/contracts-checklist.sh` from repo root: it verifies your binary and prints the exact clean-rebuild-and-respawn steps.
+
 We recommend using [`chopsticks`](https://github.com/AcalaNetwork/chopsticks) when the focus is more on the runtime
 development and `OmniNode` is enough as is.
 

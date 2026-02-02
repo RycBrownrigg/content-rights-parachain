@@ -147,7 +147,7 @@ pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, Tx
 ///
 /// This can be a tuple of types, each implementing `OnRuntimeUpgrade`.
 #[allow(unused_parens)]
-type Migrations = ();
+type Migrations = (pallet_contracts::Migration<Runtime>,);
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
@@ -256,6 +256,8 @@ mod runtime {
 	pub type ParachainInfo = parachain_info;
 	#[runtime::pallet_index(4)]
 	pub type WeightReclaim = cumulus_pallet_weight_reclaim;
+	#[runtime::pallet_index(5)]
+	pub type RandomnessCollectiveFlip = pallet_insecure_randomness_collective_flip;
 
 	// Monetary stuff.
 	#[runtime::pallet_index(10)]
@@ -288,6 +290,10 @@ mod runtime {
 	pub type CumulusXcm = cumulus_pallet_xcm;
 	#[runtime::pallet_index(33)]
 	pub type MessageQueue = pallet_message_queue;
+
+	// Smart contracts
+	#[runtime::pallet_index(40)]
+	pub type Contracts = pallet_contracts;
 
 	// Template
 	#[runtime::pallet_index(50)]

@@ -7,7 +7,9 @@
 #   ./zombienet-spawn.sh my-content-rights.toml --provider native
 #
 # Connection tips:
-# - Wait 30–60s after "Network launched" before opening Polkadot.js Apps.
+# - Wait 30–60s after spawn (or after you see blocks) before opening Polkadot.js Apps.
+# - Connect to the PARACHAIN RPC port from your config (e.g. ws://127.0.0.1:9990 for my-content-rights.toml).
+#   The relay (alice/bob) uses different ports and won't show parachain pallets like "contracts".
 # - Use the apps on the SAME machine that runs this script (127.0.0.1 = that machine).
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -34,6 +36,9 @@ TEMP_CONFIG="$(mktemp --suffix=.toml)"
 trap "rm -f '$TEMP_CONFIG'" EXIT
 sed -e "s|polkadot-sdk/target/release|${PROJECT_ROOT}/polkadot-sdk/target/release|g" \
     -e "s|target/release/parachain-template-node|${PROJECT_ROOT}/target/release/parachain-template-node|g" \
+    -e 's/^rpc_port = .*/rpc_port = 9990/' \
     "$CONFIG_ARG" > "$TEMP_CONFIG"
+PARACHAIN_BIN="${PROJECT_ROOT}/target/release/parachain-template-node"
+echo "Parachain binary (must exist for chain spec + collator): $PARACHAIN_BIN"
 shift
 exec node "$ZOMBIENET_JS/packages/cli/dist/cli.js" spawn "$TEMP_CONFIG" "$@"

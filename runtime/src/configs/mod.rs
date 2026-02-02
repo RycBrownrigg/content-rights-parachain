@@ -37,14 +37,15 @@ use frame_support::{
 	dispatch::DispatchClass,
 	parameter_types,
 	traits::{
-		ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, TransformOrigin, VariantCountOf,
+		ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, Nothing, TransformOrigin,
+		VariantCountOf,
 	},
 	weights::{ConstantMultiplier, Weight},
 	PalletId,
 };
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
+	EnsureRoot, EnsureSigned,
 };
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
@@ -60,10 +61,11 @@ use xcm::latest::prelude::BodyId;
 use super::{
 	weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
 	AccountId, Aura, Balance, Balances, Block, BlockNumber, CollatorSelection, ConsensusHook, Hash,
-	MessageQueue, Nonce, PalletInfo, ParachainSystem, Runtime, RuntimeCall, RuntimeEvent,
-	RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask, Session, SessionKeys,
-	System, WeightToFee, XcmpQueue, AVERAGE_ON_INITIALIZE_RATIO, EXISTENTIAL_DEPOSIT, HOURS,
-	MAXIMUM_BLOCK_WEIGHT, MICRO_UNIT, NORMAL_DISPATCH_RATIO, SLOT_DURATION, VERSION,
+	MessageQueue, Nonce, PalletInfo, ParachainSystem, PolkadotXcm, RandomnessCollectiveFlip,
+	Runtime, RuntimeCall, RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin,
+	RuntimeTask, Session, SessionKeys, System, Timestamp, WeightToFee, XcmpQueue,
+	AVERAGE_ON_INITIALIZE_RATIO, EXISTENTIAL_DEPOSIT, HOURS, MAXIMUM_BLOCK_WEIGHT, MICRO_UNIT,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION, VERSION,
 };
 use xcm_config::{RelayLocation, XcmOriginToTransactDispatchOrigin};
 
@@ -314,6 +316,51 @@ impl pallet_collator_selection::Config for Runtime {
 	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
 	type ValidatorRegistration = Session;
 	type WeightInfo = ();
+}
+
+impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
+
+parameter_types! {
+	pub const DepositPerItem: Balance = 100 * MICRO_UNIT;
+	pub const DepositPerByte: Balance = MICRO_UNIT;
+	pub const DefaultDepositLimit: Balance =
+		1024 * (100 * MICRO_UNIT) + (1024 * 1024) * MICRO_UNIT;
+	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
+	pub CodeHashLockupDepositPercent: Perbill = Perbill::from_percent(30);
+}
+
+impl pallet_contracts::Config for Runtime {
+	type Time = Timestamp;
+	type Randomness = RandomnessCollectiveFlip;
+	type Currency = Balances;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type RuntimeHoldReason = RuntimeHoldReason;
+	/// Contracts cannot dispatch. Use a custom `CallFilter` to allow specific dispatchables if needed.
+	type CallFilter = Nothing;
+	type DepositPerItem = DepositPerItem;
+	type DepositPerByte = DepositPerByte;
+	type DefaultDepositLimit = DefaultDepositLimit;
+	type CallStack = [pallet_contracts::Frame<Self>; 5];
+	type WeightPrice = pallet_transaction_payment::Pallet<Self>;
+	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
+	type ChainExtension = ();
+	type Schedule = Schedule;
+	type AddressGenerator = pallet_contracts::DefaultAddressGenerator;
+	type MaxCodeLen = ConstU32<{ 123 * 1024 }>;
+	type MaxStorageKeyLen = ConstU32<128>;
+	type UnsafeUnstableInterface = ConstBool<false>;
+	type UploadOrigin = EnsureSigned<Self::AccountId>;
+	type InstantiateOrigin = EnsureSigned<Self::AccountId>;
+	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
+	type MaxTransientStorageSize = ConstU32<{ 1 * 1024 * 1024 }>;
+	type Migrations = ();
+	type MaxDelegateDependencies = ConstU32<32>;
+	type CodeHashLockupDepositPercent = CodeHashLockupDepositPercent;
+	type Debug = ();
+	type Environment = ();
+	type ApiVersion = ();
+	type Xcm = PolkadotXcm;
 }
 
 /// Configure the pallet template in pallets/template.
