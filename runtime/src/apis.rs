@@ -36,6 +36,7 @@ use pallet_aura::Authorities;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_session::OpaqueGeneratedSessionKeys;
 use sp_runtime::{
 	traits::Block as BlockT,
 	transaction_validity::{TransactionSource, TransactionValidity},
@@ -43,11 +44,11 @@ use sp_runtime::{
 };
 use sp_version::RuntimeVersion;
 
-// Local module imports
+// Local module imports (BlockNumber and vec! used by pallet_revive::impl_runtime_apis_plus_revive_traits! expansion)
 use super::{
-	AccountId, Balance, Block, ConsensusHook, Executive, InherentDataExt, Nonce, ParachainSystem,
-	Runtime, RuntimeCall, RuntimeGenesisConfig, SessionKeys, System, TransactionPayment,
-	SLOT_DURATION, VERSION,
+	AccountId, Balance, Block, BlockNumber, ConsensusHook, Executive, InherentDataExt,
+	Nonce, ParachainSystem, Runtime, RuntimeCall, RuntimeGenesisConfig, SessionKeys, System,
+	TransactionPayment, SLOT_DURATION, VERSION,
 };
 
 // we move some impls outside so we can easily use them with `docify`.
@@ -66,7 +67,12 @@ impl Runtime {
 	}
 }
 
-impl_runtime_apis! {
+pallet_revive::impl_runtime_apis_plus_revive_traits!(
+	Runtime,
+	Revive,
+	Executive,
+	EthExtraImpl,
+
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
 		fn slot_duration() -> sp_consensus_aura::SlotDuration {
 			Runtime::impl_slot_duration()
@@ -91,7 +97,7 @@ impl_runtime_apis! {
 			VERSION
 		}
 
-		fn execute_block(block: Block) {
+		fn execute_block(block: <Block as BlockT>::LazyBlock) {
 			Executive::execute_block(block)
 		}
 
@@ -134,7 +140,7 @@ impl_runtime_apis! {
 		}
 
 		fn check_inherents(
-			block: Block,
+			block: <Block as BlockT>::LazyBlock,
 			data: sp_inherents::InherentData,
 		) -> sp_inherents::CheckInherentsResult {
 			data.check_extrinsics(&block)
@@ -158,8 +164,8 @@ impl_runtime_apis! {
 	}
 
 	impl sp_session::SessionKeys<Block> for Runtime {
-		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-			SessionKeys::generate(seed)
+		fn generate_session_keys(owner: Vec<u8>, seed: Option<Vec<u8>>) -> OpaqueGeneratedSessionKeys {
+			SessionKeys::generate(&owner, seed).into()
 		}
 
 		fn decode_session_keys(
@@ -312,4 +318,4 @@ impl_runtime_apis! {
 			crate::genesis_config_presets::preset_names()
 		}
 	}
-}
+);

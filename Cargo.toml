@@ -23,17 +23,21 @@ docify = { version = "0.2.9" }
 futures = { version = "0.3.31" }
 jsonrpsee = { version = "0.24.3" }
 log = { version = "0.4.22", default-features = false }
-polkadot-sdk = { version = "2503.0.1", default-features = false }
+# Use git to get pallet-revive with the API that cargo-contract 6 / ink! 6 expect.
+# Pin to a specific rev for reproducible builds (e.g. replace with a recent tag/rev).
+polkadot-sdk = { git = "https://github.com/paritytech/polkadot-sdk.git", default-features = false }
 prometheus-endpoint = { version = "0.17.2", default-features = false, package = "substrate-prometheus-endpoint" }
 serde = { version = "1.0.214", default-features = false }
 codec = { version = "3.7.4", default-features = false, package = "parity-scale-codec" }
-cumulus-pallet-parachain-system = { version = "0.20.0", default-features = false }
+# Use the same cumulus-pallet-parachain-system as the git polkadot-sdk to avoid mixing
+# registry and git versions (which can lead to duplicate `sp_io`).
+cumulus-pallet-parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/polkadot-sdk.git", default-features = false }
 hex-literal = { version = "0.4.1", default-features = false }
 scale-info = { version = "2.11.6", default-features = false }
 serde_json = { version = "1.0.132", default-features = false }
 smallvec = { version = "1.11.0", default-features = false }
 substrate-wasm-builder = { version = "26.0.1", default-features = false }
-frame = { version = "0.9.1", default-features = false, package = "polkadot-sdk-frame" }
+frame = { package = "polkadot-sdk-frame", git = "https://github.com/paritytech/polkadot-sdk.git", default-features = false }
 
 [profile.release]
 opt-level = 3

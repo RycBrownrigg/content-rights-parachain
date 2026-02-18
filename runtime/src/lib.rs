@@ -12,11 +12,19 @@ pub mod configs;
 mod genesis_config_presets;
 mod weights;
 
+#[macro_use]
 extern crate alloc;
 use alloc::vec::Vec;
-use smallvec::{smallvec, SmallVec};
 
+use pallet_revive::evm::{
+	fees::BlockRatioFee,
+	runtime::EthExtra,
+	tx_extension::SetOrigin as ReviveSetOrigin,
+};
 use polkadot_sdk::{staging_parachain_info as parachain_info, *};
+
+// Alias to disambiguate from polkadot_sdk re-export (construct_runtime! expects a single ident).
+use ::cumulus_pallet_parachain_system as cps;
 
 use sp_runtime::{
 	generic, impl_opaque_keys,
@@ -29,14 +37,11 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 use frame_support::weights::{
-	constants::WEIGHT_REF_TIME_PER_SECOND, Weight, WeightToFeeCoefficient,
-	WeightToFeePolynomial,
+	constants::WEIGHT_REF_TIME_PER_SECOND, Weight,
 };
 pub use genesis_config_presets::PARACHAIN_ID;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
-
-use weights::ExtrinsicBaseWeight;
 
 /// This determines the average expected block time that we are targeting. Blocks will be
 /// produced at a minimum duration defined by `SLOT_DURATION`. `SLOT_DURATION` is picked up by
@@ -134,11 +139,37 @@ pub type TxExtension = cumulus_pallet_weight_reclaim::StorageWeightReclaim<
 		frame_system::CheckWeight<Runtime>,
 		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 		frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
+		ReviveSetOrigin<Runtime>,
 	),
 >;
 
-/// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, TxExtension>;
+/// Default extensions for Ethereum-signed transactions (used by pallet-revive).
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct EthExtraImpl;
+
+impl EthExtra for EthExtraImpl {
+	type Config = Runtime;
+	type Extension = TxExtension;
+
+	fn get_eth_extension(nonce: u32, tip: Balance) -> Self::Extension {
+		cumulus_pallet_weight_reclaim::StorageWeightReclaim::<Runtime, _>::new((
+			frame_system::CheckNonZeroSender::<Runtime>::new(),
+			frame_system::CheckSpecVersion::<Runtime>::new(),
+			frame_system::CheckTxVersion::<Runtime>::new(),
+			frame_system::CheckGenesis::<Runtime>::new(),
+			frame_system::CheckEra::<Runtime>::from(sp_runtime::generic::Era::Immortal),
+			frame_system::CheckNonce::<Runtime>::from(nonce),
+			frame_system::CheckWeight::<Runtime>::new(),
+			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			frame_metadata_hash_extension::CheckMetadataHash::<Runtime>::new(false),
+			ReviveSetOrigin::<Runtime>::new_from_eth_transaction(),
+		))
+	}
+}
+
+/// Unchecked extrinsic type as expected by this runtime (supports both Substrate and Ethereum txs).
+pub type UncheckedExtrinsic =
+	pallet_revive::evm::runtime::UncheckedExtrinsic<Address, Signature, EthExtraImpl>;
 
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, TxExtension>;
@@ -180,24 +211,8 @@ pub fn native_version() -> NativeVersion {
     }
 }
 
-/// Linear weight to fee conversion.
-pub struct WeightToFee;
-
-impl WeightToFeePolynomial for WeightToFee {
-	type Balance = Balance;
-	fn polynomial() -> SmallVec<[WeightToFeeCoefficient<Balance>; 4]> {
-		// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLI_UNIT:
-		// in our template, we map to 1/10 of that, or 1/10 MILLI_UNIT
-		let p = MILLI_UNIT / 10;
-		let q = 100 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
-		smallvec![WeightToFeeCoefficient {
-			degree: 1,
-			negative: false,
-			coeff_frac: Perbill::from_rational(p % q, q),
-			coeff_integer: p / q,
-		}]
-	}
-}
+/// Linear weight-to-fee conversion compatible with `pallet_revive`'s `FeeInfo`.
+pub type WeightToFee = BlockRatioFee<1, 1, Runtime, Balance>;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -249,7 +264,7 @@ mod runtime {
 	#[runtime::pallet_index(0)]
 	pub type System = frame_system;
 	#[runtime::pallet_index(1)]
-	pub type ParachainSystem = cumulus_pallet_parachain_system;
+	pub type ParachainSystem = cps;
 	#[runtime::pallet_index(2)]
 	pub type Timestamp = pallet_timestamp;
 	#[runtime::pallet_index(3)]
@@ -291,9 +306,13 @@ mod runtime {
 	#[runtime::pallet_index(33)]
 	pub type MessageQueue = pallet_message_queue;
 
-	// Smart contracts
+	// Smart contracts (WASM)
 	#[runtime::pallet_index(40)]
 	pub type Contracts = pallet_contracts;
+
+	// Smart contracts (PolkaVM / ink! 6 – used by cargo-contract 6)
+	#[runtime::pallet_index(41)]
+	pub type Revive = pallet_revive;
 
 	// Template
 	#[runtime::pallet_index(50)]
@@ -308,8 +327,7 @@ type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
 	UNINCLUDED_SEGMENT_CAPACITY,
 >;
 
-#[docify::export(register_validate_block)]
-cumulus_pallet_parachain_system::register_validate_block! {
+cps::register_validate_block! {
 	Runtime = Runtime,
 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
 }

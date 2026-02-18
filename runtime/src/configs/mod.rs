@@ -25,12 +25,13 @@
 
 mod xcm_config;
 
+use crate::{Address, Signature};
 use polkadot_sdk::{staging_parachain_info as parachain_info, staging_xcm as xcm, *};
 #[cfg(not(feature = "runtime-benchmarks"))]
 use polkadot_sdk::{staging_xcm_builder as xcm_builder, staging_xcm_executor as xcm_executor};
 
 // Substrate and Polkadot dependencies
-use cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
+use ::cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
 	derive_impl,
@@ -60,8 +61,8 @@ use xcm::latest::prelude::BodyId;
 // Local module imports
 use super::{
 	weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
-	AccountId, Aura, Balance, Balances, Block, BlockNumber, CollatorSelection, ConsensusHook, Hash,
-	MessageQueue, Nonce, PalletInfo, ParachainSystem, PolkadotXcm, RandomnessCollectiveFlip,
+	AccountId, Aura, Balance, Balances, Block, BlockNumber, CollatorSelection, ConsensusHook,
+	Hash, MessageQueue, Nonce, PalletInfo, ParachainSystem, PolkadotXcm, RandomnessCollectiveFlip,
 	Runtime, RuntimeCall, RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin,
 	RuntimeTask, Session, SessionKeys, System, Timestamp, WeightToFee, XcmpQueue,
 	AVERAGE_ON_INITIALIZE_RATIO, EXISTENTIAL_DEPOSIT, HOURS, MAXIMUM_BLOCK_WEIGHT, MICRO_UNIT,
@@ -211,7 +212,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type ReservedXcmpWeight = ReservedXcmpWeight;
 	type CheckAssociatedRelayNumber = RelayNumberMonotonicallyIncreases;
 	type ConsensusHook = ConsensusHook;
-	type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Runtime>;
+	type RelayParentOffset = ConstU32<0>;
 }
 
 impl parachain_info::Config for Runtime {}
@@ -278,6 +279,8 @@ impl pallet_session::Config for Runtime {
 	type Keys = SessionKeys;
 	type DisablingStrategy = ();
 	type WeightInfo = ();
+	type Currency = Balances;
+	type KeyDeposit = ();
 }
 
 #[docify::export(aura_config)]
@@ -361,6 +364,43 @@ impl pallet_contracts::Config for Runtime {
 	type Environment = ();
 	type ApiVersion = ();
 	type Xcm = PolkadotXcm;
+}
+
+// --- pallet-revive (PolkaVM / ink! 6) ---
+
+parameter_types! {
+	pub const DepositPerChildTrieItemRevive: Balance = 0;
+	pub const MaxEthExtrinsicWeightRevive: sp_runtime::FixedU128 =
+		sp_runtime::FixedU128::from_rational(9, 10);
+}
+
+impl pallet_revive::Config for Runtime {
+	type Time = crate::Timestamp;
+	type Balance = Balance;
+	type Currency = Balances;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type RuntimeOrigin = RuntimeOrigin;
+	type DepositPerItem = DepositPerItem;
+	type DepositPerChildTrieItem = DepositPerChildTrieItemRevive;
+	type DepositPerByte = DepositPerByte;
+	type WeightInfo = pallet_revive::weights::SubstrateWeight<Self>;
+	type Precompiles = ();
+	type AddressMapper = pallet_revive::AccountId32Mapper<Self>;
+	type RuntimeMemory = ConstU32<{ 128 * 1024 * 1024 }>;
+	type PVFMemory = ConstU32<{ 512 * 1024 * 1024 }>;
+	type AllowEVMBytecode = ConstBool<true>;
+	type UploadOrigin = EnsureSigned<Self::AccountId>;
+	type InstantiateOrigin = EnsureSigned<Self::AccountId>;
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type CodeHashLockupDepositPercent = CodeHashLockupDepositPercent;
+	type ChainId = ConstU64<420_420_100>;
+	type NativeToEthRatio = ConstU32<1_000_000>;
+	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
+	type FeeInfo = pallet_revive::evm::fees::Info<Address, Signature, crate::EthExtraImpl>;
+	type MaxEthExtrinsicWeight = MaxEthExtrinsicWeightRevive;
+	type DebugEnabled = ConstBool<false>;
+	type GasScale = ConstU32<1000>;
 }
 
 /// Configure the pallet template in pallets/template.
