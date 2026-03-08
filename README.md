@@ -255,7 +255,7 @@ Do **not** pass `--dir` to the spawn script when testing; let Zombienet create a
 
 **"Contracts" still not in the list?** You are in the right place: **Developer → Chain state**; the pallet list is the left dropdown. Run `./scripts/contracts-checklist.sh` from repo root: it verifies your binary and prints the exact clean-rebuild-and-respawn steps.
 
-**ink! smart contracts:** To develop and deploy ink! contracts on this parachain, set up the ink! environment (Rust, `rust-src`, wasm32 target, `cargo-contract`) and use the parachain RPC at **`ws://127.0.0.1:9990`**. See **[INK_SETUP.md](INK_SETUP.md)** for step-by-step setup and `./scripts/check-ink-env.sh` to verify the environment.
+**ink! smart contracts:** To develop and deploy ink! contracts on this parachain, set up the ink! environment (Rust, `rust-src`, wasm32 target, `cargo-contract`) and use the parachain RPC at **`ws://127.0.0.1:9990`**. See **[INK_SETUP.md](INK_SETUP.md)** for step-by-step setup and `./scripts/check-ink-env.sh` to verify the environment. For calling contracts, the **Contracts UI** (e.g. [ui.use.ink](https://ui.use.ink)) is recommended; use weight limits below block capacity (e.g. RefTime **`1000000000000`**, ProofSize **`2097152`**) to avoid "Transaction would exhaust the block limits". See **[docs/DEPLOY_AND_CALL.md](docs/DEPLOY_AND_CALL.md)** for the full UI flow and troubleshooting.
 
 We recommend using [`chopsticks`](https://github.com/AcalaNetwork/chopsticks) when the focus is more on the runtime
 development and `OmniNode` is enough as is.

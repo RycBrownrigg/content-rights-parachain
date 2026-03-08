@@ -135,6 +135,7 @@ Standard template CI plus Zombienet test wiring.
 - **`zombienet.toml` / `zombienet-omni-node.toml`** — Other Zombienet/Omni Node configs.
 - **`Dockerfile`** — For containerized build/run.
 - **`README.md`** — Getting started, Omni Node, Zombienet, runtime development, **and** the extra content for this repo: rebuild/respawn after runtime changes, port **9990**, “Initializing connection” and “contracts not in Chain state” troubleshooting, contracts checklist.
+- **`INK_SETUP.md`** and **`docs/DEPLOY_AND_CALL.md`** — ink! environment and deploy/call via Contracts UI; weight limits (e.g. RefTime `1000000000000`, ProofSize `2097152`) and **`revive::mapAccount`** for extension accounts.
 
 ---
 

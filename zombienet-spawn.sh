@@ -37,6 +37,7 @@ trap "rm -f '$TEMP_CONFIG'" EXIT
 sed -e "s|polkadot-sdk/target/release|${PROJECT_ROOT}/polkadot-sdk/target/release|g" \
     -e "s|target/release/parachain-template-node|${PROJECT_ROOT}/target/release/parachain-template-node|g" \
     -e 's/^rpc_port = .*/rpc_port = 9990/' \
+    -e 's/^ws_port = .*/ws_port = 9990/' \
     "$CONFIG_ARG" > "$TEMP_CONFIG"
 PARACHAIN_BIN="${PROJECT_ROOT}/target/release/parachain-template-node"
 echo "Parachain binary (must exist for chain spec + collator): $PARACHAIN_BIN"

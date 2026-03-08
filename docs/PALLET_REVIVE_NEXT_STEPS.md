@@ -70,6 +70,8 @@ We integrated **pallet-revive** into the parachain runtime so that **ink! 6** an
    cargo contract call --contract <ADDRESS> --message flip --execute --suri //Alice --url ws://127.0.0.1:9990
    ```
 
+   **If `cargo contract call` fails** (e.g. DispatchError, encoding, or "call error" in the UI): use the **Contracts UI** ([contracts-ui.substrate.io](https://contracts-ui.substrate.io/) or [ui.use.ink](https://ui.use.ink)). Connect to **`ws://127.0.0.1:9990`**, add your contract by **address** (Add New Contract → Add contract from address), upload the **`.contract`** file as metadata, then call **`get`** / **`flip`**. For state-changing calls (**`flip`**), set **RefTime Limit** to **`1000000000000`** and **ProofSize Limit** to **`2097152`**—larger values can trigger **`1010: Invalid Transaction: Transaction would exhaust the block limits`**. Ensure your account is **mapped** (**`revive::mapAccount`** in Developer → Extrinsics) and funded; run mapAccount again after each zombienet restart. Full step-by-step: [DEPLOY_AND_CALL.md](DEPLOY_AND_CALL.md#3-deploy-and-call-via-contracts-ui-recommended-for-pallet-revive).
+
 ---
 
 ## Optional: pin polkadot-sdk to a specific rev

@@ -163,7 +163,7 @@ You should get a `.contract` bundle (e.g. `target/ink/flipper/flipper.contract`)
    
    Or use a UI:
    
-   - **[Contracts UI](https://contracts-ui.substrate.io/)** — set endpoint to **`ws://127.0.0.1:9990`**, then upload the `.contract` and instantiate.
+   - **[Contracts UI](https://contracts-ui.substrate.io/)** or **[ui.use.ink](https://ui.use.ink)** — set endpoint to **`ws://127.0.0.1:9990`**, then upload the `.contract` and instantiate. To **call** contracts (e.g. `flip`), set RefTime Limit to **`1000000000000`** and ProofSize Limit to **`2097152`** to avoid "Transaction would exhaust the block limits". If you use a browser extension account, run **`revive::mapAccount`** (Developer → Extrinsics) after each zombienet restart. See [INK_SETUP.md](INK_SETUP.md) and [docs/DEPLOY_AND_CALL.md](docs/DEPLOY_AND_CALL.md) for full details.
    - **Polkadot.js Apps** — connect to **`ws://127.0.0.1:9990`**, then **Developer → Contracts** to upload code and instantiate.
 
 Use an account with balance (e.g. **//Alice** in dev) for upload and instantiation.

@@ -25,10 +25,10 @@ chain = "local"
 command = "target/release/parachain-template-node"
 args = [
   "--rpc-external",
-  "--rpc-cors=all",
-  "--rpc-methods=unsafe",
+  "--unsafe-rpc-external",
   "--force-authoring"
 ]
+# Note: --rpc-cors and --rpc-methods are added automatically by zombienet
 name = "content-rights-parachain"
 
 # Use a fixed RPC port so you know which endpoint is the PARACHAIN (not the relay).
@@ -40,4 +40,10 @@ name = "content-rights-parachain"
 name = "collator01"
 command = "target/release/parachain-template-node"
 rpc_port = 9990
-# NO args= here — inherit from the parachain level
+ws_port = 9990
+args = [
+  "--rpc-external",
+  "--unsafe-rpc-external",
+  "--force-authoring"
+]
+# Note: --rpc-cors and --rpc-methods are added automatically by zombienet

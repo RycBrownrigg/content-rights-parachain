@@ -71,7 +71,7 @@ cargo contract --version
 
 ## 4. Quick test: build a Flipper contract (ink! 6)
 
-Use **cargo-contract 6** (see §2) so the template is ink! 6 and the build succeeds on current Rust.
+Use **cargo-contract 6** so the template is ink! 6 and the build succeeds on current Rust.
 
 ```sh
 # Outside this repo, or in a subdir (e.g. contracts/)
@@ -87,7 +87,7 @@ You should get `target/ink/flipper/flipper.contract` (or similar path per cargo-
 ## 5. Deploy to this parachain
 
 1. **Start the parachain** (if not already running):
-
+   
    ```sh
    ./zombienet-spawn.sh my-content-rights.toml --provider native
    ```
@@ -95,33 +95,44 @@ You should get `target/ink/flipper/flipper.contract` (or similar path per cargo-
 2. **Connect to the parachain RPC:** **`ws://127.0.0.1:9990`** (not the relay).
 
 3. **Upload and instantiate** (example with Flipper):
-
+   
    ```sh
    cd flipper
    cargo contract upload --suri //Alice --execute --skip-confirm -x
    # Then use the returned code hash to instantiate, or use Contracts UI (see below).
    ```
-
+   
    For a guided flow you can use:
-
-   - **Contracts UI:** [https://contracts-ui.substrate.io/](https://contracts-ui.substrate.io/) — set the endpoint to **`ws://127.0.0.1:9990`**, then upload and instantiate your `.contract` bundle.
+   
+   - **Contracts UI:** [https://contracts-ui.substrate.io/](https://contracts-ui.substrate.io/) or [https://ui.use.ink](https://ui.use.ink) — set the endpoint to **`ws://127.0.0.1:9990`**, then upload and instantiate your `.contract` bundle.
    - **Polkadot.js Apps:** Developer → Contracts → upload code / instantiate.
 
 Use an account with balance (e.g. `//Alice` in dev) for upload and instantiation.
+
+**Instantiate via UI (recommended for this chain):** cargo-contract expects **pallet-contracts** (`gas_limit`), but this chain uses **pallet-revive** (`weight_limit`). With `--skip-dry-run --execute` you may see *"Field weight_limit does not exist in our source struct"*. Use **Polkadot.js Apps** or **Contracts UI** to upload and instantiate (they use chain metadata and the correct field names). See [Deploy and Call](docs/DEPLOY_AND_CALL.md) for details.
+
+**Deploy and call via Contracts UI (recommended):** For the full flow—deploy, add an existing contract, and call `get` / `flip`—see the step-by-step in [Deploy and Call](docs/DEPLOY_AND_CALL.md#3-deploy-and-call-via-contracts-ui-recommended-for-pallet-revive). Summary:
+
+- **Extension account:** If you use a browser wallet (e.g. Polkadot.js extension), fund it (e.g. via **Developer → Extrinsics** → `balances::forceSetBalance` with sudo) and run **`revive::mapAccount`** signed by that account. You must run **mapAccount again after each zombienet restart** (mapping is not persisted across restarts).
+- **Add an existing contract:** In Contracts UI use **Add New Contract** → **Add contract from address**. Enter the **contract instance address** (not the code hash). Upload the **`.contract`** file (e.g. `flipper.contract`) as **metadata** so the UI can show messages like `get` and `flip`. Do not use "Look up code hash" for an existing instance—that field expects a code hash, not an address.
+- **Calling (e.g. `flip`):** Set **RefTime Limit** and **ProofSize Limit** **below** the parachain block limits. Recommended: **RefTime** `1000000000000` (1 second), **ProofSize** `2097152` (2 MiB). Using larger values (e.g. RefTime `2000000000000`, ProofSize `10485760`) can cause **`1010: Invalid Transaction: Transaction would exhaust the block limits`**—the dry run may still succeed, but the chain will reject the extrinsic. Use **Call contract** to execute; for read-only use the **`get`** message.
+- **Troubleshooting:** If the UI shows a red "call error" with no details, open the browser **Developer Tools** (F12) → **Console** and look for `RpcError: 1010` or "Transaction would exhaust the block limits". Reduce RefTime and ProofSize and try again. The **Transactions log** is in the right-hand panel below "Dry run outcome".
+
+**Version warning:** If you see *"cargo-contract is not compatible with the contract's ink! version"* (e.g. you have 6.0.0-beta.2 and the contract expects beta.1), you can ignore it for deploy/call, or install `6.0.0-beta.1`: `cargo install --force --locked --version 6.0.0-beta.1 cargo-contract`.
 
 ---
 
 ## 6. Useful commands
 
-| Command | Purpose |
-|--------|--------|
-| `cargo contract new <name>` | Create a new ink! contract (Flipper template). |
-| `cargo contract build --release` | Build contract → `.contract` bundle. |
-| `cargo contract check` | Check Wasm build without producing artifact. |
-| `cargo contract test` | Run off-chain tests. |
-| `cargo contract upload` | Upload contract code to chain. |
-| `cargo contract instantiate` | Create a contract instance. |
-| `cargo contract call` | Call a contract message. |
+| Command                          | Purpose                                        |
+| -------------------------------- | ---------------------------------------------- |
+| `cargo contract new <name>`      | Create a new ink! contract (Flipper template). |
+| `cargo contract build --release` | Build contract → `.contract` bundle.           |
+| `cargo contract check`           | Check Wasm build without producing artifact.   |
+| `cargo contract test`            | Run off-chain tests.                           |
+| `cargo contract upload`          | Upload contract code to chain.                 |
+| `cargo contract instantiate`     | Create a contract instance.                    |
+| `cargo contract call`            | Call a contract message.                       |
 
 Pass `--help` to any subcommand for options (e.g. `-u ws://127.0.0.1:9990` for endpoint).
 
@@ -132,24 +143,31 @@ Pass `--help` to any subcommand for options (e.g. `-u ws://127.0.0.1:9990` for e
 If `cargo contract build --release` fails with **`panic_immediate_abort is now a real panic strategy!`** (in `core`), do the following in the contract directory (e.g. `~/flipper`).
 
 1. **Opt in to the unstable Cargo feature** — at the **very top** of `Cargo.toml`, before any `[package]` or other table, add:
+   
    ```toml
    cargo-features = ["panic-immediate-abort"]
    ```
+
 2. **Set the release panic strategy** — in `Cargo.toml` add (or extend `[profile.release]` with):
+   
    ```toml
    [profile.release]
    panic = "immediate-abort"
    ```
+
 3. **Use nightly Cargo** — the feature is unstable on stable Cargo 1.93, so build with nightly:
+   
    ```sh
    rustup install nightly
    cargo +nightly contract build --release
    ```
 
 **If you still see `panic_immediate_abort is now a real panic strategy!` (in `core`) with nightly:** cargo-contract **6.0.0-beta.1** (crates.io) still passes the old build-std feature when compiling `core`. Install **cargo-contract from git** so the build uses the new panic strategy:
-   ```sh
-   cargo +nightly install cargo-contract --git https://github.com/paritytech/cargo-contract --force
-   ```
+
+```sh
+cargo +nightly install cargo-contract --git https://github.com/paritytech/cargo-contract --force
+```
+
    Then run `cargo +nightly contract build --release` again (keep your `cargo-features` and `[profile.release]` in `Cargo.toml` and `~/.cargo/config.toml` with `json-target-spec = true`).
 
 If you see **`feature 'panic-immediate-abort' is required`** when running `cargo contract build`, you added `panic = "immediate-abort"` but either didn't add `cargo-features = ["panic-immediate-abort"]` at the top of `Cargo.toml`, or you're using stable Cargo. Add the `cargo-features` line and use `cargo +nightly contract build --release`.
@@ -163,19 +181,23 @@ If `cargo contract build --release` fails with one of:
 
 **Version alignment:**
 
-| Tool | Contract Rust | Result |
-|------|----------------|--------|
-| **cargo-contract from git (6.x)** | Needs **Rust 1.92+** (e.g. latest nightly) and **ink! 6** | Uses `-C panic=immediate-abort`; works with latest nightly. |
-| **cargo-contract 5.0.3** (crates.io) | Uses `-Z build-std-features=panic_immediate_abort` | Fails on recent nightlies (core rejects the old feature). |
+| Tool                                 | Contract Rust                                             | Result                                                      |
+| ------------------------------------ | --------------------------------------------------------- | ----------------------------------------------------------- |
+| **cargo-contract from git (6.x)**    | Needs **Rust 1.92+** (e.g. latest nightly) and **ink! 6** | Uses `-C panic=immediate-abort`; works with latest nightly. |
+| **cargo-contract 5.0.3** (crates.io) | Uses `-Z build-std-features=panic_immediate_abort`        | Fails on recent nightlies (core rejects the old feature).   |
 
 **Recommended fix (ink! 6 + cargo-contract from git):**
 
 1. Use **latest nightly** for the contract (e.g. in `flipper/rust-toolchain.toml`: `channel = "nightly"`).
+
 2. Install **cargo-contract from git** with that same nightly so the binary is built with Rust ≥ 1.92:
+   
    ```sh
    rustup run nightly cargo install cargo-contract --git https://github.com/paritytech/cargo-contract --force
    ```
+
 3. Upgrade the Flipper (or any ink! 5) contract to **ink! 6** (see [ink! 6 migration](https://use.ink/docs/migrate/migrate-from-ink5-to-ink6/)), then:
+   
    ```sh
    cd flipper && unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS && cargo contract build --release
    ```
@@ -202,31 +224,31 @@ ERROR:
 **Fix:** Cargo must be run with the unstable flag. cargo-contract may run cargo from a context where the project’s `.cargo/config.toml` is not loaded, so use the **global** config.
 
 1. **Global config (recommended)** — In your home directory, edit or create **`~/.cargo/config.toml`** and add (or merge into existing):
-
+   
    ```toml
    [unstable]
    json-target-spec = true
    ```
-
+   
    Then build with nightly:
-
+   
    ```sh
    cargo +nightly contract build --release
    ```
 
 2. **If the error persists,** cargo-contract may invoke cargo in a way that ignores config. Use a **CARGO wrapper** so the flag is always passed. Create a script (e.g. `~/bin/cargo-json-target-spec`):
-
+   
    ```sh
    #!/bin/sh
    exec cargo +nightly -Z json-target-spec "$@"
    ```
-
+   
    Make it executable (`chmod +x ~/bin/cargo-json-target-spec`), then run:
-
+   
    ```sh
    CARGO=~/bin/cargo-json-target-spec cargo +nightly contract build --release
    ```
-
+   
    Any cargo invocation from cargo-contract will then get the flag. Use the same for other contract builds, or `export CARGO=~/bin/cargo-json-target-spec` in your shell when working on ink! 6.
 
 ---
@@ -235,4 +257,4 @@ ERROR:
 
 - [ink! documentation](https://use.ink/)
 - [cargo-contract (GitHub)](https://github.com/paritytech/cargo-contract)
-- [Contracts UI](https://contracts-ui.substrate.io/) — deploy and call contracts in the browser.
+- [Contracts UI](https://contracts-ui.substrate.io/) / [ui.use.ink](https://ui.use.ink) — deploy and call contracts in the browser; see [Deploy and Call](docs/DEPLOY_AND_CALL.md#3-deploy-and-call-via-contracts-ui-recommended-for-pallet-revive) for weight limits and mapAccount.

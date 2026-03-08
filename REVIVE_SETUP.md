@@ -17,4 +17,5 @@ This parachain uses **pallet-revive** for ink! 6 smart contracts. Contract devel
 ## References
 
 - [INK_SETUP.md](INK_SETUP.md) — ink! environment, cargo-contract, deploy to this parachain.
+- [docs/DEPLOY_AND_CALL.md](docs/DEPLOY_AND_CALL.md) — deploy and call via Contracts UI, weight limits, mapAccount, and troubleshooting (e.g. "Transaction would exhaust the block limits").
 - Polkadot SDK: `substrate/frame/revive`, `substrate/frame/revive/dev-node/runtime`, and penpal runtime for reference configs.
