@@ -444,6 +444,18 @@ impl pallet_nfts::Config for Runtime {
 	type Helper = ();
 }
 
+// --- pallet-content-rights ---
+
+parameter_types! {
+	pub const MaxChildrenPerNft: u32 = 50;
+}
+
+impl pallet_content_rights::Config for Runtime {
+	type PaymentCurrency = Balances;
+	type MaxChildren = MaxChildrenPerNft;
+	type ContentRightsWeightInfo = pallet_content_rights::weights::SubstrateWeight<Runtime>;
+}
+
 /// Configure the pallet template in pallets/template.
 impl pallet_parachain_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

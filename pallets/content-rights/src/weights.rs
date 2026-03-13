@@ -1,0 +1,58 @@
+use frame::prelude::*;
+
+// TODO: Run benchmarks for production weights
+pub trait WeightInfo {
+	fn register_content() -> Weight;
+	fn subscribe() -> Weight;
+	fn renew_subscription() -> Weight;
+	fn purchase_views() -> Weight;
+	fn consume_view() -> Weight;
+	fn purchase_ownership() -> Weight;
+	fn check_access() -> Weight;
+}
+
+pub struct SubstrateWeight<T>(core::marker::PhantomData<T>);
+
+impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
+	fn register_content() -> Weight {
+		// TODO: Run benchmarks
+		Weight::from_parts(50_000_000, 0)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(3))
+	}
+
+	fn subscribe() -> Weight {
+		Weight::from_parts(50_000_000, 0)
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(3))
+	}
+
+	fn renew_subscription() -> Weight {
+		Weight::from_parts(50_000_000, 0)
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+
+	fn purchase_views() -> Weight {
+		Weight::from_parts(50_000_000, 0)
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(3))
+	}
+
+	fn consume_view() -> Weight {
+		Weight::from_parts(50_000_000, 0)
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+
+	fn purchase_ownership() -> Weight {
+		Weight::from_parts(50_000_000, 0)
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(3))
+	}
+
+	fn check_access() -> Weight {
+		Weight::from_parts(20_000_000, 0)
+			.saturating_add(T::DbWeight::get().reads(3))
+	}
+}

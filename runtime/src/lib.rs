@@ -321,6 +321,10 @@ mod runtime {
 	// Template
 	#[runtime::pallet_index(50)]
 	pub type TemplatePallet = pallet_parachain_template;
+
+	// Content rights management (RMRK-inspired nesting on pallet-nfts)
+	#[runtime::pallet_index(51)]
+	pub type ContentRights = pallet_content_rights;
 }
 
 /// Aura consensus hook
