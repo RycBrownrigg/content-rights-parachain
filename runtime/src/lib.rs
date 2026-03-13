@@ -314,6 +314,10 @@ mod runtime {
 	#[runtime::pallet_index(41)]
 	pub type Revive = pallet_revive;
 
+	// NFTs (foundation for content rights nesting)
+	#[runtime::pallet_index(42)]
+	pub type Nfts = pallet_nfts;
+
 	// Template
 	#[runtime::pallet_index(50)]
 	pub type TemplatePallet = pallet_parachain_template;
