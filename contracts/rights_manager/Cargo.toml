@@ -1,0 +1,23 @@
+[package]
+name = "rights-manager"
+version = "0.1.0"
+authors = ["Ryc Brownrigg"]
+edition = "2021"
+description = "Content rights management contract (ink! 6) — subscriptions, PPV, ownership"
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+ink = { version = "6.0.0-beta.1", default-features = false }
+scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
+scale-info = { version = "2.6", default-features = false, features = ["derive"] }
+
+
+[features]
+default = ["std"]
+std = [
+    "ink/std",
+    "scale/std",
+    "scale-info/std",
+]
