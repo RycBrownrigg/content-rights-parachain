@@ -476,6 +476,206 @@ fn check_access_fails_content_not_found() {
 	});
 }
 
+// ==================== xcm_subscribe ====================
+
+#[test]
+fn xcm_subscribe_works() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let payer = account(3); // sovereign account (payer)
+		let beneficiary = account(2); // remote user (beneficiary)
+		let content_id = register_default_content(creator.clone());
+
+		let creator_balance_before = Balances::free_balance(&creator);
+
+		assert_ok!(ContentRights::xcm_subscribe(
+			RuntimeOrigin::signed(payer.clone()),
+			content_id,
+			beneficiary.clone(),
+		));
+
+		// Creator received payment
+		assert!(Balances::free_balance(&creator) > creator_balance_before);
+
+		// Subscription stored for beneficiary, not payer
+		let sub = pallet::Subscriptions::<Test>::get(content_id, &beneficiary).unwrap();
+		assert_eq!(sub.expiry_block, 1 + 100);
+		assert!(pallet::Subscriptions::<Test>::get(content_id, &payer).is_none());
+
+		// Cross-chain event emitted
+		System::assert_has_event(
+			crate::Event::<Test>::CrossChainSubscriptionCreated {
+				content_id,
+				beneficiary,
+				payer,
+				expiry_block: 1 + 100,
+			}
+			.into(),
+		);
+	});
+}
+
+#[test]
+fn xcm_subscribe_fails_already_subscribed() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let payer = account(3);
+		let beneficiary = account(2);
+		let content_id = register_default_content(creator);
+
+		assert_ok!(ContentRights::xcm_subscribe(
+			RuntimeOrigin::signed(payer.clone()),
+			content_id,
+			beneficiary.clone(),
+		));
+		assert_noop!(
+			ContentRights::xcm_subscribe(
+				RuntimeOrigin::signed(payer),
+				content_id,
+				beneficiary,
+			),
+			crate::Error::<Test>::SubscriptionAlreadyExists
+		);
+	});
+}
+
+// ==================== xcm_renew_subscription ====================
+
+#[test]
+fn xcm_renew_subscription_works() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let payer = account(3);
+		let beneficiary = account(2);
+		let content_id = register_default_content(creator);
+
+		assert_ok!(ContentRights::xcm_subscribe(
+			RuntimeOrigin::signed(payer.clone()),
+			content_id,
+			beneficiary.clone(),
+		));
+
+		// Advance past expiry
+		System::set_block_number(101);
+
+		assert_ok!(ContentRights::xcm_renew_subscription(
+			RuntimeOrigin::signed(payer.clone()),
+			content_id,
+			beneficiary.clone(),
+		));
+
+		let sub = pallet::Subscriptions::<Test>::get(content_id, &beneficiary).unwrap();
+		assert_eq!(sub.expiry_block, 101 + 100);
+
+		System::assert_has_event(
+			crate::Event::<Test>::CrossChainSubscriptionRenewed {
+				content_id,
+				beneficiary,
+				payer,
+				new_expiry_block: 201,
+			}
+			.into(),
+		);
+	});
+}
+
+// ==================== xcm_purchase_views ====================
+
+#[test]
+fn xcm_purchase_views_works() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let payer = account(3);
+		let beneficiary = account(2);
+		let content_id = register_default_content(creator.clone());
+
+		let creator_balance_before = Balances::free_balance(&creator);
+
+		assert_ok!(ContentRights::xcm_purchase_views(
+			RuntimeOrigin::signed(payer.clone()),
+			content_id,
+			beneficiary.clone(),
+			5,
+		));
+
+		assert!(Balances::free_balance(&creator) > creator_balance_before);
+
+		// View pack stored for beneficiary
+		let pack = pallet::ViewPacks::<Test>::get(content_id, &beneficiary).unwrap();
+		assert_eq!(pack.views_remaining, 5);
+		assert!(pallet::ViewPacks::<Test>::get(content_id, &payer).is_none());
+
+		System::assert_has_event(
+			crate::Event::<Test>::CrossChainViewPackPurchased {
+				content_id,
+				beneficiary,
+				payer,
+				views: 5,
+			}
+			.into(),
+		);
+	});
+}
+
+// ==================== xcm_purchase_ownership ====================
+
+#[test]
+fn xcm_purchase_ownership_works() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let payer = account(3);
+		let beneficiary = account(2);
+		let content_id = register_default_content(creator.clone());
+
+		let creator_balance_before = Balances::free_balance(&creator);
+
+		assert_ok!(ContentRights::xcm_purchase_ownership(
+			RuntimeOrigin::signed(payer.clone()),
+			content_id,
+			beneficiary.clone(),
+		));
+
+		assert!(Balances::free_balance(&creator) > creator_balance_before);
+
+		// Ownership recorded for beneficiary, not payer
+		assert!(pallet::Ownership::<Test>::get(content_id, &beneficiary));
+		assert!(!pallet::Ownership::<Test>::get(content_id, &payer));
+
+		System::assert_has_event(
+			crate::Event::<Test>::CrossChainOwnershipPurchased {
+				content_id,
+				beneficiary,
+				payer,
+			}
+			.into(),
+		);
+	});
+}
+
+#[test]
+fn xcm_purchase_ownership_fails_already_owned() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let payer = account(3);
+		let beneficiary = account(2);
+		let content_id = register_default_content(creator);
+
+		assert_ok!(ContentRights::xcm_purchase_ownership(
+			RuntimeOrigin::signed(payer.clone()),
+			content_id,
+			beneficiary.clone(),
+		));
+		assert_noop!(
+			ContentRights::xcm_purchase_ownership(
+				RuntimeOrigin::signed(payer),
+				content_id,
+				beneficiary,
+			),
+			crate::Error::<Test>::AlreadyOwned
+		);
+	});
+}
+
 // ==================== nesting ====================
 
 #[test]

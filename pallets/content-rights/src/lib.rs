@@ -157,6 +157,30 @@ pub mod pallet {
 			child_collection: u32,
 			child_item: u32,
 		},
+		// Cross-chain events (payer ≠ beneficiary)
+		CrossChainSubscriptionCreated {
+			content_id: u32,
+			beneficiary: T::AccountId,
+			payer: T::AccountId,
+			expiry_block: u32,
+		},
+		CrossChainSubscriptionRenewed {
+			content_id: u32,
+			beneficiary: T::AccountId,
+			payer: T::AccountId,
+			new_expiry_block: u32,
+		},
+		CrossChainViewPackPurchased {
+			content_id: u32,
+			beneficiary: T::AccountId,
+			payer: T::AccountId,
+			views: u32,
+		},
+		CrossChainOwnershipPurchased {
+			content_id: u32,
+			beneficiary: T::AccountId,
+			payer: T::AccountId,
+		},
 	}
 
 	// --------------- Errors ---------------
@@ -614,6 +638,186 @@ pub mod pallet {
 				content_id,
 				who,
 				has_access: false,
+			});
+
+			Ok(())
+		}
+
+		// --------------- Cross-Chain (XCM) Extrinsics ---------------
+		//
+		// These extrinsics decouple the **payer** (origin) from the **beneficiary**.
+		// When a sibling parachain sends an XCM `Transact`, the origin becomes the
+		// sovereign account of that parachain (via SovereignSignedViaLocation).
+		// The sovereign account pays, but the rights token is granted to the
+		// specified beneficiary — the actual user on the remote chain.
+
+		/// Cross-chain subscribe: payer (origin) pays, beneficiary gets the subscription.
+		#[pallet::call_index(7)]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::xcm_subscribe())]
+		pub fn xcm_subscribe(
+			origin: OriginFor<T>,
+			content_id: u32,
+			beneficiary: T::AccountId,
+		) -> DispatchResult {
+			let payer = ensure_signed(origin)?;
+
+			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
+			ensure!(
+				!Subscriptions::<T>::contains_key(content_id, &beneficiary),
+				Error::<T>::SubscriptionAlreadyExists
+			);
+
+			Self::pay(&payer, &content.creator, content.subscription_price)?;
+
+			let child_item_id = Self::mint_and_nest_child(
+				&content.creator,
+				&beneficiary,
+				content.collection_id,
+				content.content_item_id,
+				RightsType::Subscription,
+			)?;
+
+			let current_block: u32 = <frame_system::Pallet<T>>::block_number()
+				.try_into()
+				.unwrap_or(0u32);
+			let expiry_block = current_block.saturating_add(content.period_length);
+
+			Subscriptions::<T>::insert(
+				content_id,
+				&beneficiary,
+				SubscriptionInfo {
+					expiry_block,
+					auto_renew: false,
+					child_item_id,
+				},
+			);
+
+			Self::deposit_event(Event::CrossChainSubscriptionCreated {
+				content_id,
+				beneficiary,
+				payer,
+				expiry_block,
+			});
+
+			Ok(())
+		}
+
+		/// Cross-chain renew: payer (origin) pays, beneficiary's subscription is renewed.
+		#[pallet::call_index(8)]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::xcm_renew_subscription())]
+		pub fn xcm_renew_subscription(
+			origin: OriginFor<T>,
+			content_id: u32,
+			beneficiary: T::AccountId,
+		) -> DispatchResult {
+			let payer = ensure_signed(origin)?;
+
+			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
+			let sub = Subscriptions::<T>::get(content_id, &beneficiary)
+				.ok_or(Error::<T>::SubscriptionNotFound)?;
+
+			let current_block: u32 = <frame_system::Pallet<T>>::block_number()
+				.try_into()
+				.unwrap_or(0u32);
+			ensure!(current_block >= sub.expiry_block, Error::<T>::SubscriptionNotExpired);
+
+			Self::pay(&payer, &content.creator, content.subscription_price)?;
+
+			let new_expiry = current_block.saturating_add(content.period_length);
+			Subscriptions::<T>::mutate(content_id, &beneficiary, |maybe_sub| {
+				if let Some(s) = maybe_sub {
+					s.expiry_block = new_expiry;
+				}
+			});
+
+			Self::deposit_event(Event::CrossChainSubscriptionRenewed {
+				content_id,
+				beneficiary,
+				payer,
+				new_expiry_block: new_expiry,
+			});
+
+			Ok(())
+		}
+
+		/// Cross-chain purchase views: payer (origin) pays, beneficiary gets the view pack.
+		#[pallet::call_index(9)]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::xcm_purchase_views())]
+		pub fn xcm_purchase_views(
+			origin: OriginFor<T>,
+			content_id: u32,
+			beneficiary: T::AccountId,
+			num_views: u32,
+		) -> DispatchResult {
+			let payer = ensure_signed(origin)?;
+
+			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
+
+			let total_price = content
+				.ppv_price
+				.checked_mul(num_views as u128)
+				.ok_or(Error::<T>::InsufficientPayment)?;
+			Self::pay(&payer, &content.creator, total_price)?;
+
+			let child_item_id = Self::mint_and_nest_child(
+				&content.creator,
+				&beneficiary,
+				content.collection_id,
+				content.content_item_id,
+				RightsType::PayPerView,
+			)?;
+
+			ViewPacks::<T>::insert(
+				content_id,
+				&beneficiary,
+				ViewPackInfo {
+					views_remaining: num_views,
+					child_item_id,
+				},
+			);
+
+			Self::deposit_event(Event::CrossChainViewPackPurchased {
+				content_id,
+				beneficiary,
+				payer,
+				views: num_views,
+			});
+
+			Ok(())
+		}
+
+		/// Cross-chain purchase ownership: payer (origin) pays, beneficiary gets permanent access.
+		#[pallet::call_index(10)]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::xcm_purchase_ownership())]
+		pub fn xcm_purchase_ownership(
+			origin: OriginFor<T>,
+			content_id: u32,
+			beneficiary: T::AccountId,
+		) -> DispatchResult {
+			let payer = ensure_signed(origin)?;
+
+			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
+			ensure!(
+				!Ownership::<T>::get(content_id, &beneficiary),
+				Error::<T>::AlreadyOwned
+			);
+
+			Self::pay(&payer, &content.creator, content.ownership_price)?;
+
+			Self::mint_and_nest_child(
+				&content.creator,
+				&beneficiary,
+				content.collection_id,
+				content.content_item_id,
+				RightsType::Ownership,
+			)?;
+
+			Ownership::<T>::insert(content_id, &beneficiary, true);
+
+			Self::deposit_event(Event::CrossChainOwnershipPurchased {
+				content_id,
+				beneficiary,
+				payer,
 			});
 
 			Ok(())
