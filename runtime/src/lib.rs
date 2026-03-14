@@ -10,6 +10,7 @@ pub mod apis;
 mod benchmarks;
 pub mod configs;
 mod genesis_config_presets;
+pub mod precompiles;
 mod weights;
 
 #[macro_use]

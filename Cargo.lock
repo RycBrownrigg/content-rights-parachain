@@ -8760,6 +8760,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-content-rights"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec",
+ "polkadot-sdk",
+ "polkadot-sdk-frame",
+ "scale-info",
+]
+
+[[package]]
 name = "pallet-contracts"
 version = "27.0.0"
 source = "git+https://github.com/paritytech/polkadot-sdk.git#a20ac9bd4fedd78da159fa4bbd8452dc8c17ec4b"
@@ -10379,10 +10389,12 @@ dependencies = [
 name = "parachain-template-runtime"
 version = "0.1.0"
 dependencies = [
+ "alloy-sol-types",
  "cumulus-pallet-parachain-system",
  "docify",
  "hex-literal",
  "log",
+ "pallet-content-rights",
  "pallet-parachain-template",
  "parity-scale-codec",
  "polkadot-sdk",
