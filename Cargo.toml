@@ -12,6 +12,7 @@ members = [
     "pallets/template",
     "pallets/content-rights",
     "runtime",
+    "integration-tests",
 ]
 resolver = "2"
 exclude = ["contracts/rights_manager"]
@@ -41,6 +42,7 @@ serde_json = { version = "1.0.132", default-features = false }
 smallvec = { version = "1.11.0", default-features = false }
 substrate-wasm-builder = { version = "26.0.1", default-features = false }
 frame = { package = "polkadot-sdk-frame", git = "https://github.com/paritytech/polkadot-sdk.git", default-features = false }
+xcm-simulator = { git = "https://github.com/paritytech/polkadot-sdk.git", default-features = false }
 
 [profile.release]
 opt-level = 3

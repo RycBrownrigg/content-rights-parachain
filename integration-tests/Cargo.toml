@@ -1,0 +1,38 @@
+[package]
+name = "content-rights-xcm-tests"
+description = "XCM integration tests for cross-chain content rights flows."
+version = "0.1.0"
+license = "Unlicense"
+authors.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+codec = { features = ["derive"], workspace = true }
+scale-info = { features = ["derive"], workspace = true }
+log = { workspace = true }
+
+# XCM simulator and SDK
+xcm-simulator.workspace = true
+polkadot-sdk = { workspace = true, features = [
+  "std",
+  "runtime",
+  "frame-support",
+  "frame-system",
+  "pallet-balances",
+  "pallet-message-queue",
+  "pallet-nfts",
+  "pallet-xcm",
+  "polkadot-parachain-primitives",
+  "polkadot-runtime-parachains",
+  "cumulus-pallet-xcm",
+  "sp-core",
+  "sp-io",
+  "sp-runtime",
+  "staging-xcm",
+  "staging-xcm-builder",
+  "staging-xcm-executor",
+] }
+
+# Local pallets
+pallet-content-rights = { workspace = true, features = ["std"] }
