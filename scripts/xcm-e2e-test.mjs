@@ -1,21 +1,27 @@
 #!/usr/bin/env node
-// XCM End-to-End Test Script
-//
-// Tests cross-chain content rights operations between two parachains
-// running on a local Zombienet network.
-//
-// Prerequisites:
-//   1. Build: cargo build --release -p parachain-template-node
-//   2. Spawn: ./zombienet-spawn.sh zombienet-xcm-test.toml --provider native
-//   3. Open HRMP: node scripts/open-hrmp-channels.mjs ws://127.0.0.1:<relay-port>
-//   4. Wait ~30s for session change
-//   5. Run: node scripts/xcm-e2e-test.mjs [paraA-ws] [paraB-ws] [relay-ws]
-//
-// Network layout:
-//   - Relay chain (Rococo-local): alice, bob (ports assigned by Zombienet)
-//   - ParaA (100): content-rights chain at ws://127.0.0.1:9990
-//   - ParaB (200): consumer chain at ws://127.0.0.1:9991
-//   - HRMP channels: 100 ↔ 200 (bidirectional, opened post-launch)
+/**
+ * XCM End-to-End Test Script — Full cross-chain content rights flow.
+ *
+ * Tests all four cross-chain operations between two parachains on a local
+ * Zombienet network: subscribe, renew, purchase views, purchase ownership.
+ *
+ * @module xcm-e2e-test
+ *
+ * Exports: (none — CLI entry point)
+ *
+ * Prerequisites:
+ *   1. Build: cargo build --release -p parachain-template-node
+ *   2. Spawn: ./zombienet-spawn.sh zombienet-xcm-test.toml --provider native
+ *   3. Open HRMP: node scripts/open-hrmp-channels.mjs ws://127.0.0.1:<relay-port>
+ *   4. Wait ~30s for session change
+ *   5. Run: node scripts/xcm-e2e-test.mjs [paraA-ws] [paraB-ws] [relay-ws]
+ *
+ * Network layout:
+ *   - Relay chain (Rococo-local): alice, bob (ports assigned by Zombienet)
+ *   - ParaA (100): content-rights chain at ws://127.0.0.1:9990
+ *   - ParaB (200): consumer chain at ws://127.0.0.1:9991
+ *   - HRMP channels: 100 ↔ 200 (bidirectional, opened post-launch)
+ */
 
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api';
 import { cryptoWaitReady } from '@polkadot/util-crypto';
@@ -23,6 +29,16 @@ import { cryptoWaitReady } from '@polkadot/util-crypto';
 const PARA_A_WS = process.argv[2] || 'ws://127.0.0.1:9990';
 const PARA_B_WS = process.argv[3] || 'ws://127.0.0.1:9991';
 const RELAY_WS = process.argv[4] || 'ws://127.0.0.1:9944';
+
+// XCM fee: 100B tokens (covers ~75B proof_size cost from BlockRatioFee<1,1>).
+// See project memory project_xcm_fee_calculation.md for derivation.
+const XCM_FEE_AMOUNT = 100_000_000_000;
+
+// Sections to scan for XCM-related events on ParaA
+const XCM_EVENT_SECTIONS = [
+  'xcmpQueue', 'messageQueue', 'contentRights',
+  'polkadotXcm', 'cumulusXcm', 'balances',
+];
 
 async function connect(url, label) {
   console.log(`Connecting to ${label} at ${url}...`);
@@ -64,7 +80,7 @@ function sendAndWait(api, tx, signer) {
   });
 }
 
-// Scan events in a range of blocks on a given api
+/** Scans events in a range of blocks on a given api. */
 async function scanEvents(api, startBlock, endBlock, sections) {
   const found = [];
   for (let i = startBlock; i <= endBlock; i++) {
@@ -83,11 +99,74 @@ async function scanEvents(api, startBlock, endBlock, sections) {
   return found;
 }
 
+/**
+ * Sends an XCM Transact from ParaB to ParaA and waits for processing.
+ * Returns the events found on ParaA during the processing window.
+ */
+async function sendXcmTransact(apiA, apiB, encodedCall, signer, label) {
+  const blockBeforeSend = (await apiA.rpc.chain.getHeader()).number.toNumber();
+
+  const xcmMessage = {
+    V3: [
+      {
+        WithdrawAsset: [
+          { id: { Concrete: { parents: 1, interior: 'Here' } }, fun: { Fungible: XCM_FEE_AMOUNT } }
+        ]
+      },
+      {
+        BuyExecution: {
+          fees: { id: { Concrete: { parents: 1, interior: 'Here' } }, fun: { Fungible: XCM_FEE_AMOUNT } },
+          weightLimit: 'Unlimited',
+        }
+      },
+      {
+        Transact: {
+          originKind: 'SovereignAccount',
+          requireWeightAtMost: { refTime: 1_000_000_000, proofSize: 100_000 },
+          call: { encoded: encodedCall },
+        }
+      },
+    ]
+  };
+
+  const dest = { V3: { parents: 1, interior: { X1: { Parachain: 100 } } } };
+  const sendTx = apiB.tx.polkadotXcm.send(dest, xcmMessage);
+  const sudoSendTx = apiB.tx.sudo.sudo(sendTx);
+
+  console.log(`  Sending XCM (${label}) via sudo on ParaB...`);
+  const { events: sendEvents } = await sendAndWait(apiB, sudoSendTx, signer);
+  for (const { event } of sendEvents) {
+    if (event.section !== 'system' && event.section !== 'transactionPayment') {
+      console.log(`    ${event.section}.${event.method}: ${JSON.stringify(event.toHuman().data)}`);
+    }
+  }
+
+  // Wait for XCM to be relayed and processed on ParaA
+  const currentBlock = (await apiA.rpc.chain.getHeader()).number.toNumber();
+  const targetBlock = currentBlock + 10;
+  console.log(`  Waiting for ParaA block ${targetBlock}...`);
+  await waitForBlock(apiA, targetBlock);
+
+  // Scan ParaA events
+  const scanStart = Math.max(1, blockBeforeSend - 2);
+  const events = await scanEvents(apiA, scanStart, targetBlock, XCM_EVENT_SECTIONS);
+  if (events.length > 0) {
+    for (const ev of events) {
+      console.log(`  Block #${ev.block}: ${ev.section}.${ev.method}: ${JSON.stringify(ev.data)}`);
+    }
+  } else {
+    console.log('  No XCM-related events found on ParaA');
+  }
+
+  return events;
+}
+
 async function main() {
   await cryptoWaitReady();
   const keyring = new Keyring({ type: 'sr25519' });
   const alice = keyring.addFromUri('//Alice');
   const bob = keyring.addFromUri('//Bob');
+  const charlie = keyring.addFromUri('//Charlie');
 
   // Connect to all chains
   let apiA, apiB, apiRelay;
@@ -103,10 +182,12 @@ async function main() {
     process.exit(1);
   }
 
-  // Check what XCM version the runtime supports
   const xcmVersion = apiA.consts.polkadotXcm?.advertisedXcmVersion?.toNumber?.() ?? 'unknown';
   console.log(`  ParaA advertised XCM version: ${xcmVersion}`);
 
+  // =========================================================================
+  // Step 1: Register content on ParaA
+  // =========================================================================
   console.log('\n=== Step 1: Register content on ParaA ===');
   const metadataHash = '0x' + '00'.repeat(32);
   const title = 'Cross-Chain Test Content';
@@ -114,9 +195,9 @@ async function main() {
     metadataHash,
     title,
     1000,   // subscription_price
-    100,    // ppv_price
+    100,    // ppv_price (per view)
     5000,   // ownership_price
-    100,    // period_length
+    10,     // period_length (10 blocks — short for fast renewal testing)
   );
 
   const { events: regEvents } = await sendAndWait(apiA, registerTx, alice);
@@ -132,178 +213,150 @@ async function main() {
     process.exit(1);
   }
 
+  // =========================================================================
+  // Step 2: Fund ParaB sovereign account on ParaA
+  // =========================================================================
   console.log('\n=== Step 2: Fund ParaB sovereign account on ParaA ===');
+  // Sovereign account: b"sibl" (4 bytes) + para_id u32 LE (4 bytes) + 24 zero bytes
+  // CRITICAL: toHex(true) for little-endian — see feedback_sovereign_endianness.md
   const sovereignHex = apiA.createType('AccountId',
     '0x' + Buffer.from('sibl').toString('hex') +
     apiA.createType('u32', 200).toHex(true).slice(2) +
     '00'.repeat(24)
   );
   console.log(`  Sovereign account of Para 200: ${sovereignHex.toString()}`);
-  console.log(`  Sovereign hex raw: 0x${Buffer.from('sibl').toString('hex')}${apiA.createType('u32', 200).toHex(true).slice(2)}${'00'.repeat(24)}`);
   console.log(`  Existential deposit: ${apiA.consts.balances.existentialDeposit.toString()}`);
 
   // Fund using BOTH forceSetBalance AND a real transfer to guarantee account is alive
-  const fundAmount = 10_000_000_000_000n; // 10T — plenty of headroom
+  const fundAmount = 10_000_000_000_000n; // 10T — covers ~100 XCM operations
   console.log(`  Funding with ${fundAmount} via forceSetBalance...`);
   const fundTx = apiA.tx.sudo.sudo(
     apiA.tx.balances.forceSetBalance(sovereignHex, fundAmount)
   );
-  const { blockHash: fundBlockHash } = await sendAndWait(apiA, fundTx, alice);
-  const fundHeader = await apiA.rpc.chain.getHeader(fundBlockHash);
-  console.log(`  forceSetBalance included in ParaA block #${fundHeader.number.toNumber()}`);
+  await sendAndWait(apiA, fundTx, alice);
 
-  // Also do a real transfer to ensure providers is set via normal flow
-  console.log('  Sending additional transferAllowDeath to ensure account is fully alive...');
+  // Real transfer to ensure providers > 0
+  console.log('  Sending transferAllowDeath to ensure account is fully alive...');
   const transferTx = apiA.tx.balances.transferAllowDeath(sovereignHex, 1_000_000_000_000n);
-  const { blockHash: transferBlockHash } = await sendAndWait(apiA, transferTx, alice);
-  const transferHeader = await apiA.rpc.chain.getHeader(transferBlockHash);
-  console.log(`  transfer included in ParaA block #${transferHeader.number.toNumber()}`);
+  await sendAndWait(apiA, transferTx, alice);
 
-  // Verify account state after funding
+  // Verify account state
   const sovAccountInfo = await apiA.query.system.account(sovereignHex);
   console.log(`  Sovereign free: ${sovAccountInfo.data.free.toString()}`);
-  console.log(`  Sovereign reserved: ${sovAccountInfo.data.reserved.toString()}`);
-  console.log(`  Sovereign frozen: ${sovAccountInfo.data.frozen.toString()}`);
   console.log(`  Sovereign providers: ${sovAccountInfo.providers.toString()}`);
-  console.log(`  Sovereign consumers: ${sovAccountInfo.consumers.toString()}`);
-  console.log(`  Sovereign nonce: ${sovAccountInfo.nonce.toString()}`);
-
   if (sovAccountInfo.providers.toNumber() === 0) {
     console.error('  FATAL: Sovereign account has 0 providers after funding. Aborting.');
     process.exit(1);
   }
 
-  // Wait 3 more blocks to ensure state is fully committed
+  // Wait 3 blocks for state propagation
   const fundedBlock = (await apiA.rpc.chain.getHeader()).number.toNumber();
   const safeBlock = fundedBlock + 3;
   console.log(`  Waiting for block ${safeBlock} to ensure state propagation...`);
   await waitForBlock(apiA, safeBlock);
 
-  // Re-verify balance just before XCM send
   const preXcmBalance = await apiA.query.system.account(sovereignHex);
-  console.log(`  Pre-XCM sovereign free: ${preXcmBalance.data.free.toString()} (block ~${safeBlock})`);
-  if (preXcmBalance.data.free.toBigInt() === 0n) {
-    console.error('  FATAL: Sovereign balance dropped to 0 before XCM send!');
-    process.exit(1);
-  }
+  console.log(`  Pre-XCM sovereign free: ${preXcmBalance.data.free.toString()}`);
 
-  console.log('\n=== Step 3: Send XCM Transact from ParaB to ParaA ===');
-  // Build the xcm_subscribe call to execute on ParaA
-  const xcmSubscribeCall = apiA.tx.contentRights.xcmSubscribe(
-    contentId,
-    bob.address,  // beneficiary
-  );
-  const encodedCall = xcmSubscribeCall.method.toHex();
-  console.log(`  Encoded call: ${encodedCall}`);
-  console.log(`  Encoded call length: ${encodedCall.length / 2 - 1} bytes`);
+  // =========================================================================
+  // Step 3: XCM Subscribe — Bob gets subscription via cross-chain
+  // =========================================================================
+  console.log('\n=== Step 3: XCM Subscribe (ParaB → ParaA, beneficiary: Bob) ===');
+  const xcmSubscribeCall = apiA.tx.contentRights.xcmSubscribe(contentId, bob.address);
+  await sendXcmTransact(apiA, apiB, xcmSubscribeCall.method.toHex(), alice, 'xcmSubscribe');
 
-  // Record the block BEFORE sending so we can scan for events after
-  const blockBeforeSend = (await apiA.rpc.chain.getHeader()).number.toNumber();
-
-  // Try multiple XCM versions to find what works
-  // The runtime advertises XCM V5 but @polkadot/api may not support V4/V5 types.
-  // Use V3 with correct Concrete asset format.
-  // Asset: relay chain token {parents: 1, interior: Here} — matches IsConcrete<RelayLocation>
-  // Fee calculation: FixedWeightBounds assigns UnitWeightCost per instruction:
-  //   Weight::from_parts(1_000_000_000, 64*1024) = (1B refTime, 64KB proofSize)
-  // 3 instructions = (3B refTime, ~192KB proofSize) + call_weight for Transact.
-  // BlockRatioFee<1,1> scales proof_size by (max_ref_time / max_proof_size):
-  //   MAXIMUM_BLOCK_WEIGHT = (2T refTime, 5.2M proofSize)
-  //   ratio = 2T / 5.2M ≈ 381,470
-  //   proof_size_fee = 381,470 × 196,608 ≈ 75B
-  // fee = max(ref_time_fee, proof_size_fee) ≈ 75B. Use 100B for safety.
-  const xcmFeeAmount = 100_000_000_000;
-  const xcmMessage = {
-    V3: [
-      {
-        WithdrawAsset: [
-          { id: { Concrete: { parents: 1, interior: 'Here' } }, fun: { Fungible: xcmFeeAmount } }
-        ]
-      },
-      {
-        BuyExecution: {
-          fees: { id: { Concrete: { parents: 1, interior: 'Here' } }, fun: { Fungible: xcmFeeAmount } },
-          weightLimit: 'Unlimited',
-        }
-      },
-      {
-        Transact: {
-          originKind: 'SovereignAccount',
-          requireWeightAtMost: { refTime: 1_000_000_000, proofSize: 100_000 },
-          call: { encoded: encodedCall },
-        }
-      },
-    ]
-  };
-
-  // Send XCM from ParaB to ParaA via pallet_xcm::send
-  const dest = { V3: { parents: 1, interior: { X1: { Parachain: 100 } } } };
-  const sendTx = apiB.tx.polkadotXcm.send(dest, xcmMessage);
-  const sudoSendTx = apiB.tx.sudo.sudo(sendTx);
-
-  console.log('  Sending XCM via sudo on ParaB...');
-  const { events: sendEvents } = await sendAndWait(apiB, sudoSendTx, alice);
-  console.log('  ParaB events from send tx:');
-  for (const { event } of sendEvents) {
-    if (event.section !== 'system' && event.section !== 'transactionPayment') {
-      console.log(`    ${event.section}.${event.method}: ${JSON.stringify(event.toHuman().data)}`);
-    }
-  }
-
-  console.log('\n=== Step 4: Wait for XCM to be processed ===');
-  const currentBlock = (await apiA.rpc.chain.getHeader()).number.toNumber();
-  console.log(`  Current ParaA block: ${currentBlock}`);
-  const targetBlock = currentBlock + 10;
-  console.log(`  Waiting until block ${targetBlock}...`);
-  await waitForBlock(apiA, targetBlock);
-  console.log(`  Reached block ${targetBlock}`);
-
-  // Scan ParaA events for XCM processing (wider range)
-  const scanStart = Math.max(1, blockBeforeSend - 2);
-  console.log('\n  Scanning ParaA events from blocks', scanStart, 'to', targetBlock, '...');
-  const xcmEvents = await scanEvents(apiA, scanStart, targetBlock,
-    ['xcmpQueue', 'messageQueue', 'contentRights', 'polkadotXcm', 'cumulusXcm', 'balances']);
-  if (xcmEvents.length > 0) {
-    for (const ev of xcmEvents) {
-      console.log(`  Block #${ev.block}: ${ev.section}.${ev.method}: ${JSON.stringify(ev.data)}`);
-    }
-  } else {
-    console.log('  No XCM-related events found on ParaA');
-  }
-
-  // Check sovereign balance at each block in the scan range to find when it changes
-  console.log('\n  Sovereign balance at each block in scan range:');
-  for (let i = scanStart; i <= targetBlock; i++) {
-    try {
-      const hash = await apiA.rpc.chain.getBlockHash(i);
-      const acct = await apiA.query.system.account.at(hash, sovereignHex);
-      const free = acct.data.free.toBigInt();
-      const providers = acct.providers.toNumber();
-      if (free !== 0n || providers !== 0) {
-        console.log(`    Block #${i}: free=${free} providers=${providers}`);
-      }
-    } catch {
-      // state pruned
-    }
-  }
-
-  console.log('\n=== Step 5: Verify subscription on ParaA ===');
+  // Verify subscription
+  console.log('\n  Verifying subscription...');
   const subscription = await apiA.query.contentRights.subscriptions(contentId, bob.address);
-  if (subscription.isSome) {
-    const sub = subscription.unwrap();
-    console.log(`  SUCCESS: Bob has subscription on ParaA!`);
-    console.log(`    Expiry block: ${sub.expiryBlock.toString()}`);
-    console.log(`    Auto-renew: ${sub.autoRenew.toString()}`);
-  } else {
-    console.log('  Subscription not found.');
-    // Double-check sovereign balance to see if funds were withdrawn
-    const balAfter = await apiA.query.system.account(sovereignHex);
-    console.log(`  Sovereign balance after: ${balAfter.data.free.toString()}`);
-    console.log('\n  FAIL: Cross-chain subscription was not created');
+  if (!subscription.isSome) {
+    console.error('  FAIL: Cross-chain subscription was not created');
     process.exit(1);
   }
+  const sub = subscription.unwrap();
+  const expiryBlock = sub.expiryBlock.toNumber();
+  console.log(`  SUCCESS: Bob has subscription on ParaA! Expiry block: ${expiryBlock}`);
 
-  console.log('\n=== All E2E checks passed! ===\n');
+  // =========================================================================
+  // Step 4: XCM Renew — Wait for expiry, then renew Bob's subscription
+  // =========================================================================
+  console.log('\n=== Step 4: XCM Renew Subscription (ParaB → ParaA, beneficiary: Bob) ===');
+  console.log(`  Subscription expires at block ${expiryBlock}. Waiting...`);
+  await waitForBlock(apiA, expiryBlock);
+  console.log(`  Subscription expired. Sending renewal XCM...`);
+
+  const xcmRenewCall = apiA.tx.contentRights.xcmRenewSubscription(contentId, bob.address);
+  await sendXcmTransact(apiA, apiB, xcmRenewCall.method.toHex(), alice, 'xcmRenewSubscription');
+
+  // Verify renewal
+  console.log('\n  Verifying renewal...');
+  const renewed = await apiA.query.contentRights.subscriptions(contentId, bob.address);
+  if (!renewed.isSome) {
+    console.error('  FAIL: Subscription not found after renewal');
+    process.exit(1);
+  }
+  const renewedSub = renewed.unwrap();
+  const newExpiry = renewedSub.expiryBlock.toNumber();
+  if (newExpiry <= expiryBlock) {
+    console.error(`  FAIL: New expiry ${newExpiry} not greater than old expiry ${expiryBlock}`);
+    process.exit(1);
+  }
+  console.log(`  SUCCESS: Subscription renewed! New expiry block: ${newExpiry} (was ${expiryBlock})`);
+
+  // =========================================================================
+  // Step 5: XCM Purchase Views — Charlie gets PPV views via cross-chain
+  // =========================================================================
+  console.log('\n=== Step 5: XCM Purchase Views (ParaB → ParaA, beneficiary: Charlie) ===');
+  const numViews = 5;
+  const xcmPpvCall = apiA.tx.contentRights.xcmPurchaseViews(contentId, charlie.address, numViews);
+  await sendXcmTransact(apiA, apiB, xcmPpvCall.method.toHex(), alice, 'xcmPurchaseViews');
+
+  // Verify view pack
+  console.log('\n  Verifying view pack...');
+  const viewPack = await apiA.query.contentRights.viewPacks(contentId, charlie.address);
+  if (!viewPack.isSome) {
+    console.error('  FAIL: Cross-chain view pack was not created');
+    process.exit(1);
+  }
+  const pack = viewPack.unwrap();
+  const viewsRemaining = pack.viewsRemaining.toNumber();
+  if (viewsRemaining !== numViews) {
+    console.error(`  FAIL: Expected ${numViews} views, got ${viewsRemaining}`);
+    process.exit(1);
+  }
+  console.log(`  SUCCESS: Charlie has ${viewsRemaining} views on ParaA!`);
+
+  // =========================================================================
+  // Step 6: XCM Purchase Ownership — Charlie gets permanent ownership
+  // =========================================================================
+  console.log('\n=== Step 6: XCM Purchase Ownership (ParaB → ParaA, beneficiary: Charlie) ===');
+  const xcmOwnershipCall = apiA.tx.contentRights.xcmPurchaseOwnership(contentId, charlie.address);
+  await sendXcmTransact(apiA, apiB, xcmOwnershipCall.method.toHex(), alice, 'xcmPurchaseOwnership');
+
+  // Verify ownership
+  console.log('\n  Verifying ownership...');
+  const owned = await apiA.query.contentRights.ownership(contentId, charlie.address);
+  // Ownership is a ValueQuery (bool), so it returns true/false directly
+  const isOwned = owned.toPrimitive();
+  if (!isOwned) {
+    console.error('  FAIL: Cross-chain ownership was not granted');
+    process.exit(1);
+  }
+  console.log(`  SUCCESS: Charlie owns content ${contentId} on ParaA!`);
+
+  // =========================================================================
+  // Final summary
+  // =========================================================================
+  console.log('\n=== All E2E checks passed! ===');
+  console.log('  [x] Cross-chain subscription (xcmSubscribe)');
+  console.log('  [x] Cross-chain renewal (xcmRenewSubscription)');
+  console.log('  [x] Cross-chain PPV purchase (xcmPurchaseViews)');
+  console.log('  [x] Cross-chain ownership purchase (xcmPurchaseOwnership)');
+  console.log('');
+
+  // Print final sovereign balance for cost analysis
+  const finalBalance = await apiA.query.system.account(sovereignHex);
+  console.log(`  Sovereign balance: started with 11T, ended with ${finalBalance.data.free.toString()}`);
+  console.log(`  Total XCM cost: ~${(11_000_000_000_000n - finalBalance.data.free.toBigInt()).toString()} tokens across 4 operations\n`);
 
   await apiA.disconnect();
   await apiB.disconnect();
