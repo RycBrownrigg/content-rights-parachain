@@ -84,6 +84,9 @@ docker-volumes/
 **/*.json           # generated metadata; remove if you track ABI files
 !**/artifacts/**/*.json   # keep hand-curated artifact snapshots
 
+# Node.js (polkadot-js test scripts)
+node_modules/
+
 # ink! end-to-end test cache
 e2e-tests/.cache/
 .drink/

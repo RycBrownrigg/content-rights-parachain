@@ -1,0 +1,11 @@
+{
+  "name": "content-rights-parachain-scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "xcm-e2e-test": "node scripts/xcm-e2e-test.mjs"
+  },
+  "dependencies": {
+    "@polkadot/api": "^15.0.1"
+  }
+}

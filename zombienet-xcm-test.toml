@@ -1,0 +1,51 @@
+# Zombienet config for XCM cross-chain testing.
+# Spawns two parachains (100 = content-rights, 200 = consumer).
+# HRMP channels are opened after launch via sudo extrinsics.
+#
+# Usage:
+#   ./zombienet-spawn.sh zombienet-xcm-test.toml --provider native
+
+[settings]
+node_verifier = "None"
+prometheus = true
+
+[relaychain]
+default_command = "polkadot-sdk/target/release/polkadot"
+default_args = [ "-lparachain=debug", "--rpc-external", "--workers-path", "polkadot-sdk/target/release" ]
+chain = "rococo-local"
+
+[[relaychain.nodes]]
+name = "alice"
+
+[[relaychain.nodes]]
+name = "bob"
+
+# Parachain A: Content Rights chain (para ID 100)
+[[parachains]]
+id = 100
+chain = "local"
+command = "target/release/parachain-template-node"
+args = ["--rpc-external", "--unsafe-rpc-external", "--force-authoring"]
+name = "content-rights-parachain"
+
+[[parachains.collators]]
+name = "collator-a"
+command = "target/release/parachain-template-node"
+rpc_port = 9990
+ws_port = 9990
+args = ["--rpc-external", "--unsafe-rpc-external", "--force-authoring", "-lxcm=trace,xcm::process-message=trace,xcm::fungible_adapter=trace"]
+
+# Parachain B: Consumer chain (para ID 200) — same binary, different para ID
+[[parachains]]
+id = 200
+chain = "local"
+command = "target/release/parachain-template-node"
+args = ["--rpc-external", "--unsafe-rpc-external", "--force-authoring"]
+name = "consumer-parachain"
+
+[[parachains.collators]]
+name = "collator-b"
+command = "target/release/parachain-template-node"
+rpc_port = 9991
+ws_port = 9991
+args = ["--rpc-external", "--unsafe-rpc-external", "--force-authoring"]
