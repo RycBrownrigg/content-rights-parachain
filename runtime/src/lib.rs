@@ -326,6 +326,10 @@ mod runtime {
 	// Content rights management (RMRK-inspired nesting on pallet-nfts)
 	#[runtime::pallet_index(51)]
 	pub type ContentRights = pallet_content_rights;
+
+	// Cross-chain rights verification via Merkle storage proofs
+	#[runtime::pallet_index(52)]
+	pub type RightsVerifier = pallet_rights_verifier;
 }
 
 /// Aura consensus hook

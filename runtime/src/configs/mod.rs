@@ -456,6 +456,10 @@ impl pallet_content_rights::Config for Runtime {
 	type ContentRightsWeightInfo = pallet_content_rights::weights::SubstrateWeight<Runtime>;
 }
 
+impl pallet_rights_verifier::Config for Runtime {
+	type VerifierWeightInfo = pallet_rights_verifier::SubstrateWeight<Runtime>;
+}
+
 /// Configure the pallet template in pallets/template.
 impl pallet_parachain_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

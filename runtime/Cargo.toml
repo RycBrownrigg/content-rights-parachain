@@ -24,6 +24,7 @@ hex-literal = { optional = true, workspace = true, default-features = true }
 log = { workspace = true }
 pallet-parachain-template.workspace = true
 pallet-content-rights.workspace = true
+pallet-rights-verifier.workspace = true
 # Use runtime-full so pallet-contracts and pallet-insecure-randomness-collective-flip are
 # actually enabled (the published polkadot-sdk crate only exposes them via runtime-full).
 polkadot-sdk = { workspace = true, features = ["cumulus-pallet-aura-ext", "cumulus-pallet-session-benchmarking", "cumulus-pallet-weight-reclaim", "cumulus-pallet-xcm", "cumulus-pallet-xcmp-queue", "cumulus-primitives-aura", "cumulus-primitives-core", "cumulus-primitives-utility", "frame-metadata-hash-extension", "pallet-aura", "pallet-authorship", "pallet-balances", "pallet-collator-selection", "pallet-message-queue", "pallet-nfts", "pallet-revive", "pallet-session", "pallet-sudo", "pallet-timestamp", "pallet-transaction-payment", "pallet-transaction-payment-rpc-runtime-api", "pallet-xcm", "parachains-common", "polkadot-parachain-primitives", "polkadot-runtime-common", "runtime", "runtime-full", "staging-parachain-info", "staging-xcm", "staging-xcm-builder", "staging-xcm-executor"], default-features = false }
@@ -42,6 +43,7 @@ std = [
   "polkadot-sdk/std",
   "pallet-parachain-template/std",
   "pallet-content-rights/std",
+  "pallet-rights-verifier/std",
   "cumulus-pallet-parachain-system/std",
   "serde_json/std",
 ]
@@ -50,6 +52,7 @@ runtime-benchmarks = [
   "hex-literal",
   "pallet-parachain-template/runtime-benchmarks",
   "pallet-content-rights/runtime-benchmarks",
+  "pallet-rights-verifier/runtime-benchmarks",
   "polkadot-sdk/runtime-benchmarks",
 ]
 
@@ -57,6 +60,7 @@ try-runtime = [
   "cumulus-pallet-parachain-system/try-runtime",
   "pallet-parachain-template/try-runtime",
   "pallet-content-rights/try-runtime",
+  "pallet-rights-verifier/try-runtime",
   "polkadot-sdk/try-runtime",
 ]
 
