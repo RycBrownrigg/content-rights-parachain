@@ -39,3 +39,9 @@ pub struct ViewPackInfo {
 	pub views_remaining: u32,
 	pub child_item_id: u32,
 }
+
+/// Tracks permanent ownership for a specific user on specific content.
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Debug)]
+pub struct OwnershipInfo {
+	pub child_item_id: u32,
+}

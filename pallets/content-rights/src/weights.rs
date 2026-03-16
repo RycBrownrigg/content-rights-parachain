@@ -13,6 +13,8 @@ pub trait WeightInfo {
 	fn xcm_renew_subscription() -> Weight;
 	fn xcm_purchase_views() -> Weight;
 	fn xcm_purchase_ownership() -> Weight;
+	fn transfer_ownership() -> Weight;
+	fn xcm_transfer_ownership() -> Weight;
 }
 
 pub struct SubstrateWeight<T>(core::marker::PhantomData<T>);
@@ -85,5 +87,18 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_parts(50_000_000, 0)
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(3))
+	}
+
+	fn transfer_ownership() -> Weight {
+		// burn old NFT + mint new NFT + update ownership + nesting cleanup
+		Weight::from_parts(80_000_000, 0)
+			.saturating_add(T::DbWeight::get().reads(3))
+			.saturating_add(T::DbWeight::get().writes(5))
+	}
+
+	fn xcm_transfer_ownership() -> Weight {
+		Weight::from_parts(80_000_000, 0)
+			.saturating_add(T::DbWeight::get().reads(3))
+			.saturating_add(T::DbWeight::get().writes(5))
 	}
 }

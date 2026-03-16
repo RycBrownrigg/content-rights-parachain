@@ -82,7 +82,7 @@ pub mod pallet {
 		ViewPackInfo,
 	>;
 
-	/// (ContentId, AccountId) -> bool. Permanent ownership.
+	/// (ContentId, AccountId) -> OwnershipInfo. Permanent ownership with NFT tracking.
 	#[pallet::storage]
 	pub type Ownership<T: Config> = StorageDoubleMap<
 		_,
@@ -90,8 +90,7 @@ pub mod pallet {
 		u32,
 		Blake2_128Concat,
 		T::AccountId,
-		bool,
-		ValueQuery,
+		OwnershipInfo,
 	>;
 
 	/// Parent (collection, item) -> list of children (collection, item).
@@ -181,6 +180,17 @@ pub mod pallet {
 			beneficiary: T::AccountId,
 			payer: T::AccountId,
 		},
+		OwnershipTransferred {
+			content_id: u32,
+			from: T::AccountId,
+			to: T::AccountId,
+		},
+		CrossChainOwnershipTransferred {
+			content_id: u32,
+			from: T::AccountId,
+			to: T::AccountId,
+			authorizer: T::AccountId,
+		},
 	}
 
 	// --------------- Errors ---------------
@@ -201,6 +211,7 @@ pub mod pallet {
 		NftOperationFailed,
 		ContentIdOverflow,
 		ItemIdOverflow,
+		OwnershipNotFound,
 	}
 
 	// --------------- Hooks ---------------
@@ -562,13 +573,13 @@ pub mod pallet {
 
 			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
 			ensure!(
-				!Ownership::<T>::get(content_id, &buyer),
+				!Ownership::<T>::contains_key(content_id, &buyer),
 				Error::<T>::AlreadyOwned
 			);
 
 			Self::pay(&buyer, &content.creator, content.ownership_price)?;
 
-			Self::mint_and_nest_child(
+			let child_item_id = Self::mint_and_nest_child(
 				&content.creator,
 				&buyer,
 				content.collection_id,
@@ -576,7 +587,7 @@ pub mod pallet {
 				RightsType::Ownership,
 			)?;
 
-			Ownership::<T>::insert(content_id, &buyer, true);
+			Ownership::<T>::insert(content_id, &buyer, OwnershipInfo { child_item_id });
 
 			Self::deposit_event(Event::OwnershipPurchased {
 				content_id,
@@ -598,7 +609,7 @@ pub mod pallet {
 			);
 
 			// Check ownership first (cheapest)
-			if Ownership::<T>::get(content_id, &who) {
+			if Ownership::<T>::contains_key(content_id, &who) {
 				Self::deposit_event(Event::AccessChecked {
 					content_id,
 					who,
@@ -798,13 +809,13 @@ pub mod pallet {
 
 			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
 			ensure!(
-				!Ownership::<T>::get(content_id, &beneficiary),
+				!Ownership::<T>::contains_key(content_id, &beneficiary),
 				Error::<T>::AlreadyOwned
 			);
 
 			Self::pay(&payer, &content.creator, content.ownership_price)?;
 
-			Self::mint_and_nest_child(
+			let child_item_id = Self::mint_and_nest_child(
 				&content.creator,
 				&beneficiary,
 				content.collection_id,
@@ -812,12 +823,139 @@ pub mod pallet {
 				RightsType::Ownership,
 			)?;
 
-			Ownership::<T>::insert(content_id, &beneficiary, true);
+			Ownership::<T>::insert(content_id, &beneficiary, OwnershipInfo { child_item_id });
 
 			Self::deposit_event(Event::CrossChainOwnershipPurchased {
 				content_id,
 				beneficiary,
 				payer,
+			});
+
+			Ok(())
+		}
+
+		/// Transfer permanent ownership to another account. The caller must own the content.
+		/// No payment to the creator — this is a peer-to-peer secondary market transfer.
+		#[pallet::call_index(11)]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::transfer_ownership())]
+		pub fn transfer_ownership(
+			origin: OriginFor<T>,
+			content_id: u32,
+			to: T::AccountId,
+		) -> DispatchResult {
+			let from = ensure_signed(origin)?;
+
+			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
+			let ownership_info =
+				Ownership::<T>::get(content_id, &from).ok_or(Error::<T>::OwnershipNotFound)?;
+			ensure!(
+				!Ownership::<T>::contains_key(content_id, &to),
+				Error::<T>::AlreadyOwned
+			);
+
+			// Burn old owner's child NFT
+			let _ = pallet_nfts::Pallet::<T>::do_burn(
+				content.collection_id,
+				ownership_info.child_item_id,
+				|_| Ok(()),
+			);
+			Children::<T>::mutate(
+				content.collection_id,
+				content.content_item_id,
+				|children| {
+					children.retain(|&(_, item)| item != ownership_info.child_item_id);
+				},
+			);
+			Parent::<T>::remove(content.collection_id, ownership_info.child_item_id);
+
+			// Mint new child NFT for recipient
+			let new_child_item_id = Self::mint_and_nest_child(
+				&content.creator,
+				&to,
+				content.collection_id,
+				content.content_item_id,
+				RightsType::Ownership,
+			)?;
+
+			// Update ownership storage
+			Ownership::<T>::remove(content_id, &from);
+			Ownership::<T>::insert(
+				content_id,
+				&to,
+				OwnershipInfo {
+					child_item_id: new_child_item_id,
+				},
+			);
+
+			Self::deposit_event(Event::OwnershipTransferred {
+				content_id,
+				from,
+				to,
+			});
+
+			Ok(())
+		}
+
+		/// Cross-chain ownership transfer: authorizer (sovereign account) transfers
+		/// ownership from one user to another. The `from` account must currently own
+		/// the content.
+		#[pallet::call_index(12)]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::xcm_transfer_ownership())]
+		pub fn xcm_transfer_ownership(
+			origin: OriginFor<T>,
+			content_id: u32,
+			from: T::AccountId,
+			to: T::AccountId,
+		) -> DispatchResult {
+			let authorizer = ensure_signed(origin)?;
+
+			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
+			let ownership_info =
+				Ownership::<T>::get(content_id, &from).ok_or(Error::<T>::OwnershipNotFound)?;
+			ensure!(
+				!Ownership::<T>::contains_key(content_id, &to),
+				Error::<T>::AlreadyOwned
+			);
+
+			// Burn old owner's child NFT
+			let _ = pallet_nfts::Pallet::<T>::do_burn(
+				content.collection_id,
+				ownership_info.child_item_id,
+				|_| Ok(()),
+			);
+			Children::<T>::mutate(
+				content.collection_id,
+				content.content_item_id,
+				|children| {
+					children.retain(|&(_, item)| item != ownership_info.child_item_id);
+				},
+			);
+			Parent::<T>::remove(content.collection_id, ownership_info.child_item_id);
+
+			// Mint new child NFT for recipient
+			let new_child_item_id = Self::mint_and_nest_child(
+				&content.creator,
+				&to,
+				content.collection_id,
+				content.content_item_id,
+				RightsType::Ownership,
+			)?;
+
+			// Update ownership storage
+			Ownership::<T>::remove(content_id, &from);
+			Ownership::<T>::insert(
+				content_id,
+				&to,
+				OwnershipInfo {
+					child_item_id: new_child_item_id,
+				},
+			);
+
+			Self::deposit_event(Event::CrossChainOwnershipTransferred {
+				content_id,
+				from,
+				to,
+				authorizer,
 			});
 
 			Ok(())

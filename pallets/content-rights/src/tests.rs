@@ -301,7 +301,7 @@ fn purchase_ownership_works() {
 		assert!(Balances::free_balance(&creator) > creator_balance_before);
 
 		// Ownership recorded
-		assert!(pallet::Ownership::<Test>::get(content_id, &user));
+		assert!(pallet::Ownership::<Test>::get(content_id, &user).is_some());
 	});
 }
 
@@ -638,8 +638,8 @@ fn xcm_purchase_ownership_works() {
 		assert!(Balances::free_balance(&creator) > creator_balance_before);
 
 		// Ownership recorded for beneficiary, not payer
-		assert!(pallet::Ownership::<Test>::get(content_id, &beneficiary));
-		assert!(!pallet::Ownership::<Test>::get(content_id, &payer));
+		assert!(pallet::Ownership::<Test>::get(content_id, &beneficiary).is_some());
+		assert!(pallet::Ownership::<Test>::get(content_id, &payer).is_none());
 
 		System::assert_has_event(
 			crate::Event::<Test>::CrossChainOwnershipPurchased {
@@ -706,5 +706,162 @@ fn nesting_multiple_children() {
 			let parent = pallet::Parent::<Test>::get(col, item).unwrap();
 			assert_eq!(parent, (content.collection_id, content.content_item_id));
 		}
+	});
+}
+
+// ==================== transfer_ownership ====================
+
+#[test]
+fn transfer_ownership_works() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let owner = account(2);
+		let recipient = account(3);
+		let content_id = register_default_content(creator);
+
+		assert_ok!(ContentRights::purchase_ownership(
+			RuntimeOrigin::signed(owner.clone()),
+			content_id,
+		));
+
+		// Verify owner has it before transfer
+		assert!(pallet::Ownership::<Test>::get(content_id, &owner).is_some());
+
+		assert_ok!(ContentRights::transfer_ownership(
+			RuntimeOrigin::signed(owner.clone()),
+			content_id,
+			recipient.clone(),
+		));
+
+		// Old owner no longer has it
+		assert!(pallet::Ownership::<Test>::get(content_id, &owner).is_none());
+		// Recipient now owns it
+		assert!(pallet::Ownership::<Test>::get(content_id, &recipient).is_some());
+
+		// NFT nesting updated: still 1 child (old burned, new minted)
+		let content = pallet::Contents::<Test>::get(content_id).unwrap();
+		let children =
+			pallet::Children::<Test>::get(content.collection_id, content.content_item_id);
+		assert_eq!(children.len(), 1);
+
+		System::assert_has_event(
+			crate::Event::<Test>::OwnershipTransferred {
+				content_id,
+				from: owner,
+				to: recipient,
+			}
+			.into(),
+		);
+	});
+}
+
+#[test]
+fn transfer_ownership_fails_not_owned() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let not_owner = account(2);
+		let recipient = account(3);
+		let content_id = register_default_content(creator);
+
+		assert_noop!(
+			ContentRights::transfer_ownership(
+				RuntimeOrigin::signed(not_owner),
+				content_id,
+				recipient,
+			),
+			crate::Error::<Test>::OwnershipNotFound
+		);
+	});
+}
+
+#[test]
+fn transfer_ownership_fails_recipient_already_owns() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let owner_a = account(2);
+		let owner_b = account(3);
+		let content_id = register_default_content(creator);
+
+		assert_ok!(ContentRights::purchase_ownership(
+			RuntimeOrigin::signed(owner_a.clone()),
+			content_id,
+		));
+		assert_ok!(ContentRights::purchase_ownership(
+			RuntimeOrigin::signed(owner_b.clone()),
+			content_id,
+		));
+
+		assert_noop!(
+			ContentRights::transfer_ownership(
+				RuntimeOrigin::signed(owner_a),
+				content_id,
+				owner_b,
+			),
+			crate::Error::<Test>::AlreadyOwned
+		);
+	});
+}
+
+// ==================== xcm_transfer_ownership ====================
+
+#[test]
+fn xcm_transfer_ownership_works() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let payer = account(3); // sovereign account
+		let owner = account(2);
+		let recipient = account(4);
+		let content_id = register_default_content(creator);
+
+		// First purchase ownership for the owner via XCM
+		assert_ok!(ContentRights::xcm_purchase_ownership(
+			RuntimeOrigin::signed(payer.clone()),
+			content_id,
+			owner.clone(),
+		));
+
+		// Now transfer via XCM
+		assert_ok!(ContentRights::xcm_transfer_ownership(
+			RuntimeOrigin::signed(payer.clone()),
+			content_id,
+			owner.clone(),
+			recipient.clone(),
+		));
+
+		// Old owner no longer has it
+		assert!(pallet::Ownership::<Test>::get(content_id, &owner).is_none());
+		// Recipient now owns it
+		assert!(pallet::Ownership::<Test>::get(content_id, &recipient).is_some());
+
+		System::assert_has_event(
+			crate::Event::<Test>::CrossChainOwnershipTransferred {
+				content_id,
+				from: owner,
+				to: recipient,
+				authorizer: payer,
+			}
+			.into(),
+		);
+	});
+}
+
+#[test]
+fn xcm_transfer_ownership_fails_not_owned() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let payer = account(3);
+		let not_owner = account(2);
+		let recipient = account(4);
+		let content_id = register_default_content(creator);
+
+		assert_noop!(
+			ContentRights::xcm_transfer_ownership(
+				RuntimeOrigin::signed(payer),
+				content_id,
+				not_owner,
+				recipient,
+			),
+			crate::Error::<Test>::OwnershipNotFound
+		);
 	});
 }

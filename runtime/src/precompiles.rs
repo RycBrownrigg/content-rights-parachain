@@ -104,7 +104,7 @@ where
 				}
 
 				// Ownership = 2 (highest priority, cheapest check)
-				if pallet_content_rights::Ownership::<T>::get(content_id, &who) {
+				if pallet_content_rights::Ownership::<T>::contains_key(content_id, &who) {
 					return Ok(alloy_sol_types::sol_data::Uint::<8>::abi_encode(&2));
 				}
 
@@ -160,7 +160,7 @@ where
 
 				let who = env.to_account_id(&H160(call.who.0 .0));
 				let owned =
-					pallet_content_rights::Ownership::<T>::get(call.contentId, &who);
+					pallet_content_rights::Ownership::<T>::contains_key(call.contentId, &who);
 				Ok(SolValue::abi_encode(&owned))
 			}
 
