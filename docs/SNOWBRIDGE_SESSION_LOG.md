@@ -187,15 +187,71 @@ validatorsRoot:           0x270d43e74ce340de4bca2b1936beca0f4f5408d9e78aec485092
 
 The Ethereum beacon light client on Bridge Hub is now initialized. This means Bridge Hub can verify Ethereum beacon chain state, which is the foundation for trustless Ethereum → Polkadot message passing.
 
+### 14. Relayer Initial Sync Failure (Stale Proof Cache)
+
+After the checkpoint was set, the beacon relay failed to start with "newer finalized header available, abandoning current request". The relay needs to sync the initial sync committee for period 0, which requires proofs at historical beacon slots (64, 128). But the state service only caches proofs for the latest finalized slot — historical slots return "proof not ready".
+
+**Root cause:** The state service was started after the chain had already advanced past those slots. It only downloads and caches the latest finalized/attested pair, not historical states. The relay's defensive check then abandons old-slot requests when it detects a newer finalized slot exists.
+
+**Attempted fixes:**
+- Imported historical states via `snowbridge-relay import-beacon-state` — states saved to disk but state service doesn't generate proofs from imports
+- Restarted state service — it re-downloads the latest, ignores older imported states
+
+**Solution:** The relay must be started immediately after the checkpoint is set, before the chain advances, so the state service has proofs for the slots the relay needs. This requires tight sequencing of: beacon finalization → state service start → checkpoint generation → checkpoint submission → relay start.
+
+### 15. Created `scripts/snowbridge-full-setup.sh`
+
+Automated the entire Ethereum-side setup into a single script that handles the timing-critical sequencing:
+
+1. Kills any old processes, reinitializes Geth
+2. Starts Geth + Lodestar v1.35.0 (mainnet preset)
+3. Deploys Gateway contracts via Forge
+4. Waits for beacon finalization (~39 minutes with 8 validators on mainnet preset)
+5. Immediately starts beacon state service (caches proofs at current finalized slot)
+6. Generates beacon checkpoint from the freshly-cached state
+7. Forces checkpoint on Bridge Hub via relay sudo XCM
+8. Funds relayer accounts on Bridge Hub (`//BeaconRelay`, `//ExecutionRelayAssetHub`)
+9. Starts beacon relay and ethereum relay
+
+**Usage:** `./scripts/snowbridge-full-setup.sh <relay-ws-url>`
+
+The script runs end-to-end unattended. The tight sequencing between steps 4-9 ensures the relay starts while the state service still has proofs for the slots the relay needs.
+
+### 16. Full System Running
+
+The complete setup ran successfully:
+
+**Beacon relay:** Submitted `EthereumBeaconClient.submit` extrinsic to Bridge Hub. Synced sync committee for period 0. Now tracking finalized headers.
+
+```
+extrinsic finalized: EthereumBeaconClient.submit
+syncing sync committee for period 0
+starting to sync finalized headers
+```
+
+**Ethereum relay:** Connected to both Ethereum (ws://127.0.0.1:8546) and Bridge Hub (ws://127.0.0.1:8943). Polling Gateway contract nonces — ready to relay inbound messages.
+
+```
+Polled Nonces: ethNonce=0, paraNonce=0
+```
+
+**Bridge Hub state:**
+- `latestFinalizedBlockRoot`: set (non-zero)
+- `currentSyncCommittee`: set with 512 pubkeys
+- `latestSyncCommitteeUpdatePeriod`: 0
+- `validatorsRoot`: set
+
 ---
 
 ## Current State Summary
 
 ### What's Running
-- Zombienet: 4 chains producing blocks (relay port 64087, Bridge Hub 8943, AssetHub 9910, Content Rights 9990)
-- Geth v1.17.1: running on localhost:8545/8546/8551
-- Lodestar v1.35.0: mainnet preset (512 sync committee), producing blocks, finalized at epoch 3+
-- Beacon state service: running on localhost:8080, proofs cached
+- **Zombienet:** 4 chains (relay port 64087, Bridge Hub 8943, AssetHub 9910, Content Rights 9990)
+- **Geth v1.17.1:** localhost:8545 (HTTP), :8546 (WS), :8551 (Engine API)
+- **Lodestar v1.35.0:** mainnet preset, 512 sync committee, finalized and producing blocks
+- **Beacon state service:** localhost:8080, 8 proofs cached
+- **Beacon relay:** syncing finalized headers from Ethereum → Bridge Hub
+- **Ethereum relay:** watching Gateway events, ready to relay inbound messages
 
 ### What's Deployed / Configured
 - Gateway contracts on Ethereum (16 contracts, GatewayProxy: `0xb1185ede04202fe62d38f5db72f71e38ff3e8305`)
@@ -203,36 +259,36 @@ The Ethereum beacon light client on Bridge Hub is now initialized. This means Br
 - Ether foreign asset on AssetHub (Alice + Ferdie have 10 ETH each)
 - Gateway address configured on Bridge Hub
 - **Beacon light client initialized on Bridge Hub** (checkpoint set, validators root set)
-
-### What Remains
-- Deploy Gateway contracts on the fresh Geth instance (previous deployment was on an old Geth that was reinitialized)
-- Start the Snowbridge relayer (beacon relay + execution relay)
-- E2E demo: `Gateway.sendToken()` on Ethereum → relayer → Bridge Hub → AssetHub → Content Rights
+- **Relayers running** (beacon relay + ethereum relay)
 
 ### Files Created/Modified This Session
 | File | Purpose |
 |------|---------|
 | `scripts/start-ethereum.sh` | Start Geth + Lodestar for local Ethereum |
 | `scripts/deploy-gateway.sh` | Deploy Gateway contracts + generate BEEFY checkpoint |
+| `scripts/snowbridge-full-setup.sh` | **Full automated setup** — Geth, Lodestar, contracts, checkpoint, relayers |
 | `docs/SNOWBRIDGE_SESSION_LOG.md` | This document |
 | `/tmp/snowbridge-local/contracts.json` | Deployed contract addresses |
 | `/tmp/snowbridge-local/beefy-state.json` | BEEFY validator checkpoint |
-| `/tmp/snowbridge-local/beacon-checkpoint-v2.hex` | 50KB beacon checkpoint (SCALE, corrected) |
-| `/tmp/snowbridge-local/beacon-relay.json` | Relayer config (corrected fork epochs) |
-| `/tmp/snowbridge-local/beacon-state-service.json` | State service config (corrected fork epochs) |
-| `/tmp/snowbridge-local/*.log` | Geth, Lodestar, state service logs |
+| `/tmp/snowbridge-local/beacon-checkpoint.hex` | 50KB beacon checkpoint (SCALE) |
+| `/tmp/snowbridge-local/beacon-relay.json` | Beacon relay config (corrected fork epochs) |
+| `/tmp/snowbridge-local/ethereum-relay.json` | Ethereum relay config |
+| `/tmp/snowbridge-local/beacon-state-service.json` | State service config |
+| `/tmp/snowbridge-local/pids.txt` | PIDs for all running processes |
+| `/tmp/snowbridge-local/*.log` | Geth, Lodestar, state service, relay logs |
 
 ### Key Lessons Learned
 
 1. **Lodestar dev mode always uses minimal preset** in v1.41.0 — must use v1.35.0 (from source at `../lodestar/`) with `LODESTAR_PRESET=mainnet` env var to get 512 sync committee size
 2. **Bridge Hub's beacon client is compiled for mainnet** — `pubkeys: [PublicKey; 512]` is hardcoded, minimal preset (32) will never work
-3. **Lodestar mainnet with 8 validators** takes ~20 minutes to reach justification due to sparse committee assignments (8 validators across 32 committees = ~0.25 per committee)
-4. **Relayer `forkVersions` config expects epoch numbers**, not 4-byte version hex — this mismatch causes the relayer to generate Merkle proofs at the wrong tree position
+3. **Lodestar mainnet with 8 validators** takes ~39 minutes to reach finalization due to sparse committee assignments (8 validators across 32 committees = ~0.25 per committee). Justification comes first (~32 min), finalization follows (~7 min later)
+4. **Relayer `forkVersions` config expects epoch numbers**, not 4-byte version hex — this mismatch causes the relayer to generate Merkle proofs at the wrong tree position (gindex 54 vs 86)
 5. **XCM `Transact` with `#[transactional]` pallets** — inner dispatch errors are silently rolled back; `messageQueue.Processed` reports `success: true` even when the call fails
 6. **`foreignAssets.mint` on AssetHub** requires the issuer's signed origin, not root — must first `forceAssetStatus` to set Alice as issuer, then Alice signs the mint directly
+7. **Relay initial sync requires tight timing** — the state service, checkpoint, and relay must start in rapid succession after beacon finalization, before the chain advances past the cached proof slots
+8. **`mmrLeaf` not `beefyMmrLeaf`** — the BEEFY MMR leaf pallet on Rococo-local is named `mmrLeaf`, not `beefyMmrLeaf` as in some Snowbridge reference code
 
 ### Next Steps
-1. **Redeploy Gateway contracts** on the current Geth instance (the previous deployment was on a Geth that was reinitialized)
-2. **Start relayer** — beacon relay (Ethereum → Bridge Hub) + execution relay (Gateway events → Bridge Hub)
-3. **E2E demo** — call `Gateway.sendToken()` from Ethereum, watch tokens arrive on Content Rights parachain
-4. **Documentation** — update thesis with architecture diagrams and test results
+1. **E2E demo** — call `Gateway.sendToken()` on Ethereum, watch tokens relay through Bridge Hub → AssetHub → Content Rights
+2. **Documentation** — update thesis with architecture diagrams, setup procedure, and test results
+3. **Commit** — `scripts/snowbridge-full-setup.sh` and updated session log
