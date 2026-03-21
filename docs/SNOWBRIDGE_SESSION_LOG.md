@@ -156,41 +156,83 @@ Submitted the checkpoint via relay sudo XCM → Bridge Hub `ethereumBeaconClient
 4. The `#[transactional]` attribute rolls back all storage writes
 5. XCM `Transact` reports success regardless of inner dispatch errors
 
-The likely cause is a **generalized index (gindex) mismatch**: the Electra fork introduces new fields in the beacon state, shifting the position of `current_sync_committee` in the state Merkle tree. The relayer generates proofs with one gindex, but the pallet calculates a different one.
+The cause was a **generalized index (gindex) mismatch**: the Electra fork introduces new fields in the beacon state, shifting the position of `current_sync_committee` in the state Merkle tree (Altair gindex = 54, Electra gindex = 86). The relayer was generating proofs with the wrong gindex because of a config format error (see step 12).
+
+### 12. Diagnosed and Fixed the Gindex Mismatch
+
+**Root cause:** The beacon-relay.json `forkVersions` field was set to 4-byte hex version IDs (`"electra": "0x05000000"`) but the relayer interprets these as **fork epoch numbers**. The relayer's `ForkVersion(slot)` method compares `epoch >= forkVersions.Electra` — with `0x05000000` parsed as integer 83,886,080, the relayer always thought it was in Deneb (gindex 54), while Bridge Hub (with `electra.epoch = 0`) expected Electra (gindex 86).
+
+**The fix:** Changed relay config from hex version bytes to epoch numbers:
+```json
+// BEFORE (wrong — these are version bytes, not epochs):
+"forkVersions": { "deneb": "0x04000000", "electra": "0x05000000", "fulu": "0x06000000" }
+
+// AFTER (correct — these are fork activation epochs):
+"forkVersions": { "deneb": 0, "electra": 0, "fulu": 5000000 }
+```
+
+**Verification:** Both the relayer and pallet now agree:
+- Pallet: `current_sync_committee_gindex_at_slot()` returns `config::electra::CURRENT_SYNC_COMMITTEE_INDEX = 86`
+- Relayer: `CurrentSyncCommitteeGeneralizedIndex()` returns `ElectraCurrentSyncCommitteeGeneralizedIndex = 86`
+
+### 13. Successfully Forced Beacon Checkpoint on Bridge Hub
+
+After fixing the config, regenerated the checkpoint and submitted via relay sudo XCM:
+
+```
+latestFinalizedBlockRoot: 0xb2a55448bb9be2987d52b73fbf53bd02240c8973f0af9da2c3564b190e971492
+initialCheckpointRoot:    0xb2a55448bb9be2987d52b73fbf53bd02240c8973f0af9da2c3564b190e971492
+validatorsRoot:           0x270d43e74ce340de4bca2b1936beca0f4f5408d9e78aec4850920baf659d5b69
+```
+
+The Ethereum beacon light client on Bridge Hub is now initialized. This means Bridge Hub can verify Ethereum beacon chain state, which is the foundation for trustless Ethereum → Polkadot message passing.
 
 ---
 
 ## Current State Summary
 
 ### What's Running
-- Zombienet: 4 chains producing blocks (relay, Bridge Hub, AssetHub, Content Rights)
-- Geth: running on localhost:8545
-- Lodestar v1.35.0: stalled at slot 167 but state is cached
+- Zombienet: 4 chains producing blocks (relay port 64087, Bridge Hub 8943, AssetHub 9910, Content Rights 9990)
+- Geth v1.17.1: running on localhost:8545/8546/8551
+- Lodestar v1.35.0: mainnet preset (512 sync committee), producing blocks, finalized at epoch 3+
+- Beacon state service: running on localhost:8080, proofs cached
 
-### What's Deployed
-- Gateway contracts on Ethereum (16 contracts)
-- HRMP channels open (BH↔AH, AH↔CR)
+### What's Deployed / Configured
+- Gateway contracts on Ethereum (16 contracts, GatewayProxy: `0xb1185ede04202fe62d38f5db72f71e38ff3e8305`)
+- HRMP channels open (Bridge Hub ↔ AssetHub, AssetHub ↔ Content Rights)
 - Ether foreign asset on AssetHub (Alice + Ferdie have 10 ETH each)
 - Gateway address configured on Bridge Hub
+- **Beacon light client initialized on Bridge Hub** (checkpoint set, validators root set)
 
-### What's Blocked
-- Beacon checkpoint on Bridge Hub (gindex/Electra Merkle proof mismatch)
-- Relayer startup (depends on checkpoint)
-- E2E demo: Ethereum → Bridge Hub → AssetHub → Content Rights (depends on relayer)
+### What Remains
+- Deploy Gateway contracts on the fresh Geth instance (previous deployment was on an old Geth that was reinitialized)
+- Start the Snowbridge relayer (beacon relay + execution relay)
+- E2E demo: `Gateway.sendToken()` on Ethereum → relayer → Bridge Hub → AssetHub → Content Rights
 
 ### Files Created/Modified This Session
 | File | Purpose |
 |------|---------|
 | `scripts/start-ethereum.sh` | Start Geth + Lodestar for local Ethereum |
 | `scripts/deploy-gateway.sh` | Deploy Gateway contracts + generate BEEFY checkpoint |
+| `docs/SNOWBRIDGE_SESSION_LOG.md` | This document |
 | `/tmp/snowbridge-local/contracts.json` | Deployed contract addresses |
 | `/tmp/snowbridge-local/beefy-state.json` | BEEFY validator checkpoint |
-| `/tmp/snowbridge-local/beacon-checkpoint.hex` | 50KB beacon checkpoint (SCALE) |
-| `/tmp/snowbridge-local/beacon-relay.json` | Relayer config for our topology |
-| `/tmp/snowbridge-local/beacon-state-service.json` | State service config |
+| `/tmp/snowbridge-local/beacon-checkpoint-v2.hex` | 50KB beacon checkpoint (SCALE, corrected) |
+| `/tmp/snowbridge-local/beacon-relay.json` | Relayer config (corrected fork epochs) |
+| `/tmp/snowbridge-local/beacon-state-service.json` | State service config (corrected fork epochs) |
 | `/tmp/snowbridge-local/*.log` | Geth, Lodestar, state service logs |
 
+### Key Lessons Learned
+
+1. **Lodestar dev mode always uses minimal preset** in v1.41.0 — must use v1.35.0 (from source at `../lodestar/`) with `LODESTAR_PRESET=mainnet` env var to get 512 sync committee size
+2. **Bridge Hub's beacon client is compiled for mainnet** — `pubkeys: [PublicKey; 512]` is hardcoded, minimal preset (32) will never work
+3. **Lodestar mainnet with 8 validators** takes ~20 minutes to reach justification due to sparse committee assignments (8 validators across 32 committees = ~0.25 per committee)
+4. **Relayer `forkVersions` config expects epoch numbers**, not 4-byte version hex — this mismatch causes the relayer to generate Merkle proofs at the wrong tree position
+5. **XCM `Transact` with `#[transactional]` pallets** — inner dispatch errors are silently rolled back; `messageQueue.Processed` reports `success: true` even when the call fails
+6. **`foreignAssets.mint` on AssetHub** requires the issuer's signed origin, not root — must first `forceAssetStatus` to set Alice as issuer, then Alice signs the mint directly
+
 ### Next Steps
-1. **Debug gindex mismatch**: Compare `current_sync_committee_gindex_at_slot()` in the pallet source with the relayer's proof generation. Check if Electra fork epoch config affects the gindex.
-2. **Alternative**: Try running Snowbridge's own `start-services.sh` from `web/packages/test/scripts/` which orchestrates everything together (replaces our Zombienet).
-3. **Alternative**: Generate checkpoint at a pre-Electra slot if possible, or adjust fork version configuration.
+1. **Redeploy Gateway contracts** on the current Geth instance (the previous deployment was on a Geth that was reinitialized)
+2. **Start relayer** — beacon relay (Ethereum → Bridge Hub) + execution relay (Gateway events → Bridge Hub)
+3. **E2E demo** — call `Gateway.sendToken()` from Ethereum, watch tokens arrive on Content Rights parachain
+4. **Documentation** — update thesis with architecture diagrams and test results
