@@ -20,24 +20,26 @@ use polkadot_sdk::{
 	polkadot_sdk_frame::traits::Disabled,
 	staging_xcm_builder::{DenyRecursively, DenyThenTry},
 };
-use xcm::latest::prelude::*;
+use xcm::latest::{prelude::*, ROCOCO_GENESIS_HASH};
 use xcm_builder::{
 	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom,
-	DenyReserveTransferToRelayChain, EnsureXcmOrigin, FixedWeightBounds,
-	FrameTransactionalProcessor, FungibleAdapter, IsConcrete, NativeAsset, ParentIsPreset,
-	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-	TrailingSetTopicAsId, UsingComponents, WithComputedOrigin, WithUniqueTopic,
+	DenyReserveTransferToRelayChain, DescribeAllTerminal, DescribeFamily, EnsureXcmOrigin,
+	FixedWeightBounds, FrameTransactionalProcessor, FungibleAdapter, GlobalConsensusParachainConvertsFor,
+	HashedDescription, IsConcrete, NativeAsset, ParentIsPreset, RelayChainAsNative,
+	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, TrailingSetTopicAsId,
+	UsingComponents, WithComputedOrigin, WithUniqueTopic,
 };
 use xcm_executor::XcmExecutor;
 
 parameter_types! {
 	pub const RelayLocation: Location = Location::parent();
-	pub const RelayNetwork: Option<NetworkId> = None;
+	pub const RelayNetwork: Option<NetworkId> = Some(NetworkId::ByGenesis(ROCOCO_GENESIS_HASH));
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
-	// For the real deployment, it is recommended to set `RelayNetwork` according to the relay chain
-	// and prepend `UniversalLocation` with `GlobalConsensus(RelayNetwork::get())`.
-	pub UniversalLocation: InteriorLocation = Parachain(ParachainInfo::parachain_id().into()).into();
+	// UniversalLocation includes GlobalConsensus so that XCM messages routed through
+	// Snowbridge (Ethereum → Bridge Hub → AssetHub → here) can resolve our absolute location.
+	pub UniversalLocation: InteriorLocation =
+		[GlobalConsensus(NetworkId::ByGenesis(ROCOCO_GENESIS_HASH)), Parachain(ParachainInfo::parachain_id().into())].into();
 }
 
 /// Type for specifying how a `Location` can be converted into an `AccountId`. This is used
@@ -50,6 +52,12 @@ pub type LocationToAccountId = (
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
+	// Derive sovereign accounts for any describable location (including Ethereum
+	// `GlobalConsensus(Ethereum{..})` + `AccountKey20` origins) by hashing via blake2_256.
+	HashedDescription<AccountId, DescribeFamily<DescribeAllTerminal>>,
+	// Convert `GlobalConsensus(..)/Parachain(..)` locations (e.g. AssetHub on another
+	// consensus) into deterministic local accounts.
+	GlobalConsensusParachainConvertsFor<UniversalLocation, AccountId>,
 );
 
 /// Means for transacting assets on this chain.
