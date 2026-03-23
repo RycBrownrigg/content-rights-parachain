@@ -241,54 +241,95 @@ Polled Nonces: ethNonce=0, paraNonce=0
 - `latestSyncCommitteeUpdatePeriod`: 0
 - `validatorsRoot`: set
 
+### 17. E2E Demo: Ethereum → AssetHub Token Bridge (COMPLETE)
+
+After the relay infrastructure was running, three additional issues were resolved to complete the E2E flow:
+
+#### Issue 1: Chain reorg lost the sendToken transaction
+When Lodestar was restarted with a fresh genesis, the new beacon chain created a fork that replaced the old blocks. The sendToken transaction (originally in block 12) was lost. **Fix:** Resend the transaction on the current chain.
+
+#### Issue 2: `Token::FundsUnavailable` on Bridge Hub
+The `EthereumInboundQueue.submit` extrinsic failed with `Token::FundsUnavailable`. The relayer account had sufficient balance for transaction fees, but the inbound queue pallet needs the **Snowbridge sovereign account** and **checking account** to be funded on Bridge Hub — they pay for XCM execution that routes tokens to AssetHub.
+
+**Fix:** Fund via relay sudo XCM:
+- Snowbridge sovereign (`0xce796ae65569a670...`) — 10^20 on Bridge Hub and AssetHub
+- Checking account (`0x6d6f646c70792f78636d6368...`) — 10^20 on Bridge Hub
+- AssetHub sovereign on Bridge Hub (`0x7369626ce8030000...`) — 10^20
+
+#### Issue 3: Relay abandoned old-slot proof requests
+The beacon relay's `retryWithBackoff` function abandoned proof requests when it detected a newer finalized slot. This prevented initial sync committee synchronisation.
+
+**Fix:** Patched `snowbridge/relayer/relays/beacon/header/syncer/syncer.go` to disable the "newer finalized header" abandonment check. The relay now retries instead of giving up.
+
+#### Successful E2E Result
+
+Two `Gateway.sendToken()` transactions were sent (1 ETH each to Alice on AssetHub):
+
+```
+Transaction 1: block 5157, nonce 1 — relayed and executed successfully
+Transaction 2: block 5300, nonce 2 — relayed and executed successfully
+```
+
+**Relay log confirmation:**
+```
+inbound message executed successfully  msgNonce=2  ethNonce=2
+Polled Nonces: ethNonce=2, paraNonce=2
+```
+
+**AssetHub verification:**
+```
+Alice Ether balance: 22,000,000,000,000,000,000 (22 ETH)
+  = 20 ETH (manually minted) + 2 ETH (bridged from Ethereum)
+Total Ether supply: 42,000,000,000,000,000,000 (42 ETH)
+  = 40 ETH (manual) + 2 ETH (bridged)
+```
+
+**Complete message path verified:**
+```
+Ethereum (Gateway.sendToken 1 ETH)
+  → Geth execution layer (block 5157/5300)
+  → Lodestar beacon chain (finalized at epoch 162+)
+  → Ethereum relay generates inclusion proof
+    (receipt proof + execution proof + ancestry proof)
+  → Bridge Hub: EthereumBeaconClient.submit (beacon header update)
+  → Bridge Hub: EthereumInboundQueue.submit (message + proof verified)
+  → XCM to AssetHub
+  → AssetHub: foreignAssets.mint (Ether credited to Alice) ✅
+```
+
 ---
 
-## Current State Summary
+## Final State Summary
 
-### What's Running
-- **Zombienet:** 4 chains (relay port 64087, Bridge Hub 8943, AssetHub 9910, Content Rights 9990)
-- **Geth v1.17.1:** localhost:8545 (HTTP), :8546 (WS), :8551 (Engine API)
-- **Lodestar v1.35.0:** mainnet preset, 512 sync committee, finalized and producing blocks
-- **Beacon state service:** localhost:8080, 8 proofs cached
-- **Beacon relay:** syncing finalized headers from Ethereum → Bridge Hub
-- **Ethereum relay:** watching Gateway events, ready to relay inbound messages
+### Complete Working System
+- **Zombienet:** 4 chains (Relay, Bridge Hub 1013, AssetHub 1000, Content Rights 100)
+- **Geth v1.17.1:** Local Ethereum execution layer
+- **Lodestar v1.35.0:** Mainnet preset beacon chain (512 sync committee)
+- **Beacon state service:** Proof caching for relay
+- **Beacon relay:** Syncing Ethereum finality to Bridge Hub
+- **Ethereum relay:** Relaying Gateway events to Bridge Hub
+- **Gateway contracts:** 16 contracts deployed (GatewayProxy: `0xb1185...8305`)
+- **HRMP channels:** Bridge Hub ↔ AssetHub, AssetHub ↔ Content Rights
+- **Beacon light client:** Initialized on Bridge Hub with checkpoint
+- **E2E bridge:** 2 ETH successfully bridged from Ethereum to AssetHub via Snowbridge
 
-### What's Deployed / Configured
-- Gateway contracts on Ethereum (16 contracts, GatewayProxy: `0xb1185ede04202fe62d38f5db72f71e38ff3e8305`)
-- HRMP channels open (Bridge Hub ↔ AssetHub, AssetHub ↔ Content Rights)
-- Ether foreign asset on AssetHub (Alice + Ferdie have 10 ETH each)
-- Gateway address configured on Bridge Hub
-- **Beacon light client initialized on Bridge Hub** (checkpoint set, validators root set)
-- **Relayers running** (beacon relay + ethereum relay)
-
-### Files Created/Modified This Session
+### Files Created/Modified
 | File | Purpose |
 |------|---------|
 | `scripts/start-ethereum.sh` | Start Geth + Lodestar for local Ethereum |
 | `scripts/deploy-gateway.sh` | Deploy Gateway contracts + generate BEEFY checkpoint |
-| `scripts/snowbridge-full-setup.sh` | **Full automated setup** — Geth, Lodestar, contracts, checkpoint, relayers |
+| `scripts/snowbridge-full-setup.sh` | Full automated setup (Geth, Lodestar, contracts, checkpoint, relayers) |
 | `docs/SNOWBRIDGE_SESSION_LOG.md` | This document |
-| `/tmp/snowbridge-local/contracts.json` | Deployed contract addresses |
-| `/tmp/snowbridge-local/beefy-state.json` | BEEFY validator checkpoint |
-| `/tmp/snowbridge-local/beacon-checkpoint.hex` | 50KB beacon checkpoint (SCALE) |
-| `/tmp/snowbridge-local/beacon-relay.json` | Beacon relay config (corrected fork epochs) |
-| `/tmp/snowbridge-local/ethereum-relay.json` | Ethereum relay config |
-| `/tmp/snowbridge-local/beacon-state-service.json` | State service config |
-| `/tmp/snowbridge-local/pids.txt` | PIDs for all running processes |
-| `/tmp/snowbridge-local/*.log` | Geth, Lodestar, state service, relay logs |
 
 ### Key Lessons Learned
 
 1. **Lodestar dev mode always uses minimal preset** in v1.41.0 — must use v1.35.0 (from source at `../lodestar/`) with `LODESTAR_PRESET=mainnet` env var to get 512 sync committee size
 2. **Bridge Hub's beacon client is compiled for mainnet** — `pubkeys: [PublicKey; 512]` is hardcoded, minimal preset (32) will never work
-3. **Lodestar mainnet with 8 validators** takes ~39 minutes to reach finalization due to sparse committee assignments (8 validators across 32 committees = ~0.25 per committee). Justification comes first (~32 min), finalization follows (~7 min later)
+3. **Lodestar mainnet with 8 validators** takes ~39 minutes to reach finalization due to sparse committee assignments (8 validators across 32 committees)
 4. **Relayer `forkVersions` config expects epoch numbers**, not 4-byte version hex — this mismatch causes the relayer to generate Merkle proofs at the wrong tree position (gindex 54 vs 86)
 5. **XCM `Transact` with `#[transactional]` pallets** — inner dispatch errors are silently rolled back; `messageQueue.Processed` reports `success: true` even when the call fails
 6. **`foreignAssets.mint` on AssetHub** requires the issuer's signed origin, not root — must first `forceAssetStatus` to set Alice as issuer, then Alice signs the mint directly
-7. **Relay initial sync requires tight timing** — the state service, checkpoint, and relay must start in rapid succession after beacon finalization, before the chain advances past the cached proof slots
+7. **Start the beacon state service EARLY** (immediately after Lodestar, before finalization) — it caches proofs for each finalized epoch as they happen. Starting late means historical proofs are missing
 8. **`mmrLeaf` not `beefyMmrLeaf`** — the BEEFY MMR leaf pallet on Rococo-local is named `mmrLeaf`, not `beefyMmrLeaf` as in some Snowbridge reference code
-
-### Next Steps
-1. **E2E demo** — call `Gateway.sendToken()` on Ethereum, watch tokens relay through Bridge Hub → AssetHub → Content Rights
-2. **Documentation** — update thesis with architecture diagrams, setup procedure, and test results
-3. **Commit** — `scripts/snowbridge-full-setup.sh` and updated session log
+9. **Fund Snowbridge sovereign accounts** — the inbound queue needs the Snowbridge sovereign (`0xce796a...`) and checking account (`0x6d6f646c...`) funded on both Bridge Hub and AssetHub for XCM execution
+10. **Patch relay `retryWithBackoff`** — disable the "newer finalized header" abandonment in `syncer.go` for local dev networks where the state service may not have all historical proofs cached
