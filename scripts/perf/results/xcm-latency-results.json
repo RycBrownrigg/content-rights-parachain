@@ -1,0 +1,105 @@
+{
+  "timestamp": "2026-03-23T21:04:18.097Z",
+  "paraA": "ws://127.0.0.1:9990",
+  "paraB": "ws://127.0.0.1:9991",
+  "relay": "ws://127.0.0.1:54180",
+  "runsPerOperation": 3,
+  "results": {
+    "xcm_subscribe": [
+      {
+        "label": "subscribe_1382",
+        "success": true,
+        "paraBBlockSend": 1108,
+        "paraABlockBefore": 1107,
+        "paraABlockEvent": 1107,
+        "blockDelta": 0,
+        "wallClockSendMs": 6017,
+        "wallClockTotalMs": 101979
+      },
+      {
+        "label": "subscribe_1383",
+        "success": true,
+        "paraBBlockSend": 1123,
+        "paraABlockBefore": 1122,
+        "paraABlockEvent": 1126,
+        "blockDelta": 4,
+        "wallClockSendMs": 6022,
+        "wallClockTotalMs": 101997
+      },
+      {
+        "label": "subscribe_1384",
+        "success": true,
+        "paraBBlockSend": 1138,
+        "paraABlockBefore": 1137,
+        "paraABlockEvent": 1142,
+        "blockDelta": 5,
+        "wallClockSendMs": 5964,
+        "wallClockTotalMs": 95957
+      }
+    ],
+    "xcm_purchase_views": [
+      {
+        "label": "purchase_views_1382",
+        "success": true,
+        "paraBBlockSend": 1153,
+        "paraABlockBefore": 1152,
+        "paraABlockEvent": 1159,
+        "blockDelta": 7,
+        "wallClockSendMs": 5989,
+        "wallClockTotalMs": 101956
+      },
+      {
+        "label": "purchase_views_1383",
+        "success": true,
+        "paraBBlockSend": 1168,
+        "paraABlockBefore": 1167,
+        "paraABlockEvent": 1171,
+        "blockDelta": 4,
+        "wallClockSendMs": 5949,
+        "wallClockTotalMs": 101937
+      },
+      {
+        "label": "purchase_views_1384",
+        "success": true,
+        "paraBBlockSend": 1183,
+        "paraABlockBefore": 1182,
+        "paraABlockEvent": 1187,
+        "blockDelta": 5,
+        "wallClockSendMs": 5968,
+        "wallClockTotalMs": 95947
+      }
+    ],
+    "xcm_purchase_ownership": [
+      {
+        "label": "purchase_ownership_1382",
+        "success": true,
+        "paraBBlockSend": 1198,
+        "paraABlockBefore": 1197,
+        "paraABlockEvent": 1204,
+        "blockDelta": 7,
+        "wallClockSendMs": 5961,
+        "wallClockTotalMs": 101948
+      },
+      {
+        "label": "purchase_ownership_1383",
+        "success": true,
+        "paraBBlockSend": 1213,
+        "paraABlockBefore": 1212,
+        "paraABlockEvent": 1216,
+        "blockDelta": 4,
+        "wallClockSendMs": 5927,
+        "wallClockTotalMs": 101922
+      },
+      {
+        "label": "purchase_ownership_1384",
+        "success": true,
+        "paraBBlockSend": 1228,
+        "paraABlockBefore": 1227,
+        "paraABlockEvent": 1232,
+        "blockDelta": 5,
+        "wallClockSendMs": 5974,
+        "wallClockTotalMs": 95950
+      }
+    ]
+  }
+}
