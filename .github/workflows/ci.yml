@@ -31,14 +31,20 @@ jobs:
         run: |
           SKIP_WASM_BUILD=1 cargo clippy --all-targets --all-features --locked --workspace --quiet
         timeout-minutes: 30
+        env:
+          DYLD_FALLBACK_LIBRARY_PATH: /opt/homebrew/opt/llvm/lib
 
       - name: Run the tests
         run: SKIP_WASM_BUILD=1 cargo test
         timeout-minutes: 15
+        env:
+          DYLD_FALLBACK_LIBRARY_PATH: /opt/homebrew/opt/llvm/lib
 
       - name: Build the docs
         run: SKIP_WASM_BUILD=1 cargo doc --workspace --no-deps
         timeout-minutes: 15
+        env:
+          DYLD_FALLBACK_LIBRARY_PATH: /opt/homebrew/opt/llvm/lib
 
   build-docker:
     runs-on: ubuntu-latest

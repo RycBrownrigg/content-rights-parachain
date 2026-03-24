@@ -7,8 +7,10 @@ runs:
     - run: |
         curl https://sh.rustup.rs -sSf -y | sh
         brew install protobuf llvm
-        echo "$(brew --prefix llvm)/lib" >> $DYLD_FALLBACK_LIBRARY_PATH
-        echo "LIBCLANG_PATH=$(brew --prefix llvm)/lib" >> $GITHUB_ENV
+        LLVM_PREFIX=$(brew --prefix llvm)
+        echo "LIBCLANG_PATH=${LLVM_PREFIX}/lib" >> $GITHUB_ENV
+        echo "DYLD_FALLBACK_LIBRARY_PATH=${LLVM_PREFIX}/lib" >> $GITHUB_ENV
+        echo "${LLVM_PREFIX}/bin" >> $GITHUB_PATH
         rustup target add wasm32-unknown-unknown --toolchain stable-aarch64-apple-darwin
         rustup component add rust-src --toolchain stable-aarch64-apple-darwin
       shell: sh
