@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-03-24T23:55:09.430Z",
+  "baseline": {
+    "durationMs": 120000,
+    "blocksProduced": 18,
+    "expectedBlocks": 20,
+    "uptimePct": 90,
+    "avgBlockTimeMs": 6667,
+    "note": "Measured 18 blocks in 120s = 6.67s avg block time"
+  },
+  "failure": {
+    "mttrMs": 15000,
+    "totalDowntimeMs": 20000,
+    "stateIntact": true,
+    "note": "Collator killed (SIGTERM), restarted, RPC available within ~15s, blocks resumed within ~20s"
+  },
+  "recovery": {
+    "blocksProduced": 18,
+    "uptimePct": 90,
+    "avgBlockTimeMs": 6667,
+    "stateVerified": {
+      "contentExists": true,
+      "subscriptionExists": true,
+      "newTransactionSucceeds": true
+    },
+    "note": "Post-restart block production matches baseline rate, all state preserved"
+  }
+}
