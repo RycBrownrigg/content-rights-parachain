@@ -865,3 +865,234 @@ fn xcm_transfer_ownership_fails_not_owned() {
 		);
 	});
 }
+
+// ==================== Security Tests (Week 18) ====================
+
+// Security-focused tests for authorization gaps, edge cases,
+// and boundary conditions identified during security review.
+
+/// FINDING B: Any signed account can call xcm_transfer_ownership
+/// and transfer someone else's ownership without authorization.
+#[test]
+fn security_xcm_transfer_ownership_any_account_can_steal() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let owner = account(2);
+		let attacker = account(3);
+		let attacker_alt = account(4);
+		let content_id = register_default_content(creator);
+
+		// Owner legitimately purchases ownership
+		assert_ok!(ContentRights::purchase_ownership(
+			RuntimeOrigin::signed(owner.clone()),
+			content_id,
+		));
+		assert!(pallet::Ownership::<Test>::get(content_id, &owner).is_some());
+
+		// Attacker can steal ownership without owner's consent
+		assert_ok!(ContentRights::xcm_transfer_ownership(
+			RuntimeOrigin::signed(attacker),
+			content_id,
+			owner.clone(),
+			attacker_alt.clone(),
+		));
+
+		// Owner lost their content
+		assert!(pallet::Ownership::<Test>::get(content_id, &owner).is_none());
+		// Attacker's alt now owns it
+		assert!(pallet::Ownership::<Test>::get(content_id, &attacker_alt).is_some());
+	});
+}
+
+/// Register content with all prices at zero — creates free content.
+#[test]
+fn security_zero_price_content_registration() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let subscriber = account(2);
+
+		let content_id = pallet::NextContentId::<Test>::get();
+		assert_ok!(ContentRights::register_content(
+			RuntimeOrigin::signed(creator),
+			[0u8; 32],
+			default_title(),
+			0, 0, 0, 100,
+		));
+
+		// Subscribe for free
+		assert_ok!(ContentRights::subscribe(
+			RuntimeOrigin::signed(subscriber.clone()),
+			content_id,
+		));
+		assert!(pallet::Subscriptions::<Test>::get(content_id, &subscriber).is_some());
+	});
+}
+
+/// Purchase 0 views — creates a useless view pack.
+#[test]
+fn security_zero_views_purchase() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let buyer = account(2);
+		let content_id = register_default_content(creator);
+
+		assert_ok!(ContentRights::purchase_views(
+			RuntimeOrigin::signed(buyer.clone()),
+			content_id,
+			0,
+		));
+
+		let pack = pallet::ViewPacks::<Test>::get(content_id, &buyer).unwrap();
+		assert_eq!(pack.views_remaining, 0);
+
+		assert_noop!(
+			ContentRights::consume_view(RuntimeOrigin::signed(buyer), content_id),
+			crate::Error::<Test>::NoViewsRemaining
+		);
+	});
+}
+
+/// Creator subscribes to their own content — self-payment.
+/// Documents that self-subscription is allowed and the payment
+/// (transfer from self to self) still deducts due to Substrate's
+/// fungible::Mutate implementation.
+#[test]
+fn security_self_subscribe_as_creator() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let content_id = register_default_content(creator.clone());
+
+		assert_ok!(ContentRights::subscribe(
+			RuntimeOrigin::signed(creator.clone()),
+			content_id,
+		));
+
+		// Self-subscription succeeds — creator can subscribe to own content
+		assert!(pallet::Subscriptions::<Test>::get(content_id, &creator).is_some());
+	});
+}
+
+/// Fill to MaxChildren (50) boundary and verify the 51st fails.
+#[test]
+fn security_max_children_boundary() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let content_id = register_default_content(creator);
+
+		// Fund accounts 100-150 with enough balance
+		for i in 100u8..=150u8 {
+			let _ = Balances::force_set_balance(RuntimeOrigin::root(), account(i).into(), 10_000);
+		}
+
+		for i in 100u8..150u8 {
+			assert_ok!(ContentRights::subscribe(
+				RuntimeOrigin::signed(account(i)),
+				content_id,
+			));
+		}
+
+		assert_noop!(
+			ContentRights::subscribe(RuntimeOrigin::signed(account(150u8)), content_id),
+			crate::Error::<Test>::MaxChildrenReached
+		);
+	});
+}
+
+/// Set NextContentId to u32::MAX and verify overflow is caught.
+#[test]
+fn security_content_id_overflow() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		pallet::NextContentId::<Test>::put(u32::MAX);
+
+		assert_noop!(
+			ContentRights::register_content(
+				RuntimeOrigin::signed(creator),
+				[0u8; 32],
+				default_title(),
+				100, 10, 500, 100,
+			),
+			crate::Error::<Test>::ContentIdOverflow
+		);
+	});
+}
+
+/// Account with zero balance cannot subscribe.
+#[test]
+fn security_insufficient_balance_for_subscription() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let broke_user = account(99);
+		let content_id = register_default_content(creator);
+
+		assert!(ContentRights::subscribe(
+			RuntimeOrigin::signed(broke_user),
+			content_id,
+		).is_err());
+	});
+}
+
+/// Purchasing views when a pack already exists overwrites rather than adds.
+#[test]
+fn security_purchase_views_overwrites_existing_pack() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let buyer = account(2);
+		let content_id = register_default_content(creator);
+
+		assert_ok!(ContentRights::purchase_views(
+			RuntimeOrigin::signed(buyer.clone()),
+			content_id,
+			10,
+		));
+		assert_eq!(pallet::ViewPacks::<Test>::get(content_id, &buyer).unwrap().views_remaining, 10);
+
+		assert_ok!(ContentRights::purchase_views(
+			RuntimeOrigin::signed(buyer.clone()),
+			content_id,
+			5,
+		));
+		// Overwrites to 5, does NOT add to 15
+		assert_eq!(pallet::ViewPacks::<Test>::get(content_id, &buyer).unwrap().views_remaining, 5);
+	});
+}
+
+/// Cannot purchase ownership twice for the same content.
+#[test]
+fn security_double_ownership_purchase_rejected() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let buyer = account(2);
+		let content_id = register_default_content(creator);
+
+		assert_ok!(ContentRights::purchase_ownership(
+			RuntimeOrigin::signed(buyer.clone()),
+			content_id,
+		));
+
+		assert_noop!(
+			ContentRights::purchase_ownership(RuntimeOrigin::signed(buyer), content_id),
+			crate::Error::<Test>::AlreadyOwned
+		);
+	});
+}
+
+/// Cannot transfer content you don't own.
+#[test]
+fn security_transfer_ownership_requires_ownership() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let not_owner = account(2);
+		let recipient = account(3);
+		let content_id = register_default_content(creator);
+
+		assert_noop!(
+			ContentRights::transfer_ownership(
+				RuntimeOrigin::signed(not_owner),
+				content_id,
+				recipient,
+			),
+			crate::Error::<Test>::OwnershipNotFound
+		);
+	});
+}
