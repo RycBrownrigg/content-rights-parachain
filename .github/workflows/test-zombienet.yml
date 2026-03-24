@@ -15,7 +15,7 @@ jobs:
   test-zombienet:
     runs-on: ubuntu-latest
     env:
-      POLKADOT_VERSION: stable2407
+      POLKADOT_VERSION: stable2512-3
     steps:
       - uses: actions/checkout@v4
 
