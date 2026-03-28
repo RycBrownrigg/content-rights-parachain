@@ -1,4 +1,4 @@
-use crate::{mock::*, pallet};
+use crate::{mock::*, pallet, types::RoyaltySplit};
 use frame::{
 	deps::frame_support::{assert_noop, assert_ok},
 	prelude::*,
@@ -1094,5 +1094,176 @@ fn security_transfer_ownership_requires_ownership() {
 			),
 			crate::Error::<Test>::OwnershipNotFound
 		);
+	});
+}
+
+// ==================== Royalty Tests ====================
+
+/// Helper to convert AccountId to raw [u8; 32] for RoyaltySplit.
+fn account_bytes(id: u8) -> [u8; 32] {
+	use codec::Encode;
+	let acct = account(id);
+	let encoded = acct.encode();
+	let mut bytes = [0u8; 32];
+	bytes.copy_from_slice(&encoded[..32]);
+	bytes
+}
+
+/// Creator sets royalty splits and payments are distributed.
+#[test]
+fn royalty_splits_distribute_on_subscribe() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let collaborator = account(5);
+		let subscriber = account(2);
+
+		// Pre-fund collaborator so we can track balance changes
+		let _ = Balances::force_set_balance(RuntimeOrigin::root(), collaborator.clone().into(), 1_000);
+
+		let content_id = register_default_content(creator.clone());
+
+		// Set 25% to collaborator (2500 basis points)
+		let splits: BoundedVec<RoyaltySplit, ConstU32<10>> = vec![
+			RoyaltySplit { recipient: account_bytes(5), basis_points: 2500 },
+		].try_into().unwrap();
+
+		assert_ok!(ContentRights::set_royalty_splits(
+			RuntimeOrigin::signed(creator.clone()),
+			content_id,
+			splits,
+		));
+
+		let creator_before = Balances::free_balance(&creator);
+		let collab_before = Balances::free_balance(&collaborator);
+
+		// Subscribe — price is 100
+		assert_ok!(ContentRights::subscribe(
+			RuntimeOrigin::signed(subscriber),
+			content_id,
+		));
+
+		let creator_after = Balances::free_balance(&creator);
+		let collab_after = Balances::free_balance(&collaborator);
+
+		// Collaborator gets 25% of 100 = 25
+		assert_eq!(collab_after - collab_before, 25);
+		// Creator gets remainder (75) minus NFT attribute deposit costs
+		// The mint_and_nest_child call charges attribute deposits from the creator
+		let creator_gain = creator_after as i64 - creator_before as i64;
+		assert!(creator_gain > 0, "Creator should receive payment");
+	});
+}
+
+/// Multiple collaborators receive their shares.
+#[test]
+fn royalty_splits_multiple_collaborators() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let collab_a = account(5);
+		let collab_b = account(6);
+		let buyer = account(2);
+		let content_id = register_default_content(creator.clone());
+
+		// Fund collaborator accounts
+		let _ = Balances::force_set_balance(RuntimeOrigin::root(), collab_a.clone().into(), 1_000);
+		let _ = Balances::force_set_balance(RuntimeOrigin::root(), collab_b.clone().into(), 1_000);
+
+		// 30% to collab_a, 20% to collab_b, 50% remainder to creator
+		let splits: BoundedVec<RoyaltySplit, ConstU32<10>> = vec![
+			RoyaltySplit { recipient: account_bytes(5), basis_points: 3000 },
+			RoyaltySplit { recipient: account_bytes(6), basis_points: 2000 },
+		].try_into().unwrap();
+
+		assert_ok!(ContentRights::set_royalty_splits(
+			RuntimeOrigin::signed(creator.clone()),
+			content_id,
+			splits,
+		));
+
+		let creator_before = Balances::free_balance(&creator);
+		let a_before = Balances::free_balance(&collab_a);
+		let b_before = Balances::free_balance(&collab_b);
+
+		// Purchase ownership — price is 500
+		assert_ok!(ContentRights::purchase_ownership(
+			RuntimeOrigin::signed(buyer),
+			content_id,
+		));
+
+		// collab_a: 30% of 500 = 150
+		assert_eq!(Balances::free_balance(&collab_a) - a_before, 150);
+		// collab_b: 20% of 500 = 100
+		assert_eq!(Balances::free_balance(&collab_b) - b_before, 100);
+		// creator: remainder = 250 minus NFT attribute deposit costs
+		let creator_gain = Balances::free_balance(&creator) as i64 - creator_before as i64;
+		assert!(creator_gain > 0, "Creator should receive payment");
+	});
+}
+
+/// Only the creator can set royalty splits.
+#[test]
+fn royalty_splits_only_creator_can_set() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let not_creator = account(2);
+		let content_id = register_default_content(creator);
+
+		let splits: BoundedVec<RoyaltySplit, ConstU32<10>> = vec![
+			RoyaltySplit { recipient: account_bytes(5), basis_points: 1000 },
+		].try_into().unwrap();
+
+		assert_noop!(
+			ContentRights::set_royalty_splits(
+				RuntimeOrigin::signed(not_creator),
+				content_id,
+				splits,
+			),
+			crate::Error::<Test>::NotContentCreator
+		);
+	});
+}
+
+/// Total basis points cannot exceed 10,000.
+#[test]
+fn royalty_splits_rejects_over_100_percent() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let content_id = register_default_content(creator.clone());
+
+		let splits: BoundedVec<RoyaltySplit, ConstU32<10>> = vec![
+			RoyaltySplit { recipient: account_bytes(5), basis_points: 6000 },
+			RoyaltySplit { recipient: account_bytes(6), basis_points: 5000 },
+		].try_into().unwrap();
+
+		assert_noop!(
+			ContentRights::set_royalty_splits(
+				RuntimeOrigin::signed(creator),
+				content_id,
+				splits,
+			),
+			crate::Error::<Test>::InvalidRoyaltySplits
+		);
+	});
+}
+
+/// No splits = 100% to creator (backwards compatible).
+#[test]
+fn royalty_no_splits_full_payment_to_creator() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let subscriber = account(2);
+		let content_id = register_default_content(creator.clone());
+
+		// No splits set — default behavior
+		let creator_before = Balances::free_balance(&creator);
+		assert_ok!(ContentRights::subscribe(
+			RuntimeOrigin::signed(subscriber),
+			content_id,
+		));
+		let creator_after = Balances::free_balance(&creator);
+
+		// Creator receives payment (100 minus NFT deposit costs from minting child)
+		let creator_gain = creator_after as i64 - creator_before as i64;
+		assert!(creator_gain > 0, "Creator should receive payment");
 	});
 }

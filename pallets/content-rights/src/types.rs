@@ -1,4 +1,4 @@
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use frame::prelude::*;
 use scale_info::TypeInfo;
 
@@ -44,4 +44,12 @@ pub struct ViewPackInfo {
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Debug)]
 pub struct OwnershipInfo {
 	pub child_item_id: u32,
+}
+
+/// A single royalty split entry: recipient gets `basis_points` out of 10,000.
+/// Uses a fixed AccountId32 to avoid generic type complexity in storage.
+#[derive(Encode, Decode, DecodeWithMemTracking, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Debug)]
+pub struct RoyaltySplit {
+	pub recipient: [u8; 32], // AccountId32 as raw bytes
+	pub basis_points: u16,   // out of 10,000 (e.g., 2500 = 25%)
 }

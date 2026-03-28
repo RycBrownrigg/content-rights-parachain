@@ -105,6 +105,16 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Content ID -> list of royalty splits. If empty, 100% goes to creator.
+	#[pallet::storage]
+	pub type RoyaltySplits<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		u32,
+		BoundedVec<RoyaltySplit, ConstU32<10>>,
+		ValueQuery,
+	>;
+
 	/// Child (collection, item) -> parent (collection, item).
 	#[pallet::storage]
 	pub type Parent<T: Config> =
@@ -191,6 +201,16 @@ pub mod pallet {
 			to: T::AccountId,
 			authorizer: T::AccountId,
 		},
+		RoyaltySplitsUpdated {
+			content_id: u32,
+			creator: T::AccountId,
+			num_splits: u32,
+		},
+		RoyaltyDistributed {
+			content_id: u32,
+			recipient: T::AccountId,
+			amount: u128,
+		},
 	}
 
 	// --------------- Errors ---------------
@@ -212,6 +232,7 @@ pub mod pallet {
 		ContentIdOverflow,
 		ItemIdOverflow,
 		OwnershipNotFound,
+		InvalidRoyaltySplits,
 	}
 
 	// --------------- Hooks ---------------
@@ -297,8 +318,52 @@ pub mod pallet {
 			Ok(child_item_id)
 		}
 
-		/// Transfer funds from buyer to creator.
-		fn pay(
+		/// Transfer funds from buyer, distributing according to royalty splits.
+		/// If no splits are configured, 100% goes to the creator.
+		fn pay_with_royalties(
+			from: &T::AccountId,
+			creator: &T::AccountId,
+			content_id: u32,
+			amount: u128,
+		) -> DispatchResult {
+			let splits = RoyaltySplits::<T>::get(content_id);
+
+			if splits.is_empty() {
+				// No splits — 100% to creator (original behavior)
+				Self::transfer_amount(from, creator, amount)?;
+			} else {
+				// Distribute according to splits
+				let mut distributed: u128 = 0;
+				for split in splits.iter() {
+					let share = amount
+						.saturating_mul(split.basis_points as u128)
+						.saturating_div(10_000);
+					if share > 0 {
+						// Decode recipient from raw bytes
+						let recipient = T::AccountId::decode(&mut &split.recipient[..])
+							.map_err(|_| Error::<T>::InvalidRoyaltySplits)?;
+						Self::transfer_amount(from, &recipient, share)?;
+						distributed = distributed.saturating_add(share);
+
+						Self::deposit_event(Event::RoyaltyDistributed {
+							content_id,
+							recipient,
+							amount: share,
+						});
+					}
+				}
+				// Remainder to creator (handles rounding)
+				let remainder = amount.saturating_sub(distributed);
+				if remainder > 0 {
+					Self::transfer_amount(from, creator, remainder)?;
+				}
+			}
+
+			Ok(())
+		}
+
+		/// Low-level transfer helper.
+		fn transfer_amount(
 			from: &T::AccountId,
 			to: &T::AccountId,
 			amount: u128,
@@ -410,7 +475,7 @@ pub mod pallet {
 				Error::<T>::SubscriptionAlreadyExists
 			);
 
-			Self::pay(&subscriber, &content.creator, content.subscription_price)?;
+			Self::pay_with_royalties(&subscriber, &content.creator, content_id, content.subscription_price)?;
 
 			let child_item_id = Self::mint_and_nest_child(
 				&content.creator,
@@ -459,7 +524,7 @@ pub mod pallet {
 				.unwrap_or(0u32);
 			ensure!(current_block >= sub.expiry_block, Error::<T>::SubscriptionNotExpired);
 
-			Self::pay(&subscriber, &content.creator, content.subscription_price)?;
+			Self::pay_with_royalties(&subscriber, &content.creator, content_id, content.subscription_price)?;
 
 			let new_expiry = current_block.saturating_add(content.period_length);
 			Subscriptions::<T>::mutate(content_id, &subscriber, |maybe_sub| {
@@ -493,7 +558,7 @@ pub mod pallet {
 				.ppv_price
 				.checked_mul(num_views as u128)
 				.ok_or(Error::<T>::InsufficientPayment)?;
-			Self::pay(&buyer, &content.creator, total_price)?;
+			Self::pay_with_royalties(&buyer, &content.creator, content_id, total_price)?;
 
 			let child_item_id = Self::mint_and_nest_child(
 				&content.creator,
@@ -577,7 +642,7 @@ pub mod pallet {
 				Error::<T>::AlreadyOwned
 			);
 
-			Self::pay(&buyer, &content.creator, content.ownership_price)?;
+			Self::pay_with_royalties(&buyer, &content.creator, content_id, content.ownership_price)?;
 
 			let child_item_id = Self::mint_and_nest_child(
 				&content.creator,
@@ -678,7 +743,7 @@ pub mod pallet {
 				Error::<T>::SubscriptionAlreadyExists
 			);
 
-			Self::pay(&payer, &content.creator, content.subscription_price)?;
+			Self::pay_with_royalties(&payer, &content.creator, content_id, content.subscription_price)?;
 
 			let child_item_id = Self::mint_and_nest_child(
 				&content.creator,
@@ -732,7 +797,7 @@ pub mod pallet {
 				.unwrap_or(0u32);
 			ensure!(current_block >= sub.expiry_block, Error::<T>::SubscriptionNotExpired);
 
-			Self::pay(&payer, &content.creator, content.subscription_price)?;
+			Self::pay_with_royalties(&payer, &content.creator, content_id, content.subscription_price)?;
 
 			let new_expiry = current_block.saturating_add(content.period_length);
 			Subscriptions::<T>::mutate(content_id, &beneficiary, |maybe_sub| {
@@ -768,7 +833,7 @@ pub mod pallet {
 				.ppv_price
 				.checked_mul(num_views as u128)
 				.ok_or(Error::<T>::InsufficientPayment)?;
-			Self::pay(&payer, &content.creator, total_price)?;
+			Self::pay_with_royalties(&payer, &content.creator, content_id, total_price)?;
 
 			let child_item_id = Self::mint_and_nest_child(
 				&content.creator,
@@ -813,7 +878,7 @@ pub mod pallet {
 				Error::<T>::AlreadyOwned
 			);
 
-			Self::pay(&payer, &content.creator, content.ownership_price)?;
+			Self::pay_with_royalties(&payer, &content.creator, content_id, content.ownership_price)?;
 
 			let child_item_id = Self::mint_and_nest_child(
 				&content.creator,
@@ -956,6 +1021,37 @@ pub mod pallet {
 				from,
 				to,
 				authorizer,
+			});
+
+			Ok(())
+		}
+
+		/// Set royalty splits for content. Only the creator can call this.
+		/// Splits are in basis points (out of 10,000). The creator receives the
+		/// remainder after all splits are distributed. Total splits must be <= 10,000.
+		#[pallet::call_index(13)]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::register_content())]
+		pub fn set_royalty_splits(
+			origin: OriginFor<T>,
+			content_id: u32,
+			splits: BoundedVec<RoyaltySplit, ConstU32<10>>,
+		) -> DispatchResult {
+			let caller = ensure_signed(origin)?;
+
+			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
+			ensure!(caller == content.creator, Error::<T>::NotContentCreator);
+
+			// Validate total basis points <= 10,000
+			let total_bp: u32 = splits.iter().map(|s| s.basis_points as u32).sum();
+			ensure!(total_bp <= 10_000, Error::<T>::InvalidRoyaltySplits);
+
+			let num_splits = splits.len() as u32;
+			RoyaltySplits::<T>::insert(content_id, splits);
+
+			Self::deposit_event(Event::RoyaltySplitsUpdated {
+				content_id,
+				creator: caller,
+				num_splits,
 			});
 
 			Ok(())
