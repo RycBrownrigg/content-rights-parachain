@@ -105,6 +105,17 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Set of (content_id, subscriber) pairs with auto-renew enabled.
+	/// Indexed for efficient on_initialize scanning.
+	#[pallet::storage]
+	pub type AutoRenewIndex<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		(u32, T::AccountId),
+		bool,
+		ValueQuery,
+	>;
+
 	/// Content ID -> list of royalty splits. If empty, 100% goes to creator.
 	#[pallet::storage]
 	pub type RoyaltySplits<T: Config> = StorageMap<
@@ -211,6 +222,35 @@ pub mod pallet {
 			recipient: T::AccountId,
 			amount: u128,
 		},
+		AutoRenewEnabled {
+			content_id: u32,
+			subscriber: T::AccountId,
+		},
+		AutoRenewDisabled {
+			content_id: u32,
+			subscriber: T::AccountId,
+		},
+		RightsMetadataQueried {
+			content_id: u32,
+			metadata: RightsMetadata,
+		},
+		AutoRenewalProcessed {
+			content_id: u32,
+			subscriber: T::AccountId,
+			new_expiry_block: u32,
+		},
+		AutoRenewalFailed {
+			content_id: u32,
+			subscriber: T::AccountId,
+			reason: AutoRenewFailReason,
+		},
+	}
+
+	/// Reasons an auto-renewal can fail.
+	#[derive(Encode, Decode, codec::DecodeWithMemTracking, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Debug)]
+	pub enum AutoRenewFailReason {
+		InsufficientBalance,
+		ContentNotFound,
 	}
 
 	// --------------- Errors ---------------
@@ -233,12 +273,105 @@ pub mod pallet {
 		ItemIdOverflow,
 		OwnershipNotFound,
 		InvalidRoyaltySplits,
+		AutoRenewAlreadyEnabled,
+		AutoRenewNotEnabled,
 	}
 
 	// --------------- Hooks ---------------
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		/// Process auto-renewals for expired subscriptions each block.
+		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+			let current_block: u32 = <frame_system::Pallet<T>>::block_number()
+				.try_into()
+				.unwrap_or(0u32);
+
+			let mut weight = Weight::zero();
+			let mut renewals_processed = 0u32;
+			const MAX_RENEWALS_PER_BLOCK: u32 = 10;
+
+			// Iterate auto-renew index to find expired subscriptions
+			let entries: Vec<_> = AutoRenewIndex::<T>::iter().collect();
+			weight = weight.saturating_add(T::DbWeight::get().reads(entries.len() as u64));
+
+			for ((content_id, subscriber), _) in entries {
+				if renewals_processed >= MAX_RENEWALS_PER_BLOCK {
+					break;
+				}
+
+				let sub = match Subscriptions::<T>::get(content_id, &subscriber) {
+					Some(s) => s,
+					None => {
+						// Subscription removed — clean up index
+						AutoRenewIndex::<T>::remove((content_id, &subscriber));
+						continue;
+					}
+				};
+
+				// Only process if expired
+				if current_block < sub.expiry_block {
+					continue;
+				}
+
+				let content = match Contents::<T>::get(content_id) {
+					Some(c) => c,
+					None => {
+						Self::deposit_event(Event::AutoRenewalFailed {
+							content_id,
+							subscriber: subscriber.clone(),
+							reason: AutoRenewFailReason::ContentNotFound,
+						});
+						AutoRenewIndex::<T>::remove((content_id, &subscriber));
+						continue;
+					}
+				};
+
+				// Attempt payment
+				match Self::pay_with_royalties(
+					&subscriber,
+					&content.creator,
+					content_id,
+					content.subscription_price,
+				) {
+					Ok(()) => {
+						let new_expiry = current_block.saturating_add(content.period_length);
+						Subscriptions::<T>::mutate(content_id, &subscriber, |sub_opt| {
+							if let Some(sub) = sub_opt {
+								sub.expiry_block = new_expiry;
+							}
+						});
+
+						Self::deposit_event(Event::AutoRenewalProcessed {
+							content_id,
+							subscriber: subscriber.clone(),
+							new_expiry_block: new_expiry,
+						});
+						renewals_processed += 1;
+					}
+					Err(_) => {
+						// Payment failed — disable auto-renew
+						Subscriptions::<T>::mutate(content_id, &subscriber, |sub_opt| {
+							if let Some(sub) = sub_opt {
+								sub.auto_renew = false;
+							}
+						});
+						AutoRenewIndex::<T>::remove((content_id, &subscriber));
+
+						Self::deposit_event(Event::AutoRenewalFailed {
+							content_id,
+							subscriber: subscriber.clone(),
+							reason: AutoRenewFailReason::InsufficientBalance,
+						});
+					}
+				}
+
+				weight = weight.saturating_add(T::DbWeight::get().reads_writes(3, 2));
+			}
+
+			weight
+		}
+	}
 
 	// --------------- Helpers ---------------
 
@@ -1021,6 +1154,102 @@ pub mod pallet {
 				from,
 				to,
 				authorizer,
+			});
+
+			Ok(())
+		}
+
+		/// Enable auto-renewal for a subscription. The subscriber's balance will be
+		/// automatically deducted when the subscription expires.
+		#[pallet::call_index(14)]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::subscribe())]
+		pub fn enable_auto_renew(
+			origin: OriginFor<T>,
+			content_id: u32,
+		) -> DispatchResult {
+			let subscriber = ensure_signed(origin)?;
+
+			Subscriptions::<T>::try_mutate(content_id, &subscriber, |sub_opt| -> DispatchResult {
+				let sub = sub_opt.as_mut().ok_or(Error::<T>::SubscriptionNotFound)?;
+				ensure!(!sub.auto_renew, Error::<T>::AutoRenewAlreadyEnabled);
+				sub.auto_renew = true;
+				Ok(())
+			})?;
+
+			AutoRenewIndex::<T>::insert((content_id, &subscriber), true);
+
+			Self::deposit_event(Event::AutoRenewEnabled {
+				content_id,
+				subscriber,
+			});
+
+			Ok(())
+		}
+
+		/// Disable auto-renewal for a subscription.
+		#[pallet::call_index(15)]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::subscribe())]
+		pub fn disable_auto_renew(
+			origin: OriginFor<T>,
+			content_id: u32,
+		) -> DispatchResult {
+			let subscriber = ensure_signed(origin)?;
+
+			Subscriptions::<T>::try_mutate(content_id, &subscriber, |sub_opt| -> DispatchResult {
+				let sub = sub_opt.as_mut().ok_or(Error::<T>::SubscriptionNotFound)?;
+				ensure!(sub.auto_renew, Error::<T>::AutoRenewNotEnabled);
+				sub.auto_renew = false;
+				Ok(())
+			})?;
+
+			AutoRenewIndex::<T>::remove((content_id, &subscriber));
+
+			Self::deposit_event(Event::AutoRenewDisabled {
+				content_id,
+				subscriber,
+			});
+
+			Ok(())
+		}
+
+		/// Query the full rights metadata for a content item.
+		/// Emits a `RightsMetadataQueried` event containing the complete rights
+		/// policy — pricing, royalty configuration, and content details — enabling
+		/// cross-chain consumers to understand the full rights policy.
+		#[pallet::call_index(16)]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::check_access())]
+		pub fn query_rights_metadata(
+			origin: OriginFor<T>,
+			content_id: u32,
+		) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+
+			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
+			let splits = RoyaltySplits::<T>::get(content_id);
+			let total_bp: u16 = splits.iter().map(|s| s.basis_points).sum();
+
+			let metadata = RightsMetadata {
+				content_id,
+				rights_type: if content.ownership_price > 0 {
+					RightsType::Ownership
+				} else if content.ppv_price > 0 {
+					RightsType::PayPerView
+				} else {
+					RightsType::Subscription
+				},
+				metadata_hash: content.metadata_hash,
+				title: content.title,
+				subscription_price: content.subscription_price,
+				ppv_price: content.ppv_price,
+				ownership_price: content.ownership_price,
+				period_length: content.period_length,
+				royalty_total_basis_points: total_bp,
+				num_collaborators: splits.len() as u8,
+			};
+
+			Self::deposit_event(Event::RightsMetadataQueried {
+				content_id,
+				metadata,
 			});
 
 			Ok(())

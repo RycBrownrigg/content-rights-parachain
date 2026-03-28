@@ -1,4 +1,4 @@
-use crate::{mock::*, pallet, types::RoyaltySplit};
+use crate::{mock::*, pallet, types::{RoyaltySplit, RightsMetadata, RightsType}};
 use frame::{
 	deps::frame_support::{assert_noop, assert_ok},
 	prelude::*,
@@ -1094,6 +1094,226 @@ fn security_transfer_ownership_requires_ownership() {
 			),
 			crate::Error::<Test>::OwnershipNotFound
 		);
+	});
+}
+
+// ==================== Metadata Query Tests ====================
+
+/// Query rights metadata emits complete policy information.
+#[test]
+fn query_rights_metadata_emits_event() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let querier = account(2);
+		let content_id = register_default_content(creator.clone());
+
+		// Set royalty splits
+		let splits: BoundedVec<RoyaltySplit, ConstU32<10>> = vec![
+			RoyaltySplit { recipient: account_bytes(5), basis_points: 2000 },
+		].try_into().unwrap();
+		assert_ok!(ContentRights::set_royalty_splits(
+			RuntimeOrigin::signed(creator),
+			content_id,
+			splits,
+		));
+
+		// Query metadata
+		assert_ok!(ContentRights::query_rights_metadata(
+			RuntimeOrigin::signed(querier),
+			content_id,
+		));
+
+		// Verify the emitted metadata
+		System::assert_has_event(
+			crate::Event::<Test>::RightsMetadataQueried {
+				content_id,
+				metadata: RightsMetadata {
+					content_id,
+					rights_type: RightsType::Ownership, // ownership_price > 0 takes priority
+					metadata_hash: [0u8; 32],
+					title: default_title(),
+					subscription_price: 100,
+					ppv_price: 10,
+					ownership_price: 500,
+					period_length: 100,
+					royalty_total_basis_points: 2000,
+					num_collaborators: 1,
+				},
+			}.into(),
+		);
+	});
+}
+
+/// Query metadata for nonexistent content fails.
+#[test]
+fn query_rights_metadata_fails_not_found() {
+	new_test_ext().execute_with(|| {
+		let querier = account(2);
+		assert_noop!(
+			ContentRights::query_rights_metadata(
+				RuntimeOrigin::signed(querier),
+				999,
+			),
+			crate::Error::<Test>::ContentNotFound
+		);
+	});
+}
+
+// ==================== Auto-Renewal Tests ====================
+
+/// Enable auto-renew and verify it processes on block after expiry.
+#[test]
+fn auto_renew_processes_expired_subscription() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let subscriber = account(2);
+		let content_id = register_default_content(creator);
+
+		// Subscribe (period_length = 100 blocks)
+		assert_ok!(ContentRights::subscribe(
+			RuntimeOrigin::signed(subscriber.clone()),
+			content_id,
+		));
+
+		// Enable auto-renew
+		assert_ok!(ContentRights::enable_auto_renew(
+			RuntimeOrigin::signed(subscriber.clone()),
+			content_id,
+		));
+
+		let sub = pallet::Subscriptions::<Test>::get(content_id, &subscriber).unwrap();
+		assert!(sub.auto_renew);
+		let original_expiry = sub.expiry_block;
+
+		// Advance past expiry
+		System::set_block_number((original_expiry + 1).into());
+
+		// Trigger on_initialize — should auto-renew
+		ContentRights::on_initialize(System::block_number());
+
+		// Check subscription was renewed
+		let renewed_sub = pallet::Subscriptions::<Test>::get(content_id, &subscriber).unwrap();
+		assert!(renewed_sub.expiry_block > original_expiry);
+		assert!(renewed_sub.auto_renew); // Still enabled
+
+		// Check event
+		System::assert_has_event(
+			crate::Event::<Test>::AutoRenewalProcessed {
+				content_id,
+				subscriber,
+				new_expiry_block: renewed_sub.expiry_block,
+			}.into(),
+		);
+	});
+}
+
+/// Auto-renew fails when subscriber has insufficient balance.
+#[test]
+fn auto_renew_fails_insufficient_balance() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let subscriber = account(2);
+		let content_id = register_default_content(creator);
+
+		assert_ok!(ContentRights::subscribe(
+			RuntimeOrigin::signed(subscriber.clone()),
+			content_id,
+		));
+		assert_ok!(ContentRights::enable_auto_renew(
+			RuntimeOrigin::signed(subscriber.clone()),
+			content_id,
+		));
+
+		let sub = pallet::Subscriptions::<Test>::get(content_id, &subscriber).unwrap();
+
+		// Drain subscriber's balance
+		let balance = Balances::free_balance(&subscriber);
+		let _ = Balances::force_set_balance(RuntimeOrigin::root(), subscriber.clone().into(), 1);
+
+		// Advance past expiry
+		System::set_block_number((sub.expiry_block + 1).into());
+		ContentRights::on_initialize(System::block_number());
+
+		// Auto-renew should be disabled after failure
+		let failed_sub = pallet::Subscriptions::<Test>::get(content_id, &subscriber).unwrap();
+		assert!(!failed_sub.auto_renew);
+		// Index should be removed
+		assert!(!pallet::AutoRenewIndex::<Test>::contains_key((content_id, &subscriber)));
+	});
+}
+
+/// Cannot enable auto-renew without a subscription.
+#[test]
+fn auto_renew_requires_subscription() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let no_sub = account(3);
+		let content_id = register_default_content(creator);
+
+		assert_noop!(
+			ContentRights::enable_auto_renew(
+				RuntimeOrigin::signed(no_sub),
+				content_id,
+			),
+			crate::Error::<Test>::SubscriptionNotFound
+		);
+	});
+}
+
+/// Disable auto-renew works.
+#[test]
+fn disable_auto_renew_works() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let subscriber = account(2);
+		let content_id = register_default_content(creator);
+
+		assert_ok!(ContentRights::subscribe(
+			RuntimeOrigin::signed(subscriber.clone()),
+			content_id,
+		));
+		assert_ok!(ContentRights::enable_auto_renew(
+			RuntimeOrigin::signed(subscriber.clone()),
+			content_id,
+		));
+		assert_ok!(ContentRights::disable_auto_renew(
+			RuntimeOrigin::signed(subscriber.clone()),
+			content_id,
+		));
+
+		let sub = pallet::Subscriptions::<Test>::get(content_id, &subscriber).unwrap();
+		assert!(!sub.auto_renew);
+		assert!(!pallet::AutoRenewIndex::<Test>::contains_key((content_id, &subscriber)));
+	});
+}
+
+/// Auto-renew does NOT process unexpired subscriptions.
+#[test]
+fn auto_renew_skips_active_subscriptions() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let subscriber = account(2);
+		let content_id = register_default_content(creator);
+
+		assert_ok!(ContentRights::subscribe(
+			RuntimeOrigin::signed(subscriber.clone()),
+			content_id,
+		));
+		assert_ok!(ContentRights::enable_auto_renew(
+			RuntimeOrigin::signed(subscriber.clone()),
+			content_id,
+		));
+
+		let sub = pallet::Subscriptions::<Test>::get(content_id, &subscriber).unwrap();
+		let original_expiry = sub.expiry_block;
+
+		// Advance to BEFORE expiry
+		System::set_block_number((original_expiry - 1).into());
+		ContentRights::on_initialize(System::block_number());
+
+		// Subscription should NOT be changed
+		let still_same = pallet::Subscriptions::<Test>::get(content_id, &subscriber).unwrap();
+		assert_eq!(still_same.expiry_block, original_expiry);
 	});
 }
 
