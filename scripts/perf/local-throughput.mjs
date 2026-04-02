@@ -150,6 +150,49 @@ async function testCheckAccess(api, accounts, batchSize, contentId) {
   return Promise.allSettled(promises);
 }
 
+async function testSetRoyaltySplits(api, creators, batchSize, contentIds) {
+  // Each creator sets royalty splits on their own content (avoids nonce collisions)
+  const subset = contentIds.slice(0, batchSize);
+  const keyring = new Keyring({ type: 'sr25519' });
+  const bob = keyring.addFromUri('//Bob');
+  const promises = subset.map((contentId, i) => {
+    const splits = [
+      { recipient: creators[i].publicKey, basis_points: 7000 },
+      { recipient: bob.publicKey, basis_points: 3000 },
+    ];
+    const tx = api.tx.contentRights.setRoyaltySplits(contentId, splits);
+    return sendAndWait(api, tx, creators[i]);
+  });
+  return Promise.allSettled(promises);
+}
+
+async function testEnableAutoRenew(api, accounts, batchSize, contentId) {
+  const subset = accounts.slice(0, batchSize);
+  const promises = subset.map((acct) => {
+    const tx = api.tx.contentRights.enableAutoRenew(contentId);
+    return sendAndWait(api, tx, acct);
+  });
+  return Promise.allSettled(promises);
+}
+
+async function testDisableAutoRenew(api, accounts, batchSize, contentId) {
+  const subset = accounts.slice(0, batchSize);
+  const promises = subset.map((acct) => {
+    const tx = api.tx.contentRights.disableAutoRenew(contentId);
+    return sendAndWait(api, tx, acct);
+  });
+  return Promise.allSettled(promises);
+}
+
+async function testQueryRightsMetadata(api, accounts, batchSize, contentId) {
+  const subset = accounts.slice(0, batchSize);
+  const promises = subset.map((acct) => {
+    const tx = api.tx.contentRights.queryRightsMetadata(contentId);
+    return sendAndWait(api, tx, acct);
+  });
+  return Promise.allSettled(promises);
+}
+
 // ─── Main ───────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -234,8 +277,32 @@ async function main() {
     printResults(allResults.subscribe[batchSize]);
   }
 
-  // ── Renew Subscription (skip — requires expired subscriptions) ─────────
-  console.log('\n── renew_subscription ── (skipped — requires expired subscriptions)');
+  // ── Renew Subscription (register with short period, subscribe, wait for expiry, then renew) ─
+  console.log('\n── renew_subscription ──');
+  allResults.renew_subscription = {};
+  for (const batchSize of BATCH_SIZES) {
+    console.log(`  Batch size: ${batchSize}`);
+    // Register content with period_length=2 blocks (expires very quickly)
+    const renewHash = '0x' + Buffer.from(`renew-${batchSize}-${Date.now()}`).toString('hex').padEnd(64, '0');
+    const renewReg = await sendAndWait(api, api.tx.contentRights.registerContent(
+      renewHash, `Renew Batch ${batchSize}`, 500000, 0, 0, 2,
+    ), alice);
+    const renewId = extractContentId(renewReg.events);
+    // Subscribe all accounts
+    const renewSet = accounts.slice(0, batchSize);
+    await Promise.allSettled(renewSet.map(acct =>
+      sendAndWait(api, api.tx.contentRights.subscribe(renewId), acct)
+    ));
+    // Wait for expiry (~3 blocks = ~18s to be safe)
+    console.log('    Waiting for subscriptions to expire (~18s)...');
+    await new Promise(r => setTimeout(r, 18000));
+    // Now benchmark renewals
+    const tStart = Date.now();
+    const settled = await testRenewSubscription(api, accounts, batchSize, renewId);
+    const tEnd = Date.now();
+    allResults.renew_subscription[batchSize] = processResults(settled, tStart, tEnd, batchSize);
+    printResults(allResults.renew_subscription[batchSize]);
+  }
 
   // ── Purchase Views ─────────────────────────────────────────────────────
   console.log('\n── purchase_views ──');
@@ -288,6 +355,90 @@ async function main() {
     const tEnd = Date.now();
     allResults.check_access[batchSize] = processResults(settled, tStart, tEnd, batchSize);
     printResults(allResults.check_access[batchSize]);
+  }
+
+  // ── Set Royalty Splits (creator-only — each account registers then sets splits) ──
+  console.log('\n── set_royalty_splits ──');
+  allResults.set_royalty_splits = {};
+  for (const batchSize of BATCH_SIZES) {
+    console.log(`  Batch size: ${batchSize}`);
+    // Each account registers their own content, then sets royalty splits
+    const subset = accounts.slice(0, batchSize);
+    const royaltyContentIds = [];
+    const creators = [];
+    for (let i = 0; i < batchSize; i++) {
+      const h = '0x' + Buffer.from(`royalty-${batchSize}-${i}-${Date.now()}`).toString('hex').padEnd(64, '0');
+      const reg = await sendAndWait(api, api.tx.contentRights.registerContent(
+        h, `Royalty ${batchSize}-${i}`, 500000, 0, 0, 100,
+      ), subset[i]);
+      royaltyContentIds.push(extractContentId(reg.events));
+      creators.push(subset[i]);
+    }
+    const tStart = Date.now();
+    const settled = await testSetRoyaltySplits(api, creators, batchSize, royaltyContentIds);
+    const tEnd = Date.now();
+    allResults.set_royalty_splits[batchSize] = processResults(settled, tStart, tEnd, batchSize);
+    printResults(allResults.set_royalty_splits[batchSize]);
+  }
+
+  // ── Enable Auto Renew (requires active subscription) ────────────────
+  console.log('\n── enable_auto_renew ──');
+  allResults.enable_auto_renew = {};
+  for (const batchSize of BATCH_SIZES) {
+    console.log(`  Batch size: ${batchSize}`);
+    // Register fresh content and subscribe each account
+    const arHash = '0x' + Buffer.from(`autorenew-${batchSize}-${Date.now()}`).toString('hex').padEnd(64, '0');
+    const arReg = await sendAndWait(api, api.tx.contentRights.registerContent(
+      arHash, `AutoRenew ${batchSize}`, 500000, 0, 0, 500,
+    ), alice);
+    const arId = extractContentId(arReg.events);
+    // Subscribe accounts first
+    const subSet = accounts.slice(0, batchSize);
+    await Promise.allSettled(subSet.map(acct =>
+      sendAndWait(api, api.tx.contentRights.subscribe(arId), acct)
+    ));
+    const tStart = Date.now();
+    const settled = await testEnableAutoRenew(api, accounts, batchSize, arId);
+    const tEnd = Date.now();
+    allResults.enable_auto_renew[batchSize] = processResults(settled, tStart, tEnd, batchSize);
+    printResults(allResults.enable_auto_renew[batchSize]);
+  }
+
+  // ── Disable Auto Renew ──────────────────────────────────────────────
+  console.log('\n── disable_auto_renew ──');
+  allResults.disable_auto_renew = {};
+  for (const batchSize of BATCH_SIZES) {
+    console.log(`  Batch size: ${batchSize}`);
+    // Register, subscribe, enable auto-renew, then disable
+    const darHash = '0x' + Buffer.from(`disableauto-${batchSize}-${Date.now()}`).toString('hex').padEnd(64, '0');
+    const darReg = await sendAndWait(api, api.tx.contentRights.registerContent(
+      darHash, `DisableAR ${batchSize}`, 500000, 0, 0, 500,
+    ), alice);
+    const darId = extractContentId(darReg.events);
+    const darSet = accounts.slice(0, batchSize);
+    await Promise.allSettled(darSet.map(acct =>
+      sendAndWait(api, api.tx.contentRights.subscribe(darId), acct)
+    ));
+    await Promise.allSettled(darSet.map(acct =>
+      sendAndWait(api, api.tx.contentRights.enableAutoRenew(darId), acct)
+    ));
+    const tStart = Date.now();
+    const settled = await testDisableAutoRenew(api, accounts, batchSize, darId);
+    const tEnd = Date.now();
+    allResults.disable_auto_renew[batchSize] = processResults(settled, tStart, tEnd, batchSize);
+    printResults(allResults.disable_auto_renew[batchSize]);
+  }
+
+  // ── Query Rights Metadata ──────────────────────────────────────────
+  console.log('\n── query_rights_metadata ──');
+  allResults.query_rights_metadata = {};
+  for (const batchSize of BATCH_SIZES) {
+    console.log(`  Batch size: ${batchSize}`);
+    const tStart = Date.now();
+    const settled = await testQueryRightsMetadata(api, accounts, batchSize, subContentId);
+    const tEnd = Date.now();
+    allResults.query_rights_metadata[batchSize] = processResults(settled, tStart, tEnd, batchSize);
+    printResults(allResults.query_rights_metadata[batchSize]);
   }
 
   // ── Save Results ───────────────────────────────────────────────────────

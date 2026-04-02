@@ -1,6 +1,6 @@
 # Deploy and Call the Flipper Contract
 
-Use this after you have built the ink! 6 Flipper with `cargo contract build` in `~/flipper`.
+Use this after building the ink! 6 Flipper with `cargo contract build` in `~/flipper`.
 
 ---
 

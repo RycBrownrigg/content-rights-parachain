@@ -10,11 +10,9 @@ The thesis needs to demonstrate content rights management across **heterogeneous
 
 Snowbridge v2 (which enables single-step `Transact` from Ethereum) is documented as future work.
 
-**Timeline:** 5+ weeks available. Estimated effort: ~8-13 days.
-
 ---
 
-## Phase 1: XCM Config Changes for Ethereum Origins (1-2 days)
+## Phase 1: XCM Config Changes for Ethereum Origins
 
 **File:** `runtime/src/configs/xcm_config.rs`
 
@@ -27,7 +25,7 @@ Snowbridge v2 (which enables single-step `Transact` from Ethereum) is documented
 4. Configure `AssetTransactor` to handle bridged Ethereum tokens (WETH) as fee asset or accept reserve transfers from AssetHub
 5. Build + test runtime compiles
 
-## Phase 2: Build Required Binaries (1-2 days, mostly compile time)
+## Phase 2: Build Required Binaries
 
 All built from the `polkadot-sdk/` directory in the repo:
 
@@ -43,9 +41,7 @@ All built from the `polkadot-sdk/` directory in the repo:
    ```
 3. **`parachain-template-node`** — already built
 
-Start all builds on Day 1 in background.
-
-## Phase 3: Multi-Chain Zombienet Config (2-3 days)
+## Phase 3: Multi-Chain Zombienet Config
 
 **File to create:** `zombienet-snowbridge.toml`
 
@@ -63,7 +59,7 @@ Relay Chain (Rococo-local): alice, bob
 - Bridge Hub (1013) ↔ AssetHub (1000) — Snowbridge message routing
 - AssetHub (1000) ↔ Content Rights (100) — forwarding to destination
 
-## Phase 4: Ethereum Side Setup (2-3 days)
+## Phase 4: Ethereum Side Setup
 
 **External repo:** Clone `github.com/Snowfork/snowbridge`
 
@@ -78,15 +74,15 @@ Relay Chain (Rococo-local): alice, bob
 - Bridge Hub's `snowbridge-pallet-ethereum-client` needs a checkpoint from the local beacon chain
 - Snowfork test scripts extract checkpoint → submit to Bridge Hub via sudo
 
-## Phase 5: Relayer Setup (1-2 days)
+## Phase 5: Relayer Setup
 
 **From Snowfork/snowbridge repo:**
 1. Install Go 1.21+
 2. Build relayer: `cd relayer && go build -o snowbridge-relay .`
-3. Configure with Ethereum RPC, Bridge Hub RPC, beacon node endpoint, relayer keys
+3. Configure with Ethereum RPC, Bridge Hub RPC, beacon node endpoint, and relayer keys
 4. Start relayer — watches Gateway events → submits proofs to Bridge Hub
 
-## Phase 6: End-to-End Demo (1-2 days)
+## Phase 6: End-to-End Demo
 
 **Demo flow:**
 ```
@@ -102,7 +98,7 @@ Step 7: Verify subscription via storage query
 
 **Create:** `scripts/snowbridge-e2e-test.mjs` — automated demo script
 
-## Phase 7: Documentation (1 day)
+## Phase 7: Documentation
 
 - Update `Implementation Decisions & Design Rationale.md` — new Step 7: Snowbridge Bridge Integration
 - Architecture diagram: Ethereum → Gateway → Relayer → Bridge Hub → AssetHub → Content Rights

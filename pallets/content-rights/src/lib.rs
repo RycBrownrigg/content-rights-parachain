@@ -18,6 +18,7 @@ mod benchmarking;
 pub mod pallet {
 	use frame::prelude::*;
 	use polkadot_sdk::pallet_nfts;
+	use scale_info::prelude::vec::Vec;
 
 	use crate::types::*;
 	use crate::weights::WeightInfo as _;
@@ -275,6 +276,7 @@ pub mod pallet {
 		InvalidRoyaltySplits,
 		AutoRenewAlreadyEnabled,
 		AutoRenewNotEnabled,
+		Unauthorized,
 	}
 
 	// --------------- Hooks ---------------
@@ -292,15 +294,20 @@ pub mod pallet {
 			const MAX_RENEWALS_PER_BLOCK: u32 = 10;
 
 			// Iterate auto-renew index to find expired subscriptions
-			let entries: Vec<_> = AutoRenewIndex::<T>::iter().collect();
-			weight = weight.saturating_add(T::DbWeight::get().reads(entries.len() as u64));
+			// Collect into a bounded iteration to avoid unbounded reads
+			let mut entries_count = 0u64;
+			let entries: Vec<_> = AutoRenewIndex::<T>::iter()
+				.take(MAX_RENEWALS_PER_BLOCK as usize * 2)
+				.inspect(|_| entries_count += 1)
+				.collect();
+			weight = weight.saturating_add(T::DbWeight::get().reads(entries_count));
 
 			for ((content_id, subscriber), _) in entries {
 				if renewals_processed >= MAX_RENEWALS_PER_BLOCK {
 					break;
 				}
 
-				let sub = match Subscriptions::<T>::get(content_id, &subscriber) {
+				let sub = match Subscriptions::<T>::get::<u32, &T::AccountId>(content_id, &subscriber) {
 					Some(s) => s,
 					None => {
 						// Subscription removed — clean up index
@@ -693,22 +700,28 @@ pub mod pallet {
 				.ok_or(Error::<T>::InsufficientPayment)?;
 			Self::pay_with_royalties(&buyer, &content.creator, content_id, total_price)?;
 
-			let child_item_id = Self::mint_and_nest_child(
-				&content.creator,
-				&buyer,
-				content.collection_id,
-				content.content_item_id,
-				RightsType::PayPerView,
-			)?;
+			// If buyer already has a view pack, add views (Finding E remediation)
+			if let Some(mut existing) = ViewPacks::<T>::get(content_id, &buyer) {
+				existing.views_remaining = existing.views_remaining.saturating_add(num_views);
+				ViewPacks::<T>::insert(content_id, &buyer, existing);
+			} else {
+				let child_item_id = Self::mint_and_nest_child(
+					&content.creator,
+					&buyer,
+					content.collection_id,
+					content.content_item_id,
+					RightsType::PayPerView,
+				)?;
 
-			ViewPacks::<T>::insert(
-				content_id,
-				&buyer,
-				ViewPackInfo {
-					views_remaining: num_views,
-					child_item_id,
-				},
-			);
+				ViewPacks::<T>::insert(
+					content_id,
+					&buyer,
+					ViewPackInfo {
+						views_remaining: num_views,
+						child_item_id,
+					},
+				);
+			}
 
 			Self::deposit_event(Event::ViewPackPurchased {
 				content_id,
@@ -1106,6 +1119,8 @@ pub mod pallet {
 			to: T::AccountId,
 		) -> DispatchResult {
 			let authorizer = ensure_signed(origin)?;
+			// Authorization: caller must be the current owner (Finding B remediation)
+			ensure!(authorizer == from, Error::<T>::Unauthorized);
 
 			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
 			let ownership_info =

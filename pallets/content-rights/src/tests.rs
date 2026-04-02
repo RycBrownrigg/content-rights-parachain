@@ -808,21 +808,19 @@ fn transfer_ownership_fails_recipient_already_owns() {
 fn xcm_transfer_ownership_works() {
 	new_test_ext().execute_with(|| {
 		let creator = account(1);
-		let payer = account(3); // sovereign account
 		let owner = account(2);
 		let recipient = account(4);
 		let content_id = register_default_content(creator);
 
-		// First purchase ownership for the owner via XCM
-		assert_ok!(ContentRights::xcm_purchase_ownership(
-			RuntimeOrigin::signed(payer.clone()),
+		// First purchase ownership for the owner
+		assert_ok!(ContentRights::purchase_ownership(
+			RuntimeOrigin::signed(owner.clone()),
 			content_id,
-			owner.clone(),
 		));
 
-		// Now transfer via XCM
+		// Owner transfers via XCM (caller must == from after Finding B fix)
 		assert_ok!(ContentRights::xcm_transfer_ownership(
-			RuntimeOrigin::signed(payer.clone()),
+			RuntimeOrigin::signed(owner.clone()),
 			content_id,
 			owner.clone(),
 			recipient.clone(),
@@ -836,9 +834,9 @@ fn xcm_transfer_ownership_works() {
 		System::assert_has_event(
 			crate::Event::<Test>::CrossChainOwnershipTransferred {
 				content_id,
-				from: owner,
+				from: owner.clone(),
 				to: recipient,
-				authorizer: payer,
+				authorizer: owner,
 			}
 			.into(),
 		);
@@ -849,14 +847,14 @@ fn xcm_transfer_ownership_works() {
 fn xcm_transfer_ownership_fails_not_owned() {
 	new_test_ext().execute_with(|| {
 		let creator = account(1);
-		let payer = account(3);
 		let not_owner = account(2);
 		let recipient = account(4);
 		let content_id = register_default_content(creator);
 
+		// Caller == from (passes auth check) but doesn't own content
 		assert_noop!(
 			ContentRights::xcm_transfer_ownership(
-				RuntimeOrigin::signed(payer),
+				RuntimeOrigin::signed(not_owner.clone()),
 				content_id,
 				not_owner,
 				recipient,
@@ -889,18 +887,21 @@ fn security_xcm_transfer_ownership_any_account_can_steal() {
 		));
 		assert!(pallet::Ownership::<Test>::get(content_id, &owner).is_some());
 
-		// Attacker can steal ownership without owner's consent
-		assert_ok!(ContentRights::xcm_transfer_ownership(
-			RuntimeOrigin::signed(attacker),
-			content_id,
-			owner.clone(),
-			attacker_alt.clone(),
-		));
+		// Attacker CANNOT steal ownership — blocked by Unauthorized check (Finding B fix)
+		assert_noop!(
+			ContentRights::xcm_transfer_ownership(
+				RuntimeOrigin::signed(attacker),
+				content_id,
+				owner.clone(),
+				attacker_alt.clone(),
+			),
+			crate::Error::<Test>::Unauthorized
+		);
 
-		// Owner lost their content
-		assert!(pallet::Ownership::<Test>::get(content_id, &owner).is_none());
-		// Attacker's alt now owns it
-		assert!(pallet::Ownership::<Test>::get(content_id, &attacker_alt).is_some());
+		// Owner still has their content
+		assert!(pallet::Ownership::<Test>::get(content_id, &owner).is_some());
+		// Attacker's alt does NOT own it
+		assert!(pallet::Ownership::<Test>::get(content_id, &attacker_alt).is_none());
 	});
 }
 
@@ -1052,8 +1053,8 @@ fn security_purchase_views_overwrites_existing_pack() {
 			content_id,
 			5,
 		));
-		// Overwrites to 5, does NOT add to 15
-		assert_eq!(pallet::ViewPacks::<Test>::get(content_id, &buyer).unwrap().views_remaining, 5);
+		// Now ADDS to 15 (Finding E fix — additive behavior)
+		assert_eq!(pallet::ViewPacks::<Test>::get(content_id, &buyer).unwrap().views_remaining, 15);
 	});
 }
 

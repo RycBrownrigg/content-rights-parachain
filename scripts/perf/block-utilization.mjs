@@ -47,25 +47,13 @@ function sendAndWait(api, tx, signer) {
 }
 
 async function fundAccounts(api, sudo, accounts) {
-  console.log(`  Funding ${accounts.length} accounts concurrently...`);
-  // Send all funding txs concurrently with manual nonce management
-  let nonce = (await api.rpc.system.accountNextIndex(sudo.address)).toNumber();
-  const CHUNK = 50;
-  for (let start = 0; start < accounts.length; start += CHUNK) {
-    const chunk = accounts.slice(start, start + CHUNK);
-    const promises = chunk.map((acct) => {
-      const tx = api.tx.sudo.sudo(
-        api.tx.balances.forceSetBalance(acct.address, '1000000000000000')
-      );
-      return new Promise((resolve, reject) => {
-        tx.signAndSend(sudo, { nonce: nonce++ }, ({ status, dispatchError }) => {
-          if (dispatchError) reject(new Error('fund failed'));
-          if (status.isInBlock) resolve();
-        });
-      });
-    });
-    await Promise.all(promises);
-    console.log(`    Funded ${Math.min(start + CHUNK, accounts.length)}/${accounts.length}`);
+  console.log(`  Funding ${accounts.length} accounts sequentially...`);
+  for (let i = 0; i < accounts.length; i++) {
+    const tx = api.tx.sudo.sudo(
+      api.tx.balances.forceSetBalance(accounts[i].address, '1000000000000000')
+    );
+    await sendAndWait(api, tx, sudo);
+    if ((i + 1) % 20 === 0) console.log(`    Funded ${i + 1}/${accounts.length}`);
   }
   console.log('  All accounts funded.');
 }

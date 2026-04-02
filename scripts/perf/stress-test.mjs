@@ -57,25 +57,22 @@ async function main() {
   const keyring = new Keyring({ type: 'sr25519' });
   const alice = keyring.addFromUri('//Alice');
 
-  // Fund accounts concurrently
+  // Fund accounts sequentially with timeout
   console.log(`  Funding ${NUM_ACCOUNTS} accounts...`);
   const accounts = [];
-  let nonce = (await api.rpc.system.accountNextIndex(alice.address)).toNumber();
-  const CHUNK = 50;
-  for (let start = 0; start < NUM_ACCOUNTS; start += CHUNK) {
-    const chunk = [];
-    for (let i = start; i < Math.min(start + CHUNK, NUM_ACCOUNTS); i++) {
-      const acct = keyring.addFromUri(`//StressUser${i}`);
-      accounts.push(acct);
-      chunk.push(new Promise((resolve) => {
+  for (let i = 0; i < NUM_ACCOUNTS; i++) {
+    const acct = keyring.addFromUri(`//StressUser${i}`);
+    accounts.push(acct);
+    await Promise.race([
+      new Promise((resolve) => {
         api.tx.sudo.sudo(api.tx.balances.forceSetBalance(acct.address, '10000000000000000'))
-          .signAndSend(alice, { nonce: nonce++ }, ({ status }) => {
+          .signAndSend(alice, ({ status }) => {
             if (status.isInBlock) resolve();
           }).catch(() => resolve());
-      }));
-    }
-    await Promise.all(chunk);
-    console.log(`    Funded ${Math.min(start + CHUNK, NUM_ACCOUNTS)}/${NUM_ACCOUNTS}`);
+      }),
+      new Promise((resolve) => setTimeout(resolve, 30000)), // 30s timeout
+    ]);
+    if ((i + 1) % 20 === 0) console.log(`    Funded ${i + 1}/${NUM_ACCOUNTS}`);
   }
 
   // Track metrics
