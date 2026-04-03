@@ -1,309 +1,203 @@
-<div align="center">
+# Content Rights Parachain
 
-# Polkadot SDK's Parachain Template
+A Polkadot parachain implementing a cross-chain content rights management system supporting subscriptions, pay-per-view, and permanent ownership. Built as part of a master's thesis at the University of Malta.
 
-<img height="70px" alt="Polkadot SDK Logo" src="https://github.com/paritytech/polkadot-sdk/raw/master/docs/images/Polkadot_Logo_Horizontal_Pink_White.png#gh-dark-mode-only"/>
-<img height="70px" alt="Polkadot SDK Logo" src="https://github.com/paritytech/polkadot-sdk/raw/master/docs/images/Polkadot_Logo_Horizontal_Pink_Black.png#gh-light-mode-only"/>
+## Overview
 
-> This is a template for creating a [parachain](https://wiki.polkadot.network/docs/learn-parachains) based on Polkadot SDK.
->
-> This template is automatically updated after releases in the main [Polkadot SDK monorepo](https://github.com/paritytech/polkadot-sdk).
+This parachain provides a unified rights token model where a single on-chain pallet manages three content monetization models, subscription access, pay-per-view consumption, and permanent ownership, with cross-chain interoperability via Polkadot's XCM messaging and Ethereum bridging via Snowbridge.
 
-</div>
+**Key features:**
+- 17 extrinsics covering all content rights operations (local + cross-chain)
+- Automatic royalty distribution to up to 10 collaborators with basis-point precision
+- Scheduled auto-renewal via `on_initialize` hook
+- Rich metadata query for cross-chain consumers
+- Cross-chain operations via paid XCM execution (WithdrawAsset + BuyExecution + Transact)
+- Ethereum interoperability via Snowbridge v1 (token bridging demonstrated E2E)
+- Custom pallet-revive precompile for efficient contract-to-pallet calls
+- Merkle storage proof verification for trustless cross-chain rights checking
 
-## Table of Contents
+## Architecture
 
-- [Intro](#intro)
-
-- [Template Structure](#template-structure)
-
-- [Getting Started](#getting-started)
-
-- [Starting a Development Chain](#starting-a-development-chain)
-
-  - [Omni Node](#omni-node-prerequisites)
-  - [Zombienet setup with Omni Node](#zombienet-setup-with-omni-node)
-  - [Parachain Template Node](#parachain-template-node)
-  - [Connect with the Polkadot-JS Apps Front-End](#connect-with-the-polkadot-js-apps-front-end)
-  - [Takeaways](#takeaways)
-
-- [Runtime development](#runtime-development)
-- [Contributing](#contributing)
-- [Getting Help](#getting-help)
-
-## Intro
-
-- ⏫ This template provides a starting point to build a [parachain](https://wiki.polkadot.network/docs/learn-parachains).
-
-- ☁️ It is based on the
-  [Cumulus](https://paritytech.github.io/polkadot-sdk/master/polkadot_sdk_docs/polkadot_sdk/cumulus/index.html) framework.
-
-- 🔧 Its runtime is configured with a single custom pallet as a starting point, and a handful of ready-made pallets
-  such as a [Balances pallet](https://paritytech.github.io/polkadot-sdk/master/pallet_balances/index.html).
-
-- 👉 Learn more about parachains [here](https://wiki.polkadot.network/docs/learn-parachains)
-
-## Template Structure
-
-A Polkadot SDK based project such as this one consists of:
-
-- 🧮 the [Runtime](./runtime/README.md) - the core logic of the parachain.
-- 🎨 the [Pallets](./pallets/README.md) - from which the runtime is constructed.
-- 💿 a [Node](./node/README.md) - the binary application, not part of the project default-members list and not compiled unless
-  building the project with `--workspace` flag, which builds all workspace members, and is an alternative to
-  [Omni Node](https://paritytech.github.io/polkadot-sdk/master/polkadot_sdk_docs/reference_docs/omni_node/index.html).
-
-## Getting Started
-
-- 🦀 The template is using the Rust language.
-
-- 👉 Check the
-  [Rust installation instructions](https://www.rust-lang.org/tools/install) for your system.
-
-- 🛠️ Depending on your operating system and Rust version, there might be additional
-  packages required to compile this template - please take note of the Rust compiler output.
-
-- **WASM target (required for runtime build):**  
-  - **Rust 1.84+:** `rustup target add wasm32v1-none`  
-  - **Older Rust:** `rustup target add wasm32-unknown-unknown`  
-  After adding a new target, run `cargo clean` before building.
-
-Fetch parachain template code:
-
-```sh
-git clone https://github.com/paritytech/polkadot-sdk-parachain-template.git parachain-template
-
-cd parachain-template
+```
+content-rights-parachain/
+├── pallets/
+│   ├── content-rights/       # Core pallet: 17 extrinsics, 56 unit tests
+│   │   ├── src/lib.rs        # Pallet logic, storage, events, errors
+│   │   ├── src/types.rs      # RightsType, RoyaltySplit, RightsMetadata, etc.
+│   │   ├── src/tests.rs      # 56 tests (functional, security, XCM, royalty, auto-renewal, metadata)
+│   │   ├── src/mock.rs       # Mock runtime for testing
+│   │   └── src/weights.rs    # Placeholder weight definitions
+│   ├── rights-verifier/      # Cross-chain Merkle storage proof verification
+│   └── template/             # Original Polkadot SDK template pallet (unused)
+├── runtime/
+│   └── src/
+│       ├── lib.rs            # Runtime definition, pallet composition
+│       ├── configs/
+│       │   ├── mod.rs        # Pallet configurations (revive, nfts, balances, etc.)
+│       │   └── xcm_config.rs # XCM executor, router, barriers, Snowbridge origins
+│       └── precompiles.rs    # Custom pallet-revive precompile at 0x0000...0400
+├── contracts/
+│   └── rights_manager/       # ink! 6 contract (thin API layer over pallet)
+├── node/                     # Collator binary (parachain-template-node)
+├── scripts/
+│   ├── perf/                 # 7 performance benchmark scripts + results
+│   ├── start-ethereum.sh     # Start local Geth + Lodestar
+│   ├── deploy-gateway.sh     # Deploy 16 Snowbridge Gateway contracts
+│   ├── snowbridge-full-setup.sh  # Full automated Ethereum bridge setup
+│   ├── open-hrmp-channels.mjs    # HRMP channel setup (2-chain)
+│   ├── open-hrmp-snowbridge.mjs  # HRMP channel setup (4-chain)
+│   ├── configure-snowbridge.mjs  # Substrate-side Snowbridge configuration
+│   └── xcm-e2e-test.mjs     # XCM end-to-end test script
+├── integration-tests/        # XCM simulator integration tests
+├── docs/
+│   ├── DEPLOY_AND_CALL.md    # How to deploy and call ink! contracts
+│   ├── SNOWBRIDGE_SETUP.md   # Snowbridge setup plan (7 phases)
+│   └── SNOWBRIDGE_SESSION_LOG.md  # Detailed bridge session log with lessons
+├── zombienet-xcm-test.toml   # 2-chain topology (performance testing)
+├── zombienet-snowbridge.toml # 4-chain topology (Ethereum bridge testing)
+├── my-content-rights.toml    # Single-parachain topology (development)
+└── zombienet.toml            # Default Zombienet config
 ```
 
-## Starting a Development Chain
+## Pallet Extrinsics
 
-The parachain template relies on a hardcoded parachain id which is defined in the runtime code
-and referenced throughout the contents of this file as `{{PARACHAIN_ID}}`. Please replace
-any command or file referencing this placeholder with the value of the `PARACHAIN_ID` constant:
+| Index | Extrinsic | Description |
+|-------|-----------|-------------|
+| 0 | `register_content` | Register new content with metadata, pricing, and period length |
+| 1 | `subscribe` | Subscribe to content (payment to creator with royalty distribution) |
+| 2 | `renew_subscription` | Renew an expired subscription |
+| 3 | `purchase_views` | Purchase a PPV view pack (additive if pack exists) |
+| 4 | `consume_view` | Consume one prepaid view |
+| 5 | `purchase_ownership` | Purchase permanent ownership |
+| 6 | `check_access` | Check caller's access rights for content |
+| 7–10 | `xcm_subscribe`, `xcm_renew_subscription`, `xcm_purchase_views`, `xcm_purchase_ownership` | Cross-chain variants via XCM Transact |
+| 11 | `transfer_ownership` | Transfer ownership to another account |
+| 12 | `xcm_transfer_ownership` | Cross-chain ownership transfer (caller must be owner) |
+| 13 | `set_royalty_splits` | Configure royalty distribution (creator only, up to 10 collaborators) |
+| 14 | `enable_auto_renew` | Enable automatic subscription renewal |
+| 15 | `disable_auto_renew` | Disable automatic subscription renewal |
+| 16 | `query_rights_metadata` | Emit RightsMetadata struct for cross-chain consumption |
 
-```rust,ignore
-pub const PARACHAIN_ID: u32 = 1000;
-```
-
-### Omni Node Prerequisites
-
-[Omni Node](https://paritytech.github.io/polkadot-sdk/master/polkadot_sdk_docs/reference_docs/omni_node/index.html) can
-be used to run the parachain template's runtime. `polkadot-omni-node` binary crate usage is described at a high-level
-[on crates.io](https://crates.io/crates/polkadot-omni-node).
-
-#### Install `polkadot-omni-node`
-
-Please see the installation section at [`crates.io/omni-node`](https://crates.io/crates/polkadot-omni-node).
-
-#### Build `parachain-template-runtime`
-
-```sh
-cargo build --profile production
-```
-
-#### Install `staging-chain-spec-builder`
-
-Please see the installation section at [`crates.io/staging-chain-spec-builder`](https://crates.io/crates/staging-chain-spec-builder).
-
-#### Use `chain-spec-builder` to generate the `chain_spec.json` file
-
-```sh
-chain-spec-builder create --relay-chain "rococo-local" --para-id {{PARACHAIN_ID}} --runtime \
-    target/release/wbuild/parachain-template-runtime/parachain_template_runtime.wasm named-preset development
-```
-
-**Note**: the `relay-chain` and `para-id` flags are mandatory information required by
-Omni Node, and for parachain template case the value for `para-id` must be set to `{{PARACHAIN_ID}}`, since this
-is also the value injected through [ParachainInfo](https://docs.rs/staging-parachain-info/0.17.0/staging_parachain_info/)
-pallet into the `parachain-template-runtime`'s storage. The `relay-chain` value is set in accordance
-with the relay chain ID where this instantiation of parachain-template will connect to.
-
-#### Run Omni Node
-
-Start Omni Node with the generated chain spec. We'll start it in development mode (without a relay chain config), producing
-and finalizing blocks based on manual seal, configured below to seal a block with each second.
+## Build
 
 ```bash
-polkadot-omni-node --chain <path/to/chain_spec.json> --dev --dev-block-time 1000
+# Build the parachain node (release, ~5-10 min incremental)
+cargo build --release -p parachain-template-node
+
+# Run unit tests (no WASM build needed)
+SKIP_WASM_BUILD=1 cargo test -p pallet-content-rights
 ```
 
-However, such a setup is not close to what would run in production, and for that we need to setup a local
-relay chain network that will help with the block finalization. In this guide we'll setup a local relay chain
-as well. We'll not do it manually, by starting one node at a time, but we'll use [zombienet](https://paritytech.github.io/zombienet/intro.html).
+## Local Testnet
 
-Follow through the next section for more details on how to do it.
+### 2-Chain Topology (Development & Performance Testing)
 
-### Zombienet setup with Omni Node
+```bash
+# Spawn relay (alice, bob) + ParaA (100) at ws://9990 + ParaB (200) at ws://9991
+zombienet/javascript/packages/cli/dist/cli.js spawn zombienet-xcm-test.toml --provider native
 
-Assuming we continue from the last step of the previous section, we have a chain spec and we need to setup a relay chain.
-We can install `zombienet` as described [here](https://paritytech.github.io/zombienet/install.html#installation), and
-`zombienet-omni-node.toml` contains the network specification we want to start.
-
-#### Relay chain prerequisites
-
-Download the `polkadot` (and the accompanying `polkadot-prepare-worker` and `polkadot-execute-worker`) binaries from
-[Polkadot SDK releases](https://github.com/paritytech/polkadot-sdk/releases). Then expose them on `PATH` like so:
-
-```sh
-export PATH="$PATH:<path/to/binaries>"
+# Open HRMP channels (required for XCM tests)
+node scripts/open-hrmp-channels.mjs ws://127.0.0.1:<relay-port>
 ```
 
-#### Update `zombienet-omni-node.toml` with a valid chain spec path
+### 4-Chain Topology (Snowbridge / Ethereum Bridge Testing)
 
-To simplify the process of using the parachain-template with zombienet and Omni Node, we've added a pre-configured
-development chain spec (dev_chain_spec.json) to the parachain template. The zombienet-omni-node.toml file of this
-template points to it, but you can update it to an updated chain spec generated on your machine. To generate a
-chain spec refer to [staging-chain-spec-builder](https://crates.io/crates/staging-chain-spec-builder)
+```bash
+# Spawn relay + Bridge Hub (1013) + AssetHub (1000) + Content Rights (100)
+zombienet/javascript/packages/cli/dist/cli.js spawn zombienet-snowbridge.toml --provider native
 
-Then make the changes in the network specification like so:
+# Start local Ethereum (Geth + Lodestar)
+./scripts/start-ethereum.sh
 
-```toml
-# ...
-[[parachains]]
-id = "<PARACHAIN_ID>"
-chain_spec_path = "<TO BE UPDATED WITH A VALID PATH>"
-# ...
+# Deploy Gateway contracts and start relayers
+./scripts/snowbridge-full-setup.sh
 ```
 
-#### Start the network
+### Single-Chain Topology (Simple Development)
 
-```sh
-zombienet --provider native spawn zombienet-omni-node.toml
+```bash
+zombienet/javascript/packages/cli/dist/cli.js spawn my-content-rights.toml --provider native
 ```
 
-### Parachain Template Node
+## Performance Benchmarks
 
-As mentioned in the `Template Structure` section, the `node` crate is optionally compiled and it is an alternative
-to `Omni Node`. Similarly, it requires setting up a relay chain, and we'll use `zombienet` once more.
+Seven benchmark scripts in `scripts/perf/`:
 
-#### Install the `parachain-template-node`
+| Script | Purpose | Key Result |
+|--------|---------|------------|
+| `local-throughput.mjs` | TPS and latency for all 11 local extrinsics | 16.6 TPS peak, ~6s latency |
+| `block-utilization.mjs` | Block weight saturation | 300 txs at 12.9% weight |
+| `storage-growth.mjs` | Per-item storage costs | 191 bytes/content, 112 bytes/sub |
+| `xcm-latency.mjs` | Cross-chain operation latency | 3–5 blocks, 100% success |
+| `stress-test.mjs` | Sustained load (200 accounts, 3 min) | 26.2 TPS sustained |
+| `resource-monitor.mjs` | Collator resource utilization | 62ms block construction |
+| `reliability-test.mjs` | Uptime and MTTR | 90% uptime, 15s MTTR |
 
-```sh
-cargo install --path node
+Run all benchmarks (requires Zombienet with 2-chain topology):
+
+```bash
+node scripts/perf/local-throughput.mjs
+node scripts/perf/block-utilization.mjs
+node scripts/perf/storage-growth.mjs
+node scripts/perf/xcm-latency.mjs ws://127.0.0.1:9990 ws://127.0.0.1:9991 ws://127.0.0.1:<relay-port>
+node scripts/perf/stress-test.mjs
+node scripts/perf/resource-monitor.mjs http://127.0.0.1:<prometheus-port>/metrics ws://127.0.0.1:9990
+node scripts/perf/reliability-test.mjs
 ```
 
-#### Setup and start the network
+Results are saved to `scripts/perf/results/*.json`.
 
-For setup, please consider the instructions for `zombienet` installation [here](https://paritytech.github.io/zombienet/install.html#installation)
-and [relay chain prerequisites](#relay-chain-prerequisites).
+## Security
 
-We're left just with starting the network:
+The pallet underwent a security audit during development:
 
-```sh
-zombienet --provider native spawn zombienet.toml
+- **0 Critical, 0 High, 0 unresolved Medium** findings
+- 1 Medium finding (xcm_transfer_ownership auth gap) identified and fixed
+- 1 Low finding (view pack overwrite) identified and fixed
+- 3 Low findings acknowledged as design decisions
+- `cargo clippy` zero warnings
+- `cargo audit`: 8 advisories, all in polkadot-sdk transitive dependencies
+- 56 unit tests covering functional, security, XCM, royalty, auto-renewal, and metadata paths
+
+## Testing
+
+```bash
+# Unit tests (56 tests)
+SKIP_WASM_BUILD=1 cargo test -p pallet-content-rights
+
+# All workspace tests
+SKIP_WASM_BUILD=1 cargo test --workspace
+
+# XCM E2E test (requires running Zombienet with HRMP channels)
+node scripts/xcm-e2e-test.mjs
 ```
 
-### Connect with the Polkadot-JS Apps Front-End
+## Key Technical Decisions
 
-- 🌐 You can interact with your local node using the
-  hosted version of the Polkadot/Substrate Portal:
-  [relay chain](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944)
-  and [parachain](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9988).
+| Decision | Rationale |
+|----------|-----------|
+| FRAME pallet over pure ink! contracts | Direct storage access, native weight system, simpler XCM integration |
+| `pallet-nfts` over RMRK 2.0 | RMRK pallets abandoned (frozen at polkadot-v0.9.36) |
+| `on_initialize` over XCM `Schedule` | XCM v5 Schedule not production-ready; on-chain scheduler achieves same result |
+| Event-based metadata over XCM payload embedding | XCM ~4KB payload limit too small for rich metadata |
+| Paid XCM execution | WithdrawAsset + BuyExecution reflects realistic cross-chain fee model |
 
-- 🪐 A hosted version is also
-  available on [IPFS](https://dotapps.io/).
+## Configuration
 
-- 🧑‍🔧 You can also find the source code and instructions for hosting your own instance in the
-  [`polkadot-js/apps`](https://github.com/polkadot-js/apps) repository.
+Key runtime constants in `runtime/src/configs/mod.rs`:
 
-### Takeaways
+| Constant | Value | Effect |
+|----------|-------|--------|
+| `MaxChildrenPerNft` | 50 | Max subscribers/owners per content item (configurable) |
+| Para ID | 100 | Local development parachain ID |
+| Parachain RPC | ws://127.0.0.1:9990 | Fixed in Zombienet configs |
 
-Development parachains:
+## Thesis Context
 
-- 🔗 Connect to relay chains, and we showcased how to connect to a local one.
-- 🧹 Do not persist the state.
-- 💰 Are preconfigured with a genesis state that includes several prefunded development accounts.
-- 🧑‍⚖️ Development accounts are used as validators, collators, and `sudo` accounts.
+This implementation supports the research question: *"How can a shared-security, multi-chain framework built on Polkadot's XCM and ink! smart contracts deliver a unified rights token that natively supports recurring subscriptions, pay-per-view micro-transactions, and permanent ownership transfers across heterogeneous blockchain networks?"*
 
-## Runtime development
+The system achieves 26.2 TPS sustained throughput with ~6s deterministic latency, 100% XCM success rate across chains, and 100% creator revenue retention via a self-publishing model. Block weight utilization at 300 transactions is only 12.9%, meaning scaling to higher TPS is achievable via shorter block times or Elastic Scaling (multiple cores per parachain), without any pallet-level changes.
 
-### After adding or changing runtime pallets (e.g. pallet-contracts)
+## License
 
-When you add or remove pallets in the runtime and rebuild the node, **any already-running network (e.g. Zombienet) is still using the old runtime WASM** that was baked into genesis when it was first spawned. To see the new pallets (e.g. **contracts** in the Chain State dropdown):
-
-1. **Rebuild** the parachain node:  
-   `cargo build --release -p parachain-template-node`
-2. **Stop** the current Zombienet (or dev chain).
-3. **Respawn** the network so it starts from a **fresh genesis** using the new binary (and its embedded WASM).  
-   Example: run your usual spawn command again (e.g. `./zombienet-spawn.sh my-content-rights.toml --provider native`). Do not reuse old chain data; let Zombienet create a new temp dir so the new runtime is used from block 0.
-
-If you keep using the same chain data directory, the chain will keep executing the old runtime.
-
-**If you still don’t see the new pallets (e.g. contracts):** make sure you’re connected to the **parachain** RPC, not the relay chain. The relay (alice/bob) has a different runtime and won’t show your parachain’s pallets. In `my-content-rights.toml` the parachain collator uses `rpc_port = 9990`; in Polkadot.js Apps connect to **`ws://127.0.0.1:9990`** to get the parachain (with contracts). You can confirm you’re on the parachain: Developer → Chain state → **parachainInfo** → **parachainId()** should return your para id (e.g. 100).
-
-**If Polkadot.js Apps shows “Initializing connection” forever when using `ws://127.0.0.1:9990`:** the parachain collator may be on a different port. In the zombienet spawn output, after “Network launched”, check the **collator01** row: **Direct Link (pjs)** shows the actual RPC URL (e.g. `ws://127.0.0.1:9989`). Use that port in Polkadot.js Apps. This repo is configured for `rpc_port = 9990`; if Zombienet still used 9989, a patch in `zombienet/javascript` was applied so it respects `rpc_port`. Rebuild zombienet after pulling: `cd zombienet/javascript && npm run build`, then spawn again. If nothing is listening on the port shown, run `./scripts/check-parachain-port.sh <port>` and check the collator log path from the spawn terminal.
-
-**If you’re on the parachain (9990) and contracts still don’t appear**, the chain was almost certainly created with an older binary. Do a **clean rebuild and fresh spawn** from the repo root:
-
-1. **Stop** Zombienet completely (Ctrl+C or kill the process).
-2. **Clean and rebuild** so the runtime WASM is definitely regenerated:
-   ```sh
-   cargo clean -p parachain-template-runtime -p parachain-template-node
-   cargo build --release -p parachain-template-node
-   ```
-3. **Spawn from repo root** (so the script resolves the binary path correctly):
-   ```sh
-   cd /path/to/content-rights-parachain
-   ./zombienet-spawn.sh my-content-rights.toml --provider native
-   ```
-4. After the network is running (blocks in explorers), connect to **`ws://127.0.0.1:9990`** and check the Chain State pallet list for **contracts**.
-
-Do **not** pass `--dir` to the spawn script when testing; let Zombienet create a new temp dir so the chain spec is generated from the binary you just built.
-
-**Verify your binary:** From repo root, run `./scripts/verify-runtime-has-contracts.sh` after building. If it prints "Contracts pallet: FOUND", your binary is correct and the running chain was created with an older one; do a full stop and respawn (no `--dir`). If it prints "NOT FOUND", run `./scripts/clean-runtime-wasm.sh` then `cargo build --release -p parachain-template-node` and verify again (the runtime uses `runtime-full` so pallet-contracts is included; a stale build can omit it).
-
-**"Contracts" still not in the list?** You are in the right place: **Developer → Chain state**; the pallet list is the left dropdown. Run `./scripts/contracts-checklist.sh` from repo root: it verifies your binary and prints the exact clean-rebuild-and-respawn steps.
-
-**ink! smart contracts:** To develop and deploy ink! contracts on this parachain, set up the ink! environment (Rust, `rust-src`, wasm32 target, `cargo-contract`) and use the parachain RPC at **`ws://127.0.0.1:9990`**. See **[INK_SETUP.md](INK_SETUP.md)** for step-by-step setup and `./scripts/check-ink-env.sh` to verify the environment. For calling contracts, the **Contracts UI** (e.g. [ui.use.ink](https://ui.use.ink)) is recommended; use weight limits below block capacity (e.g. RefTime **`1000000000000`**, ProofSize **`2097152`**) to avoid "Transaction would exhaust the block limits". See **[docs/DEPLOY_AND_CALL.md](docs/DEPLOY_AND_CALL.md)** for the full UI flow and troubleshooting.
-
-We recommend using [`chopsticks`](https://github.com/AcalaNetwork/chopsticks) when the focus is more on the runtime
-development and `OmniNode` is enough as is.
-
-### Install chopsticks
-
-To use `chopsticks`, please install the latest version according to the installation [guide](https://github.com/AcalaNetwork/chopsticks?tab=readme-ov-file#install).
-
-### Build a raw chain spec
-
-Build the `parachain-template-runtime` as mentioned before in this guide and use `chain-spec-builder`
-again but this time by passing `--raw-storage` flag:
-
-```sh
-chain-spec-builder create --raw-storage --relay-chain "rococo-local" --para-id {{PARACHAIN_ID}} --runtime \
-    target/release/wbuild/parachain-template-runtime/parachain_template_runtime.wasm named-preset development
-```
-
-### Start `chopsticks` with the chain spec
-
-```sh
-npx @acala-network/chopsticks@latest --chain-spec <path/to/chain_spec.json>
-```
-
-### Alternatives
-
-`OmniNode` can be still used for runtime development if using the `--dev` flag, while `parachain-template-node` doesn't
-support it at this moment. It can still be used to test a runtime in a full setup where it is started alongside a
-relay chain network (see [Parachain Template node](#parachain-template-node) setup).
-
-## Contributing
-
-- 🔄 This template is automatically updated after releases in the main [Polkadot SDK monorepo](https://github.com/paritytech/polkadot-sdk).
-
-- ➡️ Any pull requests should be directed to this [source](https://github.com/paritytech/polkadot-sdk/tree/master/templates/parachain).
-
-- 😇 Please refer to the monorepo's
-  [contribution guidelines](https://github.com/paritytech/polkadot-sdk/blob/master/docs/contributor/CONTRIBUTING.md) and
-  [Code of Conduct](https://github.com/paritytech/polkadot-sdk/blob/master/docs/contributor/CODE_OF_CONDUCT.md).
-
-## Getting Help
-
-- 🧑‍🏫 To learn about Polkadot in general, [docs.Polkadot.com](https://docs.polkadot.com/) website is a good starting point.
-
-- 🧑‍🔧 For technical introduction, [here](https://github.com/paritytech/polkadot-sdk#-documentation) are
-  the Polkadot SDK documentation resources.
-
-- 👥 Additionally, there are [GitHub issues](https://github.com/paritytech/polkadot-sdk/issues) and
-  [Substrate StackExchange](https://substrate.stackexchange.com/).
-- 👥You can also reach out on the [Official Polkdot discord server](https://polkadot-discord.w3f.tools/)
-- 🧑Reach out on [Telegram](https://t.me/substratedevs) for more questions and discussions
+MIT-0
