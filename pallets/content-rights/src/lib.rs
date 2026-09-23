@@ -18,7 +18,6 @@ mod benchmarking;
 pub mod pallet {
 	use frame::prelude::*;
 	use polkadot_sdk::pallet_nfts;
-	use scale_info::prelude::vec::Vec;
 
 	use crate::types::*;
 	use crate::weights::WeightInfo as _;
@@ -46,6 +45,11 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
+
+	/// Maximum auto-renewals processed per block (size of one `RenewalQueue` bucket).
+	pub const MAX_RENEWALS_PER_BLOCK: u32 = 10;
+	/// How many blocks ahead `enqueue_renewal` searches for a bucket with free space.
+	pub const MAX_RENEWAL_SLOT_SEARCH: u32 = 100;
 
 	// --------------- Storage ---------------
 
@@ -107,13 +111,27 @@ pub mod pallet {
 	>;
 
 	/// Set of (content_id, subscriber) pairs with auto-renew enabled.
-	/// Indexed for efficient on_initialize scanning.
+	/// Authoritative "is auto-renew on" set; scheduling lives in `RenewalQueue`.
 	#[pallet::storage]
 	pub type AutoRenewIndex<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
 		(u32, T::AccountId),
 		bool,
+		ValueQuery,
+	>;
+
+	/// Finding K: block number -> (content_id, subscriber) pairs due for auto-renewal
+	/// at that block. `on_initialize` takes only the current block's bucket, so no
+	/// scan of `AutoRenewIndex` is needed and no entry can be starved. Entries are
+	/// validated lazily when processed (disabled or manually extended subscriptions
+	/// are dropped or re-queued), so other extrinsics need not touch the queue.
+	#[pallet::storage]
+	pub type RenewalQueue<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		u32,
+		BoundedVec<(u32, T::AccountId), ConstU32<MAX_RENEWALS_PER_BLOCK>>,
 		ValueQuery,
 	>;
 
@@ -252,6 +270,8 @@ pub mod pallet {
 	pub enum AutoRenewFailReason {
 		InsufficientBalance,
 		ContentNotFound,
+		/// No free `RenewalQueue` slot for the next period.
+		RenewalQueueFull,
 	}
 
 	// --------------- Errors ---------------
@@ -277,70 +297,102 @@ pub mod pallet {
 		AutoRenewAlreadyEnabled,
 		AutoRenewNotEnabled,
 		Unauthorized,
+		/// No renewal slot free within `MAX_RENEWAL_SLOT_SEARCH` blocks of expiry.
+		RenewalQueueFull,
 	}
 
 	// --------------- Hooks ---------------
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		/// Process auto-renewals for expired subscriptions each block.
+		/// Process auto-renewals due at this block (Finding K).
+		///
+		/// Only the current block's `RenewalQueue` bucket is read, so the work is
+		/// bounded by `MAX_RENEWALS_PER_BLOCK` and no entry can be starved. Each
+		/// payment runs in its own storage layer, so a failure part-way through a
+		/// royalty split rolls back every transfer made for that renewal.
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
 			let current_block: u32 = <frame_system::Pallet<T>>::block_number()
 				.try_into()
 				.unwrap_or(0u32);
+			let db = T::DbWeight::get();
 
-			let mut weight = Weight::zero();
-			let mut renewals_processed = 0u32;
-			const MAX_RENEWALS_PER_BLOCK: u32 = 10;
+			// Read + clear this block's bucket.
+			let mut weight = db.reads_writes(1, 1);
+			let due = RenewalQueue::<T>::take(current_block);
 
-			// Iterate auto-renew index to find expired subscriptions
-			// Collect into a bounded iteration to avoid unbounded reads
-			let mut entries_count = 0u64;
-			let entries: Vec<_> = AutoRenewIndex::<T>::iter()
-				.take(MAX_RENEWALS_PER_BLOCK as usize * 2)
-				.inspect(|_| entries_count += 1)
-				.collect();
-			weight = weight.saturating_add(T::DbWeight::get().reads(entries_count));
+			for (content_id, subscriber) in due.into_iter() {
+				// AutoRenewIndex + Subscriptions
+				weight = weight.saturating_add(db.reads(2));
 
-			for ((content_id, subscriber), _) in entries {
-				if renewals_processed >= MAX_RENEWALS_PER_BLOCK {
-					break;
-				}
-
-				let sub = match Subscriptions::<T>::get::<u32, &T::AccountId>(content_id, &subscriber) {
-					Some(s) => s,
-					None => {
-						// Subscription removed — clean up index
-						AutoRenewIndex::<T>::remove((content_id, &subscriber));
-						continue;
-					}
-				};
-
-				// Only process if expired
-				if current_block < sub.expiry_block {
+				// Auto-renew disabled since this entry was queued: drop it.
+				if !AutoRenewIndex::<T>::contains_key((content_id, &subscriber)) {
 					continue;
 				}
 
+				let sub = match Subscriptions::<T>::get(content_id, &subscriber) {
+					Some(s) if s.auto_renew => s,
+					_ => {
+						AutoRenewIndex::<T>::remove((content_id, &subscriber));
+						weight = weight.saturating_add(db.writes(1));
+						continue;
+					},
+				};
+
+				// Extended manually since queued: re-queue at the new expiry.
+				if current_block < sub.expiry_block {
+					match Self::enqueue_renewal(content_id, &subscriber, sub.expiry_block) {
+						Ok(offset) => {
+							weight = weight
+								.saturating_add(db.reads_writes(offset as u64 + 1, 1));
+						},
+						Err(_) => {
+							Self::stop_auto_renew(
+								content_id,
+								&subscriber,
+								AutoRenewFailReason::RenewalQueueFull,
+							);
+							weight = weight.saturating_add(
+								db.reads_writes(MAX_RENEWAL_SLOT_SEARCH as u64, 2),
+							);
+						},
+					}
+					continue;
+				}
+
+				weight = weight.saturating_add(db.reads(1)); // Contents
 				let content = match Contents::<T>::get(content_id) {
 					Some(c) => c,
 					None => {
-						Self::deposit_event(Event::AutoRenewalFailed {
+						Self::stop_auto_renew(
 							content_id,
-							subscriber: subscriber.clone(),
-							reason: AutoRenewFailReason::ContentNotFound,
-						});
-						AutoRenewIndex::<T>::remove((content_id, &subscriber));
+							&subscriber,
+							AutoRenewFailReason::ContentNotFound,
+						);
+						weight = weight.saturating_add(db.writes(2));
 						continue;
-					}
+					},
 				};
 
-				// Attempt payment
-				match Self::pay_with_royalties(
-					&subscriber,
-					&content.creator,
-					content_id,
-					content.subscription_price,
-				) {
+				// One transfer per royalty recipient plus the creator's remainder;
+				// each transfer reads and writes two accounts.
+				let splits = RoyaltySplits::<T>::decode_len(content_id).unwrap_or(0) as u64;
+				let transfers = splits.saturating_add(1);
+				weight = weight.saturating_add(
+					db.reads_writes(1 + 2 * transfers, 2 * transfers + 1),
+				);
+
+				// Atomic payment: all royalty transfers succeed, or none persist.
+				let paid = frame::deps::frame_support::storage::with_storage_layer(|| {
+					Self::pay_with_royalties(
+						&subscriber,
+						&content.creator,
+						content_id,
+						content.subscription_price,
+					)
+				});
+
+				match paid {
 					Ok(()) => {
 						let new_expiry = current_block.saturating_add(content.period_length);
 						Subscriptions::<T>::mutate(content_id, &subscriber, |sub_opt| {
@@ -348,32 +400,39 @@ pub mod pallet {
 								sub.expiry_block = new_expiry;
 							}
 						});
-
 						Self::deposit_event(Event::AutoRenewalProcessed {
 							content_id,
 							subscriber: subscriber.clone(),
 							new_expiry_block: new_expiry,
 						});
-						renewals_processed += 1;
-					}
+
+						match Self::enqueue_renewal(content_id, &subscriber, new_expiry) {
+							Ok(offset) => {
+								weight = weight
+									.saturating_add(db.reads_writes(offset as u64 + 1, 1));
+							},
+							Err(_) => {
+								// Renewed this period, but no slot for the next one.
+								Self::stop_auto_renew(
+									content_id,
+									&subscriber,
+									AutoRenewFailReason::RenewalQueueFull,
+								);
+								weight = weight.saturating_add(
+									db.reads_writes(MAX_RENEWAL_SLOT_SEARCH as u64, 2),
+								);
+							},
+						}
+					},
 					Err(_) => {
-						// Payment failed — disable auto-renew
-						Subscriptions::<T>::mutate(content_id, &subscriber, |sub_opt| {
-							if let Some(sub) = sub_opt {
-								sub.auto_renew = false;
-							}
-						});
-						AutoRenewIndex::<T>::remove((content_id, &subscriber));
-
-						Self::deposit_event(Event::AutoRenewalFailed {
+						Self::stop_auto_renew(
 							content_id,
-							subscriber: subscriber.clone(),
-							reason: AutoRenewFailReason::InsufficientBalance,
-						});
-					}
+							&subscriber,
+							AutoRenewFailReason::InsufficientBalance,
+						);
+						weight = weight.saturating_add(db.writes(2));
+					},
 				}
-
-				weight = weight.saturating_add(T::DbWeight::get().reads_writes(3, 2));
 			}
 
 			weight
@@ -502,6 +561,44 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Queue an auto-renewal for `at`, or the first block after it (within
+		/// `MAX_RENEWAL_SLOT_SEARCH`) whose bucket has room. Idempotent per bucket.
+		/// Returns how many blocks past `at` the entry was placed.
+		pub(crate) fn enqueue_renewal(
+			content_id: u32,
+			who: &T::AccountId,
+			at: u32,
+		) -> Result<u32, DispatchError> {
+			for offset in 0..MAX_RENEWAL_SLOT_SEARCH {
+				let block = at.saturating_add(offset);
+				let placed = RenewalQueue::<T>::try_mutate(block, |bucket| -> Result<(), ()> {
+					if bucket.iter().any(|(c, a)| *c == content_id && a == who) {
+						return Ok(());
+					}
+					bucket.try_push((content_id, who.clone())).map_err(|_| ())
+				});
+				if placed.is_ok() {
+					return Ok(offset);
+				}
+			}
+			Err(Error::<T>::RenewalQueueFull.into())
+		}
+
+		/// Turn auto-renewal off for a subscriber and report why.
+		fn stop_auto_renew(content_id: u32, who: &T::AccountId, reason: AutoRenewFailReason) {
+			Subscriptions::<T>::mutate(content_id, who, |sub_opt| {
+				if let Some(sub) = sub_opt {
+					sub.auto_renew = false;
+				}
+			});
+			AutoRenewIndex::<T>::remove((content_id, who));
+			Self::deposit_event(Event::AutoRenewalFailed {
+				content_id,
+				subscriber: who.clone(),
+				reason,
+			});
+		}
+
 		/// Low-level transfer helper.
 		fn transfer_amount(
 			from: &T::AccountId,
@@ -545,8 +642,14 @@ pub mod pallet {
 
 			// Allocate a collection ID and create the NFT collection
 			let collection_id = Self::next_collection_id()?;
+			// Finding J: items in a CCRMS collection are non-transferable receipts.
+			// The storage maps are authoritative; rights move only through this pallet
+			// (e.g. `transfer_ownership`), never through pallet-nfts transfer/buy/swap.
+			// The collection owner cannot re-enable this; only ForceOrigin can.
 			let collection_config = pallet_nfts::CollectionConfigFor::<T> {
-				settings: Default::default(),
+				settings: pallet_nfts::CollectionSettings::from_disabled(
+					pallet_nfts::CollectionSetting::TransferableItems.into(),
+				),
 				max_supply: None,
 				mint_settings: Default::default(),
 			};
@@ -748,11 +851,11 @@ pub mod pallet {
 				let content =
 					Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
 				// Burn the child NFT
-				let _ = pallet_nfts::Pallet::<T>::do_burn(
+				pallet_nfts::Pallet::<T>::do_burn(
 					content.collection_id,
 					pack.child_item_id,
 					|_| Ok(()),
-				);
+				)?;
 				// Clean up nesting index
 				Children::<T>::mutate(
 					content.collection_id,
@@ -1065,11 +1168,11 @@ pub mod pallet {
 			);
 
 			// Burn old owner's child NFT
-			let _ = pallet_nfts::Pallet::<T>::do_burn(
+			pallet_nfts::Pallet::<T>::do_burn(
 				content.collection_id,
 				ownership_info.child_item_id,
 				|_| Ok(()),
-			);
+			)?;
 			Children::<T>::mutate(
 				content.collection_id,
 				content.content_item_id,
@@ -1131,11 +1234,11 @@ pub mod pallet {
 			);
 
 			// Burn old owner's child NFT
-			let _ = pallet_nfts::Pallet::<T>::do_burn(
+			pallet_nfts::Pallet::<T>::do_burn(
 				content.collection_id,
 				ownership_info.child_item_id,
 				|_| Ok(()),
-			);
+			)?;
 			Children::<T>::mutate(
 				content.collection_id,
 				content.content_item_id,
@@ -1184,14 +1287,27 @@ pub mod pallet {
 		) -> DispatchResult {
 			let subscriber = ensure_signed(origin)?;
 
-			Subscriptions::<T>::try_mutate(content_id, &subscriber, |sub_opt| -> DispatchResult {
-				let sub = sub_opt.as_mut().ok_or(Error::<T>::SubscriptionNotFound)?;
-				ensure!(!sub.auto_renew, Error::<T>::AutoRenewAlreadyEnabled);
-				sub.auto_renew = true;
-				Ok(())
-			})?;
+			let expiry_block = Subscriptions::<T>::try_mutate(
+				content_id,
+				&subscriber,
+				|sub_opt| -> Result<u32, DispatchError> {
+					let sub = sub_opt.as_mut().ok_or(Error::<T>::SubscriptionNotFound)?;
+					ensure!(!sub.auto_renew, Error::<T>::AutoRenewAlreadyEnabled);
+					sub.auto_renew = true;
+					Ok(sub.expiry_block)
+				},
+			)?;
 
 			AutoRenewIndex::<T>::insert((content_id, &subscriber), true);
+
+			// Queue the renewal at expiry (or next block if already expired; this
+			// block's on_initialize has already run).
+			let now: u32 = <frame_system::Pallet<T>>::block_number().try_into().unwrap_or(0u32);
+			Self::enqueue_renewal(
+				content_id,
+				&subscriber,
+				expiry_block.max(now.saturating_add(1)),
+			)?;
 
 			Self::deposit_event(Event::AutoRenewEnabled {
 				content_id,

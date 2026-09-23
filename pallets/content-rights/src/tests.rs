@@ -1,4 +1,5 @@
 use crate::{mock::*, pallet, types::{RoyaltySplit, RightsMetadata, RightsType}};
+use polkadot_sdk::pallet_nfts;
 use frame::{
 	deps::frame_support::{assert_noop, assert_ok},
 	prelude::*,
@@ -21,6 +22,16 @@ fn register_default_content(creator: AccountId) -> u32 {
 		100,              // period_length (blocks)
 	));
 	content_id
+}
+
+/// Run `on_initialize` for every block up to and including `n`, as a real chain does.
+fn run_to_block(n: u32) {
+	let mut now: u32 = System::block_number().try_into().unwrap();
+	while now < n {
+		now += 1;
+		System::set_block_number(now.into());
+		ContentRights::on_initialize(System::block_number());
+	}
 }
 
 // ==================== register_content ====================
@@ -1186,11 +1197,8 @@ fn auto_renew_processes_expired_subscription() {
 		assert!(sub.auto_renew);
 		let original_expiry = sub.expiry_block;
 
-		// Advance past expiry
-		System::set_block_number((original_expiry + 1).into());
-
-		// Trigger on_initialize — should auto-renew
-		ContentRights::on_initialize(System::block_number());
+		// Advance to expiry, running on_initialize each block — should auto-renew
+		run_to_block(original_expiry);
 
 		// Check subscription was renewed
 		let renewed_sub = pallet::Subscriptions::<Test>::get(content_id, &subscriber).unwrap();
@@ -1231,9 +1239,8 @@ fn auto_renew_fails_insufficient_balance() {
 		let balance = Balances::free_balance(&subscriber);
 		let _ = Balances::force_set_balance(RuntimeOrigin::root(), subscriber.clone().into(), 1);
 
-		// Advance past expiry
-		System::set_block_number((sub.expiry_block + 1).into());
-		ContentRights::on_initialize(System::block_number());
+		// Advance to expiry, running on_initialize each block
+		run_to_block(sub.expiry_block);
 
 		// Auto-renew should be disabled after failure
 		let failed_sub = pallet::Subscriptions::<Test>::get(content_id, &subscriber).unwrap();
@@ -1486,5 +1493,233 @@ fn royalty_no_splits_full_payment_to_creator() {
 		// Creator receives payment (100 minus NFT deposit costs from minting child)
 		let creator_gain = creator_after as i64 - creator_before as i64;
 		assert!(creator_gain > 0, "Creator should receive payment");
+	});
+}
+
+// ==================== Finding J: child NFTs are non-transferable ====================
+
+/// A rights holder cannot move their child NFT through pallet-nfts, so the NFT
+/// can never diverge from the `Ownership` map.
+#[test]
+fn child_nft_cannot_be_transferred_via_pallet_nfts() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let owner = account(2);
+		let buyer = account(3);
+		let content_id = register_default_content(creator);
+		assert_ok!(ContentRights::purchase_ownership(RuntimeOrigin::signed(owner.clone()), content_id));
+
+		let collection = pallet::Contents::<Test>::get(content_id).unwrap().collection_id;
+		let item = pallet::Ownership::<Test>::get(content_id, &owner).unwrap().child_item_id;
+
+		// Direct transfer is rejected.
+		assert_noop!(
+			Nfts::transfer(RuntimeOrigin::signed(owner.clone()), collection, item, buyer.clone()),
+			pallet_nfts::Error::<Test>::ItemsNonTransferable
+		);
+		// Listing for sale (set_price -> buy_item) is rejected.
+		assert_noop!(
+			Nfts::set_price(RuntimeOrigin::signed(owner.clone()), collection, item, Some(1), None),
+			pallet_nfts::Error::<Test>::ItemsNonTransferable
+		);
+
+		// Records still agree: owner holds both the NFT and the map entry.
+		assert_eq!(pallet_nfts::Pallet::<Test>::owner(collection, item), Some(owner.clone()));
+		assert!(pallet::Ownership::<Test>::contains_key(content_id, &owner));
+		assert!(!pallet::Ownership::<Test>::contains_key(content_id, &buyer));
+	});
+}
+
+/// Rights still move through the pallet: transfer_ownership burns the old
+/// (non-transferable) child and mints a new one for the recipient.
+#[test]
+fn transfer_ownership_works_with_non_transferable_children() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let from = account(2);
+		let to = account(3);
+		let content_id = register_default_content(creator);
+		assert_ok!(ContentRights::purchase_ownership(RuntimeOrigin::signed(from.clone()), content_id));
+
+		let collection = pallet::Contents::<Test>::get(content_id).unwrap().collection_id;
+		let old_item = pallet::Ownership::<Test>::get(content_id, &from).unwrap().child_item_id;
+
+		assert_ok!(ContentRights::transfer_ownership(
+			RuntimeOrigin::signed(from.clone()),
+			content_id,
+			to.clone(),
+		));
+
+		let new_item = pallet::Ownership::<Test>::get(content_id, &to).unwrap().child_item_id;
+		assert_eq!(pallet_nfts::Pallet::<Test>::owner(collection, old_item), None);
+		assert_eq!(pallet_nfts::Pallet::<Test>::owner(collection, new_item), Some(to));
+	});
+}
+
+// ==================== Finding K: auto-renewal queue and atomic payment ====================
+
+fn fund(who: &AccountId, amount: u64) {
+	assert_ok!(Balances::force_set_balance(RuntimeOrigin::root(), who.clone(), amount));
+}
+
+fn subscribe_with_auto_renew(who: &AccountId, content_id: u32) {
+	assert_ok!(ContentRights::subscribe(RuntimeOrigin::signed(who.clone()), content_id));
+	assert_ok!(ContentRights::enable_auto_renew(RuntimeOrigin::signed(who.clone()), content_id));
+}
+
+/// Many long-period auto-renew subscribers must not prevent a short-period
+/// subscriber from renewing exactly at its expiry block. (The old hook scanned
+/// only the first 20 index entries per block and could starve later ones.)
+#[test]
+fn auto_renew_is_not_starved_by_unexpired_entries() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+
+		// Content A: long period (1000 blocks). Content B: default 100 blocks.
+		assert_ok!(ContentRights::register_content(
+			RuntimeOrigin::signed(creator.clone()),
+			[1u8; 32],
+			default_title(),
+			100,
+			10,
+			500,
+			1000,
+		));
+		let content_a = 0u32;
+		let content_b = register_default_content(creator);
+
+		for id in 10u8..40 {
+			let who = account(id);
+			fund(&who, 10_000);
+			subscribe_with_auto_renew(&who, content_a);
+		}
+		let late = account(2);
+		subscribe_with_auto_renew(&late, content_b);
+		let expiry = pallet::Subscriptions::<Test>::get(content_b, &late).unwrap().expiry_block;
+
+		run_to_block(expiry);
+
+		let renewed = pallet::Subscriptions::<Test>::get(content_b, &late).unwrap();
+		assert_eq!(renewed.expiry_block, expiry + 100);
+		assert!(renewed.auto_renew);
+		// And it is queued for its next period.
+		assert!(pallet::RenewalQueue::<Test>::get(expiry + 100)
+			.iter()
+			.any(|(c, a)| *c == content_b && *a == late));
+	});
+}
+
+/// When more subscribers share an expiry block than one bucket holds, overflow
+/// goes to the following blocks: nobody is dropped and no block does more than
+/// MAX_RENEWALS_PER_BLOCK renewals.
+#[test]
+fn auto_renew_overflow_spills_to_next_blocks() {
+	new_test_ext().execute_with(|| {
+		let content_id = register_default_content(account(1));
+		let subscribers: Vec<AccountId> = (10u8..35).map(account).collect(); // 25
+		for who in &subscribers {
+			fund(who, 10_000);
+			subscribe_with_auto_renew(who, content_id);
+		}
+		let expiry = pallet::Subscriptions::<Test>::get(content_id, &subscribers[0])
+			.unwrap()
+			.expiry_block;
+
+		run_to_block(expiry - 1);
+		for block in expiry..expiry + 3 {
+			System::reset_events();
+			run_to_block(block);
+			let processed = System::events()
+				.iter()
+				.filter(|r| matches!(
+					r.event,
+					RuntimeEvent::ContentRights(crate::Event::AutoRenewalProcessed { .. })
+				))
+				.count() as u32;
+			assert!(processed <= pallet::MAX_RENEWALS_PER_BLOCK);
+		}
+
+		for who in &subscribers {
+			let sub = pallet::Subscriptions::<Test>::get(content_id, who).unwrap();
+			assert!(sub.expiry_block > expiry, "every subscriber renewed");
+			assert!(sub.auto_renew);
+		}
+	});
+}
+
+/// A payment that fails part-way through a royalty split is rolled back
+/// entirely: the collaborator keeps nothing and the subscriber loses nothing.
+#[test]
+fn auto_renew_payment_is_atomic_across_royalty_splits() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let subscriber = account(2);
+		let collaborator = account(5);
+		fund(&collaborator, 1_000);
+
+		let content_id = register_default_content(creator.clone());
+		let splits: BoundedVec<RoyaltySplit, ConstU32<10>> =
+			vec![RoyaltySplit { recipient: account_bytes(5), basis_points: 2500 }]
+				.try_into()
+				.unwrap();
+		assert_ok!(ContentRights::set_royalty_splits(
+			RuntimeOrigin::signed(creator.clone()),
+			content_id,
+			splits,
+		));
+
+		subscribe_with_auto_renew(&subscriber, content_id);
+		let expiry = pallet::Subscriptions::<Test>::get(content_id, &subscriber)
+			.unwrap()
+			.expiry_block;
+
+		// Enough for the 25 royalty share, not for the 75 remainder.
+		fund(&subscriber, 60);
+		let collab_before = Balances::free_balance(&collaborator);
+		let creator_before = Balances::free_balance(&creator);
+
+		run_to_block(expiry);
+
+		assert_eq!(Balances::free_balance(&subscriber), 60, "subscriber refunded in full");
+		assert_eq!(Balances::free_balance(&collaborator), collab_before, "no partial payout");
+		assert_eq!(Balances::free_balance(&creator), creator_before);
+
+		let sub = pallet::Subscriptions::<Test>::get(content_id, &subscriber).unwrap();
+		assert_eq!(sub.expiry_block, expiry, "not renewed");
+		assert!(!sub.auto_renew);
+		System::assert_has_event(
+			crate::Event::<Test>::AutoRenewalFailed {
+				content_id,
+				subscriber,
+				reason: pallet::AutoRenewFailReason::InsufficientBalance,
+			}
+			.into(),
+		);
+	});
+}
+
+/// Disabling auto-renew leaves a stale queue entry, which is dropped harmlessly.
+#[test]
+fn disabled_auto_renew_is_not_charged() {
+	new_test_ext().execute_with(|| {
+		let content_id = register_default_content(account(1));
+		let subscriber = account(2);
+		subscribe_with_auto_renew(&subscriber, content_id);
+		assert_ok!(ContentRights::disable_auto_renew(
+			RuntimeOrigin::signed(subscriber.clone()),
+			content_id,
+		));
+		let expiry = pallet::Subscriptions::<Test>::get(content_id, &subscriber)
+			.unwrap()
+			.expiry_block;
+		let before = Balances::free_balance(&subscriber);
+
+		run_to_block(expiry);
+
+		assert_eq!(Balances::free_balance(&subscriber), before);
+		assert_eq!(
+			pallet::Subscriptions::<Test>::get(content_id, &subscriber).unwrap().expiry_block,
+			expiry
+		);
 	});
 }
