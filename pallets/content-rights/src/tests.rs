@@ -1723,3 +1723,34 @@ fn disabled_auto_renew_is_not_charged() {
 		);
 	});
 }
+
+/// If every bucket in the search window is full, enabling auto-renew fails
+/// cleanly with RenewalQueueFull and changes nothing.
+#[test]
+fn enable_auto_renew_fails_when_queue_full() {
+	new_test_ext().execute_with(|| {
+		let content_id = register_default_content(account(1));
+		let subscriber = account(2);
+		assert_ok!(ContentRights::subscribe(RuntimeOrigin::signed(subscriber.clone()), content_id));
+		let expiry = pallet::Subscriptions::<Test>::get(content_id, &subscriber)
+			.unwrap()
+			.expiry_block;
+
+		// Fill every bucket from expiry across the whole search window.
+		let filler: BoundedVec<(u32, AccountId), ConstU32<{ pallet::MAX_RENEWALS_PER_BLOCK }>> =
+			(0..pallet::MAX_RENEWALS_PER_BLOCK)
+				.map(|i| (999u32, account(100 + i as u8)))
+				.collect::<Vec<_>>()
+				.try_into()
+				.unwrap();
+		for offset in 0..pallet::MAX_RENEWAL_SLOT_SEARCH {
+			pallet::RenewalQueue::<Test>::insert(expiry + offset, filler.clone());
+		}
+
+		assert_noop!(
+			ContentRights::enable_auto_renew(RuntimeOrigin::signed(subscriber.clone()), content_id),
+			crate::Error::<Test>::RenewalQueueFull
+		);
+		assert!(!pallet::AutoRenewIndex::<Test>::contains_key((content_id, &subscriber)));
+	});
+}
