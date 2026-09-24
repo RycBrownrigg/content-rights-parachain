@@ -6,7 +6,7 @@
  * centralised platforms, existing Web3 marketplaces, and bridge-based solutions.
  *
  * Models four competing dynamics that create genuine trade-offs:
- *   1. Platform fees (centralised 30-45%, CCRMS 1-5%)
+ *   1. Platform fees (centralised 30-45%, Web3 marketplace 0-2.5%, CCRMS 1-5%)
  *   2. Discovery/network effects (centralised algorithms boost audience)
  *   3. On-chain transaction costs (CCRMS cost per tx scales with volume)
  *   4. Subscriber churn (centralised has stickier UX, lower churn)
@@ -128,7 +128,12 @@ const PLATFORMS = {
     txCostPerUnit: 0.0,                              // near-zero marginal cost
   },
   web3: {
-    feeLow: 0.075, feeHigh: 0.15,
+    // Marketplace fees 0–2.5%: OpenSea 0% (promotional; originally 2.5%),
+    // Blur 0%, X2Y2 0.5%, Magic Eden 2%, LooksRare 2% (Binance Research,
+    // "State of NFT Marketplaces", 2023); Blur proposal for a 0.5% protocol
+    // fee (The Block, 2024). Creator royalties are income to the creator,
+    // not a cost, so they are excluded. (Previously 7.5–15%, uncited.)
+    feeLow: 0.0, feeHigh: 0.025,
     discoveryAddLow: 100, discoveryAddHigh: 800,     // marketplace adds some discovery
     churnLow: 0.05, churnHigh: 0.10,                 // moderate churn
     txCostPerUnit: 0.005,                             // gas fees per tx (~$0.005 L2)
