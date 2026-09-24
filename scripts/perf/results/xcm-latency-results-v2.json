@@ -1,0 +1,673 @@
+{
+  "version": 2,
+  "timestamp": "2026-09-24T18:53:58.414Z",
+  "paraA": "ws://127.0.0.1:9990",
+  "paraB": "ws://127.0.0.1:9991",
+  "runsPerOperation": 10,
+  "maxBlocks": 30,
+  "gapSeconds": 12,
+  "partial": false,
+  "contentIds": {
+    "xcm_subscribe": 0,
+    "xcm_purchase_views": 1,
+    "xcm_purchase_ownership": 2
+  },
+  "summary": {
+    "xcm_subscribe": {
+      "succeeded": 10,
+      "runs": 10,
+      "lateArrivals": 0,
+      "neverArrived": 0,
+      "paraABlocks": {
+        "n": 10,
+        "mean": 5,
+        "sd": 0.816496580927726,
+        "median": 5,
+        "min": 3,
+        "max": 6
+      },
+      "latencySec": {
+        "n": 10,
+        "mean": 28.8,
+        "sd": 6.196773353931867,
+        "median": 30,
+        "min": 18,
+        "max": 36
+      },
+      "wallClockSec": {
+        "n": 10,
+        "mean": 66.50890000000001,
+        "sd": 4.688749050179116,
+        "median": 67.9165,
+        "min": 55.964,
+        "max": 72.279
+      }
+    },
+    "xcm_purchase_views": {
+      "succeeded": 10,
+      "runs": 10,
+      "lateArrivals": 0,
+      "neverArrived": 0,
+      "paraABlocks": {
+        "n": 10,
+        "mean": 5.1,
+        "sd": 1.3703203194062976,
+        "median": 5,
+        "min": 3,
+        "max": 7
+      },
+      "latencySec": {
+        "n": 10,
+        "mean": 30.6,
+        "sd": 8.694826047713663,
+        "median": 30,
+        "min": 18,
+        "max": 42
+      },
+      "wallClockSec": {
+        "n": 10,
+        "mean": 68.1759,
+        "sd": 10.200047085403304,
+        "median": 67.9435,
+        "min": 51.912,
+        "max": 84.114
+      }
+    },
+    "xcm_purchase_ownership": {
+      "succeeded": 10,
+      "runs": 10,
+      "lateArrivals": 0,
+      "neverArrived": 0,
+      "paraABlocks": {
+        "n": 10,
+        "mean": 5,
+        "sd": 0.816496580927726,
+        "median": 5,
+        "min": 3,
+        "max": 6
+      },
+      "latencySec": {
+        "n": 10,
+        "mean": 28.8,
+        "sd": 6.196773353931867,
+        "median": 30,
+        "min": 18,
+        "max": 36
+      },
+      "wallClockSec": {
+        "n": 10,
+        "mean": 65.48679999999999,
+        "sd": 4.206869218578374,
+        "median": 64.98599999999999,
+        "min": 55.86,
+        "max": 72.001
+      }
+    },
+    "all": {
+      "paraABlocks": {
+        "n": 30,
+        "mean": 5.033333333333333,
+        "sd": 0.99942512211403,
+        "median": 5,
+        "min": 3,
+        "max": 7
+      },
+      "latencySec": {
+        "n": 30,
+        "mean": 29.4,
+        "sd": 6.9311888814506295,
+        "median": 30,
+        "min": 18,
+        "max": 42
+      }
+    }
+  },
+  "results": {
+    "xcm_subscribe": [
+      {
+        "label": "xcm_subscribe_1",
+        "beneficiary": "5DwWer3dzqjN2VZ7MnYpW83zUZYCZhyFSHuAvPx7ud9DZdzb",
+        "eventName": "CrossChainSubscriptionCreated",
+        "success": true,
+        "paraBBlock": 41,
+        "paraAHeadAtSend": 40,
+        "paraAEventBlock": 45,
+        "paraABlocks": 5,
+        "latencyMs": 36000,
+        "wallClockMs": 72279,
+        "messageQueueProcessed": [
+          {
+            "block": 45,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_subscribe_2",
+        "beneficiary": "5ELTNS1yQA7SXCNGwH5HUZ8jS1aSNPjKLZtgwqCBFsocE5H6",
+        "eventName": "CrossChainSubscriptionCreated",
+        "success": true,
+        "paraBBlock": 54,
+        "paraAHeadAtSend": 53,
+        "paraAEventBlock": 58,
+        "paraABlocks": 5,
+        "latencyMs": 30000,
+        "wallClockMs": 71947,
+        "messageQueueProcessed": [
+          {
+            "block": 58,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_subscribe_3",
+        "beneficiary": "5GQj2XmrSPXkVPEA2MAzh5su8edyuao8BhvaMB5HdnQArE9S",
+        "eventName": "CrossChainSubscriptionCreated",
+        "success": true,
+        "paraBBlock": 66,
+        "paraAHeadAtSend": 65,
+        "paraAEventBlock": 70,
+        "paraABlocks": 5,
+        "latencyMs": 24000,
+        "wallClockMs": 63954,
+        "messageQueueProcessed": [
+          {
+            "block": 70,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_subscribe_4",
+        "beneficiary": "5G6h5zDyy2tqZK7Y6JUgkRqmag6XevrAhWJnHs9xbceevK9F",
+        "eventName": "CrossChainSubscriptionCreated",
+        "success": true,
+        "paraBBlock": 77,
+        "paraAHeadAtSend": 76,
+        "paraAEventBlock": 81,
+        "paraABlocks": 5,
+        "latencyMs": 36000,
+        "wallClockMs": 68033,
+        "messageQueueProcessed": [
+          {
+            "block": 81,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_subscribe_5",
+        "beneficiary": "5EqAzMDxv3o9qvogeMt4g5rvuHMymBABhgfjwyNHBDMjWyUS",
+        "eventName": "CrossChainSubscriptionCreated",
+        "success": true,
+        "paraBBlock": 90,
+        "paraAHeadAtSend": 89,
+        "paraAEventBlock": 94,
+        "paraABlocks": 5,
+        "latencyMs": 30000,
+        "wallClockMs": 68084,
+        "messageQueueProcessed": [
+          {
+            "block": 94,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_subscribe_6",
+        "beneficiary": "5H1ZsaDHzhY4HhxcaX1icoKtJdKDJt8nCy3mqizRUVt9gUZb",
+        "eventName": "CrossChainSubscriptionCreated",
+        "success": true,
+        "paraBBlock": 102,
+        "paraAHeadAtSend": 100,
+        "paraAEventBlock": 106,
+        "paraABlocks": 6,
+        "latencyMs": 24000,
+        "wallClockMs": 67899,
+        "messageQueueProcessed": [
+          {
+            "block": 106,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_subscribe_7",
+        "beneficiary": "5Fmpyg61mie1fb7bTUZimedbnuvVeFWgNUyHSLKUtKbNVyBE",
+        "eventName": "CrossChainSubscriptionCreated",
+        "success": true,
+        "paraBBlock": 113,
+        "paraAHeadAtSend": 112,
+        "paraAEventBlock": 117,
+        "paraABlocks": 5,
+        "latencyMs": 36000,
+        "wallClockMs": 64951,
+        "messageQueueProcessed": [
+          {
+            "block": 117,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_subscribe_8",
+        "beneficiary": "5CXJQafdfbEN76ZMQ3Uzt83RKKwJwPfXZbWAZWtwaHEaTuZT",
+        "eventName": "CrossChainSubscriptionCreated",
+        "success": true,
+        "paraBBlock": 125,
+        "paraAHeadAtSend": 124,
+        "paraAEventBlock": 127,
+        "paraABlocks": 3,
+        "latencyMs": 18000,
+        "wallClockMs": 55964,
+        "messageQueueProcessed": [
+          {
+            "block": 127,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_subscribe_9",
+        "beneficiary": "5EqmYxFQX81VspwoDFDPEMLuJdPvQKmijWN6N1jbxgzQR7yV",
+        "eventName": "CrossChainSubscriptionCreated",
+        "success": true,
+        "paraBBlock": 135,
+        "paraAHeadAtSend": 134,
+        "paraAEventBlock": 139,
+        "paraABlocks": 5,
+        "latencyMs": 30000,
+        "wallClockMs": 64044,
+        "messageQueueProcessed": [
+          {
+            "block": 139,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_subscribe_10",
+        "beneficiary": "5EvXMsdc7fDdW4NNxnv9p4P3SPGbJe88HWQkRnC29YMdPtwu",
+        "eventName": "CrossChainSubscriptionCreated",
+        "success": true,
+        "paraBBlock": 147,
+        "paraAHeadAtSend": 145,
+        "paraAEventBlock": 151,
+        "paraABlocks": 6,
+        "latencyMs": 24000,
+        "wallClockMs": 67934,
+        "messageQueueProcessed": [
+          {
+            "block": 151,
+            "success": true
+          }
+        ]
+      }
+    ],
+    "xcm_purchase_views": [
+      {
+        "label": "xcm_purchase_views_1",
+        "beneficiary": "5EKuZT2uh65s41FCe2f5SyFHriurepU2A52VZHo3Aiec5EiK",
+        "eventName": "CrossChainViewPackPurchased",
+        "success": true,
+        "paraBBlock": 158,
+        "paraAHeadAtSend": 157,
+        "paraAEventBlock": 162,
+        "paraABlocks": 5,
+        "latencyMs": 36000,
+        "wallClockMs": 64015,
+        "messageQueueProcessed": [
+          {
+            "block": 162,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_views_2",
+        "beneficiary": "5EbfKnGRRuLMSE9uic4NC3pfkiZt9wWGbsVtBma6vv5buHqL",
+        "eventName": "CrossChainViewPackPurchased",
+        "success": true,
+        "paraBBlock": 170,
+        "paraAHeadAtSend": 169,
+        "paraAEventBlock": 172,
+        "paraABlocks": 3,
+        "latencyMs": 18000,
+        "wallClockMs": 56881,
+        "messageQueueProcessed": [
+          {
+            "block": 172,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_views_3",
+        "beneficiary": "5E6zmNYHo8HUkf6acRp7zY52ZuutLXbTzRgCMXqbeNGiuqU1",
+        "eventName": "CrossChainViewPackPurchased",
+        "success": true,
+        "paraBBlock": 181,
+        "paraAHeadAtSend": 180,
+        "paraAEventBlock": 187,
+        "paraABlocks": 7,
+        "latencyMs": 42000,
+        "wallClockMs": 84114,
+        "messageQueueProcessed": [
+          {
+            "block": 187,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_views_4",
+        "beneficiary": "5EC8TJpKESpS2vDwEhEtvp6DHzUxLAefuh9KuzMNF194uWkQ",
+        "eventName": "CrossChainViewPackPurchased",
+        "success": true,
+        "paraBBlock": 195,
+        "paraAHeadAtSend": 194,
+        "paraAEventBlock": 199,
+        "paraABlocks": 5,
+        "latencyMs": 30000,
+        "wallClockMs": 71974,
+        "messageQueueProcessed": [
+          {
+            "block": 199,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_views_5",
+        "beneficiary": "5HbSo1pe6diSXtvd22USnXEaiScsp5V5YWwhXTsK4zy7VUhX",
+        "eventName": "CrossChainViewPackPurchased",
+        "success": true,
+        "paraBBlock": 208,
+        "paraAHeadAtSend": 207,
+        "paraAEventBlock": 214,
+        "paraABlocks": 7,
+        "latencyMs": 42000,
+        "wallClockMs": 83945,
+        "messageQueueProcessed": [
+          {
+            "block": 214,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_views_6",
+        "beneficiary": "5HNfLDDBzTM8EfpJJrqRCSppZXD7e9iNrYB57vwG39hK9NoX",
+        "eventName": "CrossChainViewPackPurchased",
+        "success": true,
+        "paraBBlock": 222,
+        "paraAHeadAtSend": 221,
+        "paraAEventBlock": 226,
+        "paraABlocks": 5,
+        "latencyMs": 30000,
+        "wallClockMs": 67954,
+        "messageQueueProcessed": [
+          {
+            "block": 226,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_views_7",
+        "beneficiary": "5DyEfaYg4AnQVvqZCbiBYnCGJnzRgWN9FNZZc21WaomV7jCo",
+        "eventName": "CrossChainViewPackPurchased",
+        "success": true,
+        "paraBBlock": 234,
+        "paraAHeadAtSend": 233,
+        "paraAEventBlock": 238,
+        "paraABlocks": 5,
+        "latencyMs": 30000,
+        "wallClockMs": 67933,
+        "messageQueueProcessed": [
+          {
+            "block": 238,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_views_8",
+        "beneficiary": "5CvruY2ZrgWLkcUBEJ1Mwu821DWVVkdRGSxAcsrshpsL646F",
+        "eventName": "CrossChainViewPackPurchased",
+        "success": true,
+        "paraBBlock": 246,
+        "paraAHeadAtSend": 244,
+        "paraAEventBlock": 250,
+        "paraABlocks": 6,
+        "latencyMs": 24000,
+        "wallClockMs": 65061,
+        "messageQueueProcessed": [
+          {
+            "block": 250,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_views_9",
+        "beneficiary": "5Eq5C7ThEc2nsCgKVyBEcmb9A2KL9QgtnjDfEcEBLPTKT1pP",
+        "eventName": "CrossChainViewPackPurchased",
+        "success": true,
+        "paraBBlock": 257,
+        "paraAHeadAtSend": 256,
+        "paraAEventBlock": 261,
+        "paraABlocks": 5,
+        "latencyMs": 36000,
+        "wallClockMs": 67970,
+        "messageQueueProcessed": [
+          {
+            "block": 261,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_views_10",
+        "beneficiary": "5CwhcYdXjNRoMQxYnKdgmXa3bbY1BupitebwGxMDt4tTTZEB",
+        "eventName": "CrossChainViewPackPurchased",
+        "success": true,
+        "paraBBlock": 269,
+        "paraAHeadAtSend": 268,
+        "paraAEventBlock": 271,
+        "paraABlocks": 3,
+        "latencyMs": 18000,
+        "wallClockMs": 51912,
+        "messageQueueProcessed": [
+          {
+            "block": 271,
+            "success": true
+          }
+        ]
+      }
+    ],
+    "xcm_purchase_ownership": [
+      {
+        "label": "xcm_purchase_ownership_1",
+        "beneficiary": "5HghRTZ2WaZAfbZx1H72gjLULc2EsQbVx1aux5KEqoce2DhX",
+        "eventName": "CrossChainOwnershipPurchased",
+        "success": true,
+        "paraBBlock": 279,
+        "paraAHeadAtSend": 278,
+        "paraAEventBlock": 283,
+        "paraABlocks": 5,
+        "latencyMs": 30000,
+        "wallClockMs": 68118,
+        "messageQueueProcessed": [
+          {
+            "block": 283,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_ownership_2",
+        "beneficiary": "5GjPEvwcpCm8SAPd23xu1rqyXojz5F26VJ7hotEJbyNCd25w",
+        "eventName": "CrossChainOwnershipPurchased",
+        "success": true,
+        "paraBBlock": 291,
+        "paraAHeadAtSend": 289,
+        "paraAEventBlock": 295,
+        "paraABlocks": 6,
+        "latencyMs": 24000,
+        "wallClockMs": 64864,
+        "messageQueueProcessed": [
+          {
+            "block": 295,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_ownership_3",
+        "beneficiary": "5E9NAejEWyUNFrjqM97N3gNfMFEHeYnk4gMD1inKtYEtfzfa",
+        "eventName": "CrossChainOwnershipPurchased",
+        "success": true,
+        "paraBBlock": 302,
+        "paraAHeadAtSend": 301,
+        "paraAEventBlock": 306,
+        "paraABlocks": 5,
+        "latencyMs": 36000,
+        "wallClockMs": 67999,
+        "messageQueueProcessed": [
+          {
+            "block": 306,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_ownership_4",
+        "beneficiary": "5E7r2HU4qAii7Q7D177Xah52nyTJSgU2KchFPcnck7Dqz23V",
+        "eventName": "CrossChainOwnershipPurchased",
+        "success": true,
+        "paraBBlock": 315,
+        "paraAHeadAtSend": 314,
+        "paraAEventBlock": 319,
+        "paraABlocks": 5,
+        "latencyMs": 30000,
+        "wallClockMs": 72001,
+        "messageQueueProcessed": [
+          {
+            "block": 319,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_ownership_5",
+        "beneficiary": "5FeVWptLxrw8aoCs9vbsQdxaMpJgR8jt6FH28vLXnWvk7Xuy",
+        "eventName": "CrossChainOwnershipPurchased",
+        "success": true,
+        "paraBBlock": 327,
+        "paraAHeadAtSend": 326,
+        "paraAEventBlock": 331,
+        "paraABlocks": 5,
+        "latencyMs": 24000,
+        "wallClockMs": 64057,
+        "messageQueueProcessed": [
+          {
+            "block": 331,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_ownership_6",
+        "beneficiary": "5DUGiZM9oJfnXS3aziA8tksPG8WZwrDMi434baXaavXaEaqS",
+        "eventName": "CrossChainOwnershipPurchased",
+        "success": true,
+        "paraBBlock": 338,
+        "paraAHeadAtSend": 337,
+        "paraAEventBlock": 342,
+        "paraABlocks": 5,
+        "latencyMs": 36000,
+        "wallClockMs": 64964,
+        "messageQueueProcessed": [
+          {
+            "block": 342,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_ownership_7",
+        "beneficiary": "5CkqnrEKBDpNXz9bpFaQYYMExVnM5LF9XwPyxsByyKTyftCL",
+        "eventName": "CrossChainOwnershipPurchased",
+        "success": true,
+        "paraBBlock": 350,
+        "paraAHeadAtSend": 349,
+        "paraAEventBlock": 352,
+        "paraABlocks": 3,
+        "latencyMs": 18000,
+        "wallClockMs": 55860,
+        "messageQueueProcessed": [
+          {
+            "block": 352,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_ownership_8",
+        "beneficiary": "5DtsWRwL7Z2Cf7UrWFTbxH5dvMaQUT812KKus9W8RiqT3L4Q",
+        "eventName": "CrossChainOwnershipPurchased",
+        "success": true,
+        "paraBBlock": 360,
+        "paraAHeadAtSend": 359,
+        "paraAEventBlock": 364,
+        "paraABlocks": 5,
+        "latencyMs": 30000,
+        "wallClockMs": 64065,
+        "messageQueueProcessed": [
+          {
+            "block": 364,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_ownership_9",
+        "beneficiary": "5DyxaX6ATB3EqMLiyDo7g383XHcaPmsqJHYYZE36mEQvNGMe",
+        "eventName": "CrossChainOwnershipPurchased",
+        "success": true,
+        "paraBBlock": 372,
+        "paraAHeadAtSend": 370,
+        "paraAEventBlock": 376,
+        "paraABlocks": 6,
+        "latencyMs": 24000,
+        "wallClockMs": 67932,
+        "messageQueueProcessed": [
+          {
+            "block": 376,
+            "success": true
+          }
+        ]
+      },
+      {
+        "label": "xcm_purchase_ownership_10",
+        "beneficiary": "5CAnceHzFh35uEwya6tsbxiHMpxLPH3zamokAoZEDutM4Ujy",
+        "eventName": "CrossChainOwnershipPurchased",
+        "success": true,
+        "paraBBlock": 383,
+        "paraAHeadAtSend": 382,
+        "paraAEventBlock": 387,
+        "paraABlocks": 5,
+        "latencyMs": 36000,
+        "wallClockMs": 65008,
+        "messageQueueProcessed": [
+          {
+            "block": 387,
+            "success": true
+          }
+        ]
+      }
+    ]
+  }
+}
