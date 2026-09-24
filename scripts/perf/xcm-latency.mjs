@@ -26,7 +26,11 @@
  *                 event on ParaA (includes RPC polling overhead)
  *
  * Usage:
- *   node scripts/perf/xcm-latency.mjs [paraA-ws] [paraB-ws] [--runs N] [--max-blocks M]
+ *   node scripts/perf/xcm-latency.mjs [paraA-ws] [paraB-ws] [--runs N] [--max-blocks M] [--gap S]
+ *
+ * Runs that miss the window are re-checked at the end (late-arrival sweep), so
+ * each failure is classified as 'late' (arrived after the window) or 'never'.
+ * Results are written after every run, so a crash keeps completed runs.
  *
  * Prerequisites: HRMP channels open between para 100 and para 200; sudo on ParaB.
  *
@@ -48,6 +52,7 @@ const PARA_A_WS = positional[0] || 'ws://127.0.0.1:9990';
 const PARA_B_WS = positional[1] || 'ws://127.0.0.1:9991';
 const RUNS_PER_OPERATION = flag('runs', 10);
 const MAX_BLOCKS = flag('max-blocks', 30);
+const GAP_SECONDS = flag('gap', 12);
 const XCM_FEE_AMOUNT = 100_000_000_000;
 const PARA_A_ID = 100;
 const OUTPUT = 'scripts/perf/results/xcm-latency-results-v2.json';
@@ -132,7 +137,7 @@ async function sendXcmAndMeasure(apiA, apiB, encodedCall, signer, label, eventNa
   const sudoFailed = bEvents.find(({ event }) =>
     event.section === 'sudo' && event.method === 'Sudid' && event.data[0].isErr);
   if (!sentOk || sudoFailed) {
-    return { label, success: false, reason: 'send failed on ParaB', paraBBlock };
+    return { label, beneficiary, eventName, success: false, reason: 'send failed on ParaB', paraBBlock };
   }
 
   // Follow ParaA strictly after the head at send time.
@@ -156,6 +161,8 @@ async function sendXcmAndMeasure(apiA, apiB, encodedCall, signer, label, eventNa
       const paraATimestamp = await timestampAt(apiA, hash);
       return {
         label,
+        beneficiary,
+        eventName,
         success: true,
         paraBBlock,
         paraAHeadAtSend,
@@ -171,6 +178,9 @@ async function sendXcmAndMeasure(apiA, apiB, encodedCall, signer, label, eventNa
   const failedProcessing = processed.some((p) => p.success === false);
   return {
     label,
+    beneficiary,
+    eventName,
+    paraBTimestamp,
     success: false,
     reason: failedProcessing
       ? 'XCM message processed with success=false on ParaA (Transact failed)'
@@ -179,6 +189,20 @@ async function sendXcmAndMeasure(apiA, apiB, encodedCall, signer, label, eventNa
     paraAHeadAtSend,
     messageQueueProcessed: processed,
   };
+}
+
+function save(body) {
+  mkdirSync('scripts/perf/results', { recursive: true });
+  writeFileSync(OUTPUT, JSON.stringify({
+    version: 2,
+    timestamp: new Date().toISOString(),
+    paraA: PARA_A_WS,
+    paraB: PARA_B_WS,
+    runsPerOperation: RUNS_PER_OPERATION,
+    maxBlocks: MAX_BLOCKS,
+    gapSeconds: GAP_SECONDS,
+    ...body,
+  }, null, 2));
 }
 
 // ── Main ────────────────────────────────────────────────────────────────────
@@ -230,12 +254,49 @@ async function main() {
     for (let run = 0; run < RUNS_PER_OPERATION; run++) {
       const beneficiary = keyring.addFromUri(`//XcmLatency/${stamp}/${op}/${run}`).address;
       const [call, eventName] = build[op](contentFor[op], beneficiary);
-      const r = await sendXcmAndMeasure(
-        apiA, apiB, call.method.toHex(), alice, `${op}_${run + 1}`, eventName, beneficiary);
+      let r;
+      try {
+        r = await sendXcmAndMeasure(
+          apiA, apiB, call.method.toHex(), alice, `${op}_${run + 1}`, eventName, beneficiary);
+      } catch (e) {
+        r = { label: `${op}_${run + 1}`, beneficiary, eventName, success: false, reason: `harness error: ${e.message}` };
+      }
       results[op].push(r);
+      save({ partial: true, contentIds: contentFor, results });
       console.log(r.success
         ? `  ${run + 1}/${RUNS_PER_OPERATION} OK   ParaA blocks: ${r.paraABlocks}  latency: ${r.latencyMs} ms  wall: ${r.wallClockMs} ms`
         : `  ${run + 1}/${RUNS_PER_OPERATION} FAIL ${r.reason}`);
+      await sleep(GAP_SECONDS * 1000);
+    }
+  }
+
+  // ── Late-arrival sweep: did "failed" messages arrive after the window? ──
+  const pending = ops.flatMap((op) => results[op].filter((r) => !r.success && r.paraAHeadAtSend));
+  if (pending.length) {
+    console.log(`
+── Late-arrival sweep for ${pending.length} missed run(s) ──`);
+    await sleep(60_000); // give stragglers another ~10 blocks
+    const headNow = (await apiA.rpc.chain.getHeader()).number.toNumber();
+    for (const r of pending) {
+      r.late = { found: false, sweptTo: headNow };
+      for (let n = r.paraAHeadAtSend + 1; n <= headNow && !r.late.found; n++) {
+        const hash = await apiA.rpc.chain.getBlockHash(n);
+        const events = await apiA.query.system.events.at(hash);
+        for (const { event } of events) {
+          if (event.section === 'contentRights' && event.method === r.eventName) {
+            const b = field(event, 'beneficiary');
+            if (b && b.eq(r.beneficiary)) {
+              const ts = (await apiA.query.timestamp.now.at(hash)).toNumber();
+              r.late = { found: true, paraAEventBlock: n, paraABlocks: n - r.paraAHeadAtSend,
+                latencyMs: r.paraBTimestamp ? ts - r.paraBTimestamp : null };
+              break;
+            }
+          }
+        }
+      }
+      console.log(r.late.found
+        ? `  ${r.label}: LATE — arrived after ${r.late.paraABlocks} ParaA blocks (${r.late.latencyMs} ms)`
+        : `  ${r.label}: NEVER arrived (swept to ParaA #${headNow})`);
     }
   }
 
@@ -248,10 +309,14 @@ async function main() {
     const b = stats(ok.map((r) => r.paraABlocks));
     const l = stats(ok.map((r) => r.latencyMs / 1000));
     const w = stats(ok.map((r) => r.wallClockMs / 1000));
-    summary[op] = { succeeded: ok.length, runs: results[op].length, paraABlocks: b, latencySec: l, wallClockSec: w };
+    const late = results[op].filter((r) => r.late && r.late.found).length;
+    const never = results[op].filter((r) => !r.success && !(r.late && r.late.found)).length;
+    summary[op] = { succeeded: ok.length, runs: results[op].length, lateArrivals: late, neverArrived: never,
+      paraABlocks: b, latencySec: l, wallClockSec: w };
     console.log(`${op.padEnd(24)}| ${String(ok.length).padStart(2)}/${String(results[op].length).padEnd(2)} | ` +
       (b ? `${b.median} (${b.min}–${b.max})`.padEnd(23) : 'n/a'.padEnd(23)) + ' | ' +
-      (l ? `${l.median.toFixed(1)}, ${l.mean.toFixed(1)} ± ${l.sd.toFixed(1)}` : 'n/a'));
+      (l ? `${l.median.toFixed(1)}, ${l.mean.toFixed(1)} ± ${l.sd.toFixed(1)}` : 'n/a') +
+      `   (late: ${summary[op].lateArrivals}, never: ${summary[op].neverArrived})`);
   }
   const all = ops.flatMap((op) => results[op].filter((r) => r.success));
   summary.all = {
@@ -264,18 +329,7 @@ async function main() {
       `median latency ${a.latencySec.median.toFixed(1)} s (range ${a.latencySec.min.toFixed(1)}–${a.latencySec.max.toFixed(1)} s)`);
   }
 
-  mkdirSync('scripts/perf/results', { recursive: true });
-  writeFileSync(OUTPUT, JSON.stringify({
-    version: 2,
-    timestamp: new Date().toISOString(),
-    paraA: PARA_A_WS,
-    paraB: PARA_B_WS,
-    runsPerOperation: RUNS_PER_OPERATION,
-    maxBlocks: MAX_BLOCKS,
-    contentIds: contentFor,
-    summary,
-    results,
-  }, null, 2));
+  save({ partial: false, contentIds: contentFor, summary, results });
   console.log(`\nResults saved to ${OUTPUT}`);
 
   await apiA.disconnect();
