@@ -23,7 +23,11 @@
  *                 send (both from pallet-timestamp; same host clock in Zombienet)
  *   paraABlocks   ParaA blocks from the ParaA head at send time to the event
  *   wallClockMs   client-observed time from submitting on ParaB to seeing the
- *                 event on ParaA (includes RPC polling overhead)
+ *                 event in a FINALIZED ParaA block (includes finality lag)
+ *
+ * Only finalized ParaA blocks are read (v2.2). v2.0 read unfinalized tip blocks,
+ * which with --force-authoring could be replaced, so delivered messages were
+ * occasionally reported as missing.
  *
  * Usage:
  *   node scripts/perf/xcm-latency.mjs [paraA-ws] [paraB-ws] [--runs N] [--max-blocks M] [--gap S]
@@ -89,15 +93,20 @@ async function timestampAt(api, hash) {
   return (await api.query.timestamp.now.at(hash)).toNumber();
 }
 
-/** Wait until block `n` exists on `api`, then return its hash. */
-async function waitForBlockHash(api, n, timeoutMs = 120_000) {
+/**
+ * Wait until block `n` is FINALIZED on `api`, then return its canonical hash.
+ * Reading unfinalized tip blocks is unsafe with --force-authoring: a block read
+ * at the tip can be replaced, so an event in the final block `n` can be missed.
+ */
+async function waitForFinalizedHash(api, n, timeoutMs = 300_000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const head = (await api.rpc.chain.getHeader()).number.toNumber();
-    if (head >= n) return api.rpc.chain.getBlockHash(n);
-    await sleep(500);
+    const fin = await api.rpc.chain.getFinalizedHead();
+    const finNum = (await api.rpc.chain.getHeader(fin)).number.toNumber();
+    if (finNum >= n) return api.rpc.chain.getBlockHash(n);
+    await sleep(1000);
   }
-  throw new Error(`timed out waiting for block ${n}`);
+  throw new Error(`timed out waiting for block ${n} to finalize`);
 }
 
 function field(event, name) {
@@ -143,7 +152,7 @@ async function sendXcmAndMeasure(apiA, apiB, encodedCall, signer, label, eventNa
   // Follow ParaA strictly after the head at send time.
   const processed = [];
   for (let n = paraAHeadAtSend + 1; n <= paraAHeadAtSend + MAX_BLOCKS; n++) {
-    const hash = await waitForBlockHash(apiA, n);
+    const hash = await waitForFinalizedHash(apiA, n);
     const events = await apiA.query.system.events.at(hash);
     let hit = null;
     for (const { event } of events) {

@@ -36,12 +36,14 @@ function field(event, name) {
 async function scan(api, from, to, pick) {
   const rows = [];
   for (let n = from; n <= to; n++) {
-    let hash;
-    try { hash = await api.rpc.chain.getBlockHash(n); } catch { continue; }
-    const [events, ts] = await Promise.all([
-      api.query.system.events.at(hash),
-      api.query.timestamp.now.at(hash),
-    ]);
+    let hash, events, ts;
+    try {
+      hash = await api.rpc.chain.getBlockHash(n);
+      [events, ts] = await Promise.all([
+        api.query.system.events.at(hash),
+        api.query.timestamp.now.at(hash),
+      ]);
+    } catch { continue; } // state pruned (non-archive node keeps ~256 blocks)
     for (const { event } of events) {
       const row = pick(event);
       if (row) rows.push({ block: n, time: new Date(ts.toNumber()).toISOString().slice(11, 19), ...row });
