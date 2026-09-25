@@ -6,7 +6,7 @@ repository = "https://github.com/paritytech/polkadot-sdk-parachain-template.git"
 edition = "2021"
 
 [workspace]
-default-members = ["pallets/template", "pallets/content-rights", "pallets/rights-verifier", "runtime"]
+default-members = ["pallets/template", "pallets/content-rights", "pallets/rights-verifier", "runtime", "integration-tests"]
 members = [
     "node",
     "pallets/template",
