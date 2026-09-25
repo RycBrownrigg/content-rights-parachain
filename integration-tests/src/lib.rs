@@ -214,16 +214,18 @@ mod tests {
 				pallet_content_rights::Ownership::<parachain::Runtime>::get(
 					content_id,
 					&BENEFICIARY,
-				),
+				)
+				.is_some(),
 				"Beneficiary should own the content"
 			);
 
 			let sovereign = sovereign_account_of(200);
 			assert!(
-				!pallet_content_rights::Ownership::<parachain::Runtime>::get(
+				pallet_content_rights::Ownership::<parachain::Runtime>::get(
 					content_id,
 					&sovereign,
-				),
+				)
+				.is_none(),
 				"Sovereign account should NOT own the content"
 			);
 		});

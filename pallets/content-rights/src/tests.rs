@@ -628,6 +628,71 @@ fn xcm_purchase_views_works() {
 	});
 }
 
+/// Finding E (XCM path): a repeat cross-chain purchase adds views and keeps one child NFT.
+#[test]
+fn xcm_purchase_views_adds_to_existing_pack() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let payer = account(3);
+		let beneficiary = account(2);
+		let content_id = register_default_content(creator);
+		let content = pallet::Contents::<Test>::get(content_id).unwrap();
+
+		assert_ok!(ContentRights::xcm_purchase_views(
+			RuntimeOrigin::signed(payer.clone()),
+			content_id,
+			beneficiary.clone(),
+			5,
+		));
+		let first = pallet::ViewPacks::<Test>::get(content_id, &beneficiary).unwrap();
+
+		assert_ok!(ContentRights::xcm_purchase_views(
+			RuntimeOrigin::signed(payer),
+			content_id,
+			beneficiary.clone(),
+			3,
+		));
+		let second = pallet::ViewPacks::<Test>::get(content_id, &beneficiary).unwrap();
+
+		assert_eq!(second.views_remaining, 8);
+		assert_eq!(second.child_item_id, first.child_item_id);
+		assert_eq!(
+			pallet::Children::<Test>::get(content.collection_id, content.content_item_id).len(),
+			1
+		);
+	});
+}
+
+/// Local and cross-chain purchases for the same beneficiary share one pack and one child NFT.
+#[test]
+fn local_then_xcm_purchase_views_share_one_pack() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let payer = account(3);
+		let user = account(2);
+		let content_id = register_default_content(creator);
+		let content = pallet::Contents::<Test>::get(content_id).unwrap();
+
+		assert_ok!(ContentRights::purchase_views(
+			RuntimeOrigin::signed(user.clone()),
+			content_id,
+			4,
+		));
+		assert_ok!(ContentRights::xcm_purchase_views(
+			RuntimeOrigin::signed(payer),
+			content_id,
+			user.clone(),
+			6,
+		));
+
+		assert_eq!(pallet::ViewPacks::<Test>::get(content_id, &user).unwrap().views_remaining, 10);
+		assert_eq!(
+			pallet::Children::<Test>::get(content.collection_id, content.content_item_id).len(),
+			1
+		);
+	});
+}
+
 // ==================== xcm_purchase_ownership ====================
 
 #[test]
@@ -883,7 +948,7 @@ fn xcm_transfer_ownership_fails_not_owned() {
 /// FINDING B: Any signed account can call xcm_transfer_ownership
 /// and transfer someone else's ownership without authorization.
 #[test]
-fn security_xcm_transfer_ownership_any_account_can_steal() {
+fn security_xcm_transfer_ownership_rejects_non_owner() {
 	new_test_ext().execute_with(|| {
 		let creator = account(1);
 		let owner = account(2);
@@ -940,27 +1005,49 @@ fn security_zero_price_content_registration() {
 	});
 }
 
-/// Purchase 0 views — creates a useless view pack.
+/// Finding I: a zero-view purchase is rejected and mints no child NFT.
 #[test]
-fn security_zero_views_purchase() {
+fn security_zero_views_purchase_rejected() {
 	new_test_ext().execute_with(|| {
 		let creator = account(1);
 		let buyer = account(2);
 		let content_id = register_default_content(creator);
-
-		assert_ok!(ContentRights::purchase_views(
-			RuntimeOrigin::signed(buyer.clone()),
-			content_id,
-			0,
-		));
-
-		let pack = pallet::ViewPacks::<Test>::get(content_id, &buyer).unwrap();
-		assert_eq!(pack.views_remaining, 0);
+		let content = pallet::Contents::<Test>::get(content_id).unwrap();
 
 		assert_noop!(
-			ContentRights::consume_view(RuntimeOrigin::signed(buyer), content_id),
-			crate::Error::<Test>::NoViewsRemaining
+			ContentRights::purchase_views(RuntimeOrigin::signed(buyer.clone()), content_id, 0),
+			crate::Error::<Test>::ZeroViews
 		);
+
+		assert!(pallet::ViewPacks::<Test>::get(content_id, &buyer).is_none());
+		assert!(pallet::Children::<Test>::get(content.collection_id, content.content_item_id)
+			.is_empty());
+	});
+}
+
+/// Finding I (XCM path): a zero-view cross-chain purchase is rejected.
+#[test]
+fn security_xcm_zero_views_purchase_rejected() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let payer = account(3);
+		let beneficiary = account(2);
+		let content_id = register_default_content(creator);
+		let content = pallet::Contents::<Test>::get(content_id).unwrap();
+
+		assert_noop!(
+			ContentRights::xcm_purchase_views(
+				RuntimeOrigin::signed(payer),
+				content_id,
+				beneficiary.clone(),
+				0,
+			),
+			crate::Error::<Test>::ZeroViews
+		);
+
+		assert!(pallet::ViewPacks::<Test>::get(content_id, &beneficiary).is_none());
+		assert!(pallet::Children::<Test>::get(content.collection_id, content.content_item_id)
+			.is_empty());
 	});
 }
 
@@ -1044,9 +1131,9 @@ fn security_insufficient_balance_for_subscription() {
 	});
 }
 
-/// Purchasing views when a pack already exists overwrites rather than adds.
+/// Finding E: purchasing views when a pack already exists adds to it.
 #[test]
-fn security_purchase_views_overwrites_existing_pack() {
+fn security_purchase_views_adds_to_existing_pack() {
 	new_test_ext().execute_with(|| {
 		let creator = account(1);
 		let buyer = account(2);
@@ -1236,7 +1323,6 @@ fn auto_renew_fails_insufficient_balance() {
 		let sub = pallet::Subscriptions::<Test>::get(content_id, &subscriber).unwrap();
 
 		// Drain subscriber's balance
-		let balance = Balances::free_balance(&subscriber);
 		let _ = Balances::force_set_balance(RuntimeOrigin::root(), subscriber.clone().into(), 1);
 
 		// Advance to expiry, running on_initialize each block
@@ -1752,5 +1838,87 @@ fn enable_auto_renew_fails_when_queue_full() {
 			crate::Error::<Test>::RenewalQueueFull
 		);
 		assert!(!pallet::AutoRenewIndex::<Test>::contains_key((content_id, &subscriber)));
+	});
+}
+
+// ---------------------------------------------------------------------------
+// Error-variant coverage: reachable variants not otherwise asserted
+// ---------------------------------------------------------------------------
+
+/// Enabling auto-renew twice fails with AutoRenewAlreadyEnabled.
+#[test]
+fn enable_auto_renew_twice_fails() {
+	new_test_ext().execute_with(|| {
+		let subscriber = account(2);
+		let content_id = register_default_content(account(1));
+		assert_ok!(ContentRights::subscribe(RuntimeOrigin::signed(subscriber.clone()), content_id));
+		assert_ok!(ContentRights::enable_auto_renew(
+			RuntimeOrigin::signed(subscriber.clone()),
+			content_id,
+		));
+
+		assert_noop!(
+			ContentRights::enable_auto_renew(RuntimeOrigin::signed(subscriber), content_id),
+			crate::Error::<Test>::AutoRenewAlreadyEnabled
+		);
+	});
+}
+
+/// Disabling auto-renew that was never enabled fails with AutoRenewNotEnabled.
+#[test]
+fn disable_auto_renew_when_not_enabled_fails() {
+	new_test_ext().execute_with(|| {
+		let subscriber = account(2);
+		let content_id = register_default_content(account(1));
+		assert_ok!(ContentRights::subscribe(RuntimeOrigin::signed(subscriber.clone()), content_id));
+
+		assert_noop!(
+			ContentRights::disable_auto_renew(RuntimeOrigin::signed(subscriber), content_id),
+			crate::Error::<Test>::AutoRenewNotEnabled
+		);
+	});
+}
+
+/// A pay-per-view total that overflows u128 fails with InsufficientPayment.
+#[test]
+fn purchase_views_price_overflow_fails() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let content_id = pallet::NextContentId::<Test>::get();
+		assert_ok!(ContentRights::register_content(
+			RuntimeOrigin::signed(creator),
+			[0u8; 32],
+			default_title(),
+			100,
+			u128::MAX, // ppv_price: any num_views > 1 overflows
+			500,
+			100,
+		));
+
+		assert_noop!(
+			ContentRights::purchase_views(RuntimeOrigin::signed(account(2)), content_id, 2),
+			crate::Error::<Test>::InsufficientPayment
+		);
+	});
+}
+
+/// consume_view on a pack with zero views fails with NoViewsRemaining.
+/// Unreachable through the public API since Finding I (packs are removed at zero
+/// and zero-view purchases are rejected); this tests the defensive check directly.
+#[test]
+fn consume_view_on_empty_pack_fails() {
+	new_test_ext().execute_with(|| {
+		let viewer = account(2);
+		let content_id = register_default_content(account(1));
+		pallet::ViewPacks::<Test>::insert(
+			content_id,
+			&viewer,
+			crate::types::ViewPackInfo { views_remaining: 0, child_item_id: 0 },
+		);
+
+		assert_noop!(
+			ContentRights::consume_view(RuntimeOrigin::signed(viewer), content_id),
+			crate::Error::<Test>::NoViewsRemaining
+		);
 	});
 }

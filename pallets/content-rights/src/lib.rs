@@ -299,6 +299,8 @@ pub mod pallet {
 		Unauthorized,
 		/// No renewal slot free within `MAX_RENEWAL_SLOT_SEARCH` blocks of expiry.
 		RenewalQueueFull,
+		/// A pay-per-view purchase must be for at least one view (Finding I).
+		ZeroViews,
 	}
 
 	// --------------- Hooks ---------------
@@ -515,6 +517,48 @@ pub mod pallet {
 			});
 
 			Ok(child_item_id)
+		}
+
+		/// Shared pay-per-view purchase logic for the local and XCM paths.
+		///
+		/// Rejects zero-view purchases (Finding I) and adds to an existing pack rather
+		/// than overwriting it (Finding E), so each beneficiary holds at most one
+		/// pay-per-view child NFT per content item.
+		fn do_purchase_views(
+			payer: &T::AccountId,
+			beneficiary: &T::AccountId,
+			content_id: u32,
+			num_views: u32,
+		) -> DispatchResult {
+			ensure!(num_views > 0, Error::<T>::ZeroViews);
+
+			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
+
+			let total_price = content
+				.ppv_price
+				.checked_mul(num_views as u128)
+				.ok_or(Error::<T>::InsufficientPayment)?;
+			Self::pay_with_royalties(payer, &content.creator, content_id, total_price)?;
+
+			if let Some(mut existing) = ViewPacks::<T>::get(content_id, beneficiary) {
+				existing.views_remaining = existing.views_remaining.saturating_add(num_views);
+				ViewPacks::<T>::insert(content_id, beneficiary, existing);
+			} else {
+				let child_item_id = Self::mint_and_nest_child(
+					&content.creator,
+					beneficiary,
+					content.collection_id,
+					content.content_item_id,
+					RightsType::PayPerView,
+				)?;
+				ViewPacks::<T>::insert(
+					content_id,
+					beneficiary,
+					ViewPackInfo { views_remaining: num_views, child_item_id },
+				);
+			}
+
+			Ok(())
 		}
 
 		/// Transfer funds from buyer, distributing according to royalty splits.
@@ -794,37 +838,7 @@ pub mod pallet {
 			num_views: u32,
 		) -> DispatchResult {
 			let buyer = ensure_signed(origin)?;
-
-			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
-
-			let total_price = content
-				.ppv_price
-				.checked_mul(num_views as u128)
-				.ok_or(Error::<T>::InsufficientPayment)?;
-			Self::pay_with_royalties(&buyer, &content.creator, content_id, total_price)?;
-
-			// If buyer already has a view pack, add views (Finding E remediation)
-			if let Some(mut existing) = ViewPacks::<T>::get(content_id, &buyer) {
-				existing.views_remaining = existing.views_remaining.saturating_add(num_views);
-				ViewPacks::<T>::insert(content_id, &buyer, existing);
-			} else {
-				let child_item_id = Self::mint_and_nest_child(
-					&content.creator,
-					&buyer,
-					content.collection_id,
-					content.content_item_id,
-					RightsType::PayPerView,
-				)?;
-
-				ViewPacks::<T>::insert(
-					content_id,
-					&buyer,
-					ViewPackInfo {
-						views_remaining: num_views,
-						child_item_id,
-					},
-				);
-			}
+			Self::do_purchase_views(&buyer, &buyer, content_id, num_views)?;
 
 			Self::deposit_event(Event::ViewPackPurchased {
 				content_id,
@@ -1075,31 +1089,7 @@ pub mod pallet {
 			num_views: u32,
 		) -> DispatchResult {
 			let payer = ensure_signed(origin)?;
-
-			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
-
-			let total_price = content
-				.ppv_price
-				.checked_mul(num_views as u128)
-				.ok_or(Error::<T>::InsufficientPayment)?;
-			Self::pay_with_royalties(&payer, &content.creator, content_id, total_price)?;
-
-			let child_item_id = Self::mint_and_nest_child(
-				&content.creator,
-				&beneficiary,
-				content.collection_id,
-				content.content_item_id,
-				RightsType::PayPerView,
-			)?;
-
-			ViewPacks::<T>::insert(
-				content_id,
-				&beneficiary,
-				ViewPackInfo {
-					views_remaining: num_views,
-					child_item_id,
-				},
-			);
+			Self::do_purchase_views(&payer, &beneficiary, content_id, num_views)?;
 
 			Self::deposit_event(Event::CrossChainViewPackPurchased {
 				content_id,
