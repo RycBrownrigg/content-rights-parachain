@@ -98,7 +98,8 @@ function provenance(cmd) {
   return {
     scriptVersion: 2,
     gitCommit: sh('git rev-parse HEAD'),
-    gitDirty: (sh('git status --porcelain') || '').length > 0,
+    // Untracked files (including this run's own output) do not count.
+    gitDirty: (sh('git status --porcelain --untracked-files=no') || '').length > 0,
     collatorBinary: binary,
     collatorBinaryVersion: sh(`"${binary}" --version`),
     collatorBinaryMtime: sh(`date -r "${binary}" -u +%Y-%m-%dT%H:%M:%SZ`),
