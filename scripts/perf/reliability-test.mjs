@@ -312,20 +312,25 @@ async function oneRun(runNo, keyring, alice) {
   if (!rpcReadyTime) throw new Error('RPC did not come back');
   log(`  RPC ready ${rpcReadyTime - killTime} ms after kill`);
 
-  // First block authored after the kill (best and finalized).
+  // First block authored after the kill (best and finalized). "best" may be
+  // on a fork that is later abandoned (the dry run showed this: the collator
+  // built on its unincluded pre-kill head, then re-authored that height), so
+  // the canonical first block is worked out afterwards from seenAt.
+  const seenAt = new Map(); // hash -> { number, observedAt } for every best head seen
   const firstNew = await new Promise(async resolve => {
     const result = { best: null, finalized: null };
     const unsubs = [];
     const done = () => { if (result.best && result.finalized) { unsubs.forEach(u => u()); resolve(result); } };
     const watch = kind => async header => {
-      if (result[kind]) return;
       const h = header.hash.toHex();
       const observedAt = Date.now();
+      if (kind === 'best' && !seenAt.has(h)) seenAt.set(h, { number: header.number.toNumber(), observedAt });
+      if (result[kind]) return;
       let ts;
       try { ts = await onChainTimestamp(api, h); } catch { return; }
       if (ts > killTime && !result[kind]) {
         result[kind] = { number: header.number.toNumber(), hash: h, timestamp: ts, observedAt };
-        log(`  First ${kind} block authored after kill: #${result[kind].number}, ` +
+        log(`  First ${kind === 'best' ? 'best block (any fork)' : 'finalized block'} authored after kill: #${result[kind].number}, ` +
             `seen ${observedAt - killTime} ms after kill (on-chain timestamp +${ts - killTime} ms)`);
         done();
       }
@@ -334,6 +339,26 @@ async function oneRun(runNo, keyring, alice) {
     unsubs.push(await api.rpc.chain.subscribeFinalizedHeads(watch('finalized')));
     setTimeout(() => { unsubs.forEach(u => u()); resolve(result); }, NEW_BLOCK_TIMEOUT_MS);
   });
+
+  // First CANONICAL block authored after the kill, and post-kill blocks that
+  // were seen as best but ended up off the canonical chain.
+  let firstCanonical = null;
+  const finNow = (await api.rpc.chain.getHeader(await api.rpc.chain.getFinalizedHead())).number.toNumber();
+  for (let n = preKill.finalizedNumber + 1; n <= finNow && !firstCanonical; n++) {
+    const h = (await api.rpc.chain.getBlockHash(n)).toHex();
+    const ts = await onChainTimestamp(api, h);
+    if (ts > killTime) firstCanonical = { number: n, hash: h, timestamp: ts, observedAt: seenAt.get(h)?.observedAt ?? null };
+  }
+  const abandonedHeads = [];
+  for (const [h, v] of seenAt) {
+    if (v.number > finNow) continue; // not yet decidable
+    if ((await api.rpc.chain.getBlockHash(v.number)).toHex() !== h) abandonedHeads.push({ number: v.number, hash: h, observedAt: v.observedAt });
+  }
+  if (firstCanonical) {
+    log(`  First canonical block authored after kill: #${firstCanonical.number}, on-chain timestamp +${firstCanonical.timestamp - killTime} ms` +
+        (firstCanonical.observedAt ? `, seen ${firstCanonical.observedAt - killTime} ms after kill` : ''));
+  }
+  if (abandonedHeads.length) log(`  Post-kill best blocks later abandoned: ${abandonedHeads.map(b => '#' + b.number).join(', ')}`);
 
   // Blocks authored before the kill that are no longer canonical.
   let lostPreKillBlocks = 0;
@@ -387,9 +412,12 @@ async function oneRun(runNo, keyring, alice) {
       killToRpcReady: rpcReadyTime - killTime,
       killToFirstNewBestSeen: firstNew.best ? firstNew.best.observedAt - killTime : null,
       killToFirstNewBestTimestamp: firstNew.best ? firstNew.best.timestamp - killTime : null,
+      killToFirstCanonicalTimestamp: firstCanonical ? firstCanonical.timestamp - killTime : null,
+      killToFirstCanonicalSeen: firstCanonical?.observedAt ? firstCanonical.observedAt - killTime : null,
       killToFirstNewFinalizedSeen: firstNew.finalized ? firstNew.finalized.observedAt - killTime : null,
     },
-    firstNewBlock: firstNew,
+    firstNewBlock: { ...firstNew, canonical: firstCanonical },
+    abandonedPostKillHeads: abandonedHeads,
     lostPreKillBlocks,
     state,
     baseline,
@@ -419,7 +447,8 @@ async function main() {
   for (const r of runs) {
     if (r.error) { log(`  Run ${r.run}: FAILED (${r.error})`); continue; }
     const t = r.timesMs;
-    log(`  Run ${r.run}: exit ${t.killToExit} ms | RPC ${t.killToRpcReady} ms | first new block ${t.killToFirstNewBestSeen} ms | ` +
+    log(`  Run ${r.run}: exit ${t.killToExit} ms | RPC ${t.killToRpcReady} ms | first new block (any fork) ${t.killToFirstNewBestSeen} ms | ` +
+        `first canonical new block +${t.killToFirstCanonicalTimestamp} ms | abandoned ${r.abandonedPostKillHeads.length} | ` +
         `first new finalized ${t.killToFirstNewFinalizedSeen} ms | lost pre-kill blocks ${r.lostPreKillBlocks} | ` +
         `state ${r.state.intact ? 'intact' : 'NOT intact'} | uptime ${r.baseline.uptimePct.toFixed(0)}% → ${r.recovery.uptimePct.toFixed(0)}%`);
   }
