@@ -316,7 +316,15 @@ async function oneRun(runNo, keyring, alice) {
   // on a fork that is later abandoned (the dry run showed this: the collator
   // built on its unincluded pre-kill head, then re-authored that height), so
   // the canonical first block is worked out afterwards from seenAt.
-  const seenAt = new Map(); // hash -> { number, observedAt } for every best head seen
+  const seenAt = new Map(); // hash -> { number, timestamp, observedAt } for every best head seen
+  const recordHead = async header => {
+    const h = header.hash.toHex();
+    if (seenAt.has(h)) return;
+    const entry = { number: header.number.toNumber(), timestamp: null, observedAt: Date.now() };
+    seenAt.set(h, entry);
+    try { entry.timestamp = await onChainTimestamp(api, h); } catch { /* pruned */ }
+  };
+  const unsubHeads = await api.rpc.chain.subscribeNewHeads(recordHead);
   const firstNew = await new Promise(async resolve => {
     const result = { best: null, finalized: null };
     const unsubs = [];
@@ -324,7 +332,6 @@ async function oneRun(runNo, keyring, alice) {
     const watch = kind => async header => {
       const h = header.hash.toHex();
       const observedAt = Date.now();
-      if (kind === 'best' && !seenAt.has(h)) seenAt.set(h, { number: header.number.toNumber(), observedAt });
       if (result[kind]) return;
       let ts;
       try { ts = await onChainTimestamp(api, h); } catch { return; }
@@ -342,23 +349,16 @@ async function oneRun(runNo, keyring, alice) {
 
   // First CANONICAL block authored after the kill, and post-kill blocks that
   // were seen as best but ended up off the canonical chain.
-  let firstCanonical = null;
+  let firstCanonical = null; // observedAt is not meaningful here: see canonicalChainFirstBest
   const finNow = (await api.rpc.chain.getHeader(await api.rpc.chain.getFinalizedHead())).number.toNumber();
   for (let n = preKill.finalizedNumber + 1; n <= finNow && !firstCanonical; n++) {
     const h = (await api.rpc.chain.getBlockHash(n)).toHex();
     const ts = await onChainTimestamp(api, h);
-    if (ts > killTime) firstCanonical = { number: n, hash: h, timestamp: ts, observedAt: seenAt.get(h)?.observedAt ?? null };
-  }
-  const abandonedHeads = [];
-  for (const [h, v] of seenAt) {
-    if (v.number > finNow) continue; // not yet decidable
-    if ((await api.rpc.chain.getBlockHash(v.number)).toHex() !== h) abandonedHeads.push({ number: v.number, hash: h, observedAt: v.observedAt });
+    if (ts > killTime) firstCanonical = { number: n, hash: h, timestamp: ts };
   }
   if (firstCanonical) {
-    log(`  First canonical block authored after kill: #${firstCanonical.number}, on-chain timestamp +${firstCanonical.timestamp - killTime} ms` +
-        (firstCanonical.observedAt ? `, seen ${firstCanonical.observedAt - killTime} ms after kill` : ''));
+    log(`  First canonical block authored after kill: #${firstCanonical.number}, on-chain timestamp +${firstCanonical.timestamp - killTime} ms`);
   }
-  if (abandonedHeads.length) log(`  Post-kill best blocks later abandoned: ${abandonedHeads.map(b => '#' + b.number).join(', ')}`);
 
   // Blocks authored before the kill that are no longer canonical.
   let lostPreKillBlocks = 0;
@@ -398,6 +398,23 @@ async function oneRun(runNo, keyring, alice) {
   const recovery = await monitorBlocks(api, RECOVERY_MS, 'recovery');
   log(`  Blocks ${recovery.blocksProduced}/${recovery.expectedBlocks} (${recovery.uptimePct.toFixed(1)}%), ` +
       `median interval ${recovery.blockIntervalMs?.median ?? 'n/a'} ms`);
+  unsubHeads();
+
+  // Post-kill blocks (timestamp > kill) that were best at some point but are
+  // not on the finalized chain; and when a canonical post-kill block first
+  // became the node's best block.
+  const finEnd = (await api.rpc.chain.getHeader(await api.rpc.chain.getFinalizedHead())).number.toNumber();
+  const abandonedHeads = [];
+  let firstCanonicalBestAt = null;
+  for (const [h, v] of seenAt) {
+    if (v.timestamp === null || v.timestamp <= killTime || v.number > finEnd) continue;
+    const canonical = (await api.rpc.chain.getBlockHash(v.number)).toHex() === h;
+    if (!canonical) abandonedHeads.push({ number: v.number, hash: h, timestamp: v.timestamp, observedAt: v.observedAt });
+    else if (firstCanonicalBestAt === null || v.observedAt < firstCanonicalBestAt.observedAt) firstCanonicalBestAt = { number: v.number, hash: h, observedAt: v.observedAt };
+  }
+  abandonedHeads.sort((a, b) => a.number - b.number);
+  log(`  Post-kill blocks abandoned: ${abandonedHeads.length ? abandonedHeads.map(b => '#' + b.number).join(', ') : 'none'}`);
+  if (firstCanonicalBestAt) log(`  Canonical chain first became best at #${firstCanonicalBestAt.number}, ${firstCanonicalBestAt.observedAt - killTime} ms after kill`);
   await api.disconnect();
 
   return {
@@ -413,10 +430,10 @@ async function oneRun(runNo, keyring, alice) {
       killToFirstNewBestSeen: firstNew.best ? firstNew.best.observedAt - killTime : null,
       killToFirstNewBestTimestamp: firstNew.best ? firstNew.best.timestamp - killTime : null,
       killToFirstCanonicalTimestamp: firstCanonical ? firstCanonical.timestamp - killTime : null,
-      killToFirstCanonicalSeen: firstCanonical?.observedAt ? firstCanonical.observedAt - killTime : null,
+      killToCanonicalChainBest: firstCanonicalBestAt ? firstCanonicalBestAt.observedAt - killTime : null,
       killToFirstNewFinalizedSeen: firstNew.finalized ? firstNew.finalized.observedAt - killTime : null,
     },
-    firstNewBlock: { ...firstNew, canonical: firstCanonical },
+    firstNewBlock: { ...firstNew, canonical: firstCanonical, canonicalChainFirstBest: firstCanonicalBestAt },
     abandonedPostKillHeads: abandonedHeads,
     lostPreKillBlocks,
     state,
@@ -448,7 +465,7 @@ async function main() {
     if (r.error) { log(`  Run ${r.run}: FAILED (${r.error})`); continue; }
     const t = r.timesMs;
     log(`  Run ${r.run}: exit ${t.killToExit} ms | RPC ${t.killToRpcReady} ms | first new block (any fork) ${t.killToFirstNewBestSeen} ms | ` +
-        `first canonical new block +${t.killToFirstCanonicalTimestamp} ms | abandoned ${r.abandonedPostKillHeads.length} | ` +
+        `first canonical new block +${t.killToFirstCanonicalTimestamp} ms | canonical chain best ${t.killToCanonicalChainBest} ms | abandoned ${r.abandonedPostKillHeads.length} | ` +
         `first new finalized ${t.killToFirstNewFinalizedSeen} ms | lost pre-kill blocks ${r.lostPreKillBlocks} | ` +
         `state ${r.state.intact ? 'intact' : 'NOT intact'} | uptime ${r.baseline.uptimePct.toFixed(0)}% → ${r.recovery.uptimePct.toFixed(0)}%`);
   }
