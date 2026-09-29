@@ -1,0 +1,1204 @@
+{
+  "runId": "2026-09-28T18-09-34-798Z-sigkill",
+  "startedFrom": "ws://127.0.0.1:9990",
+  "signal": "SIGKILL",
+  "config": {
+    "BASELINE_MS": 120000,
+    "RECOVERY_MS": 120000,
+    "SLOT_MS": 6000,
+    "RPC_POLL_MS": 500
+  },
+  "runs": [
+    {
+      "run": 1,
+      "provenance": {
+        "scriptVersion": 2,
+        "gitCommit": "d88ec4e4ce7ecae8bb97fe3ed6f56762d41dc637",
+        "gitDirty": false,
+        "collatorBinary": "/Volumes/WorkFiles/Projects/Cross-Chain_Content_Rights_Management_Service/content-rights-parachain/target/release/parachain-template-node",
+        "collatorBinaryVersion": "parachain-template-node 0.1.0",
+        "collatorBinaryMtime": "2026-09-27T15:39:40Z",
+        "node": "v26.3.0",
+        "platform": "darwin arm64",
+        "host": "14InchMacbook.local"
+      },
+      "signal": "SIGKILL",
+      "collator": {
+        "pidBefore": 39472,
+        "pidAfter": 40887,
+        "argv": [
+          "/Volumes/WorkFiles/Projects/Cross-Chain_Content_Rights_Management_Service/content-rights-parachain/target/release/parachain-template-node",
+          "--name",
+          "collator01",
+          "--node-key",
+          "5e123980fad4770d9ab5b7df7bbee8499943822a8555d11995e8203210065342",
+          "--chain",
+          "/var/folders/96/1fvx3_752wvbzbd2vnmk6y2c0000gn/T/zombie-4362b06b7caa33f2b3590b78d99076e9_-39275-gjti5crkOxMm/collator01/cfg/local_rococo-local-100.json",
+          "--base-path",
+          "/var/folders/96/1fvx3_752wvbzbd2vnmk6y2c0000gn/T/zombie-4362b06b7caa33f2b3590b78d99076e9_-39275-gjti5crkOxMm/collator01/data",
+          "--listen-addr",
+          "/ip4/127.0.0.1/tcp/54757/ws",
+          "--prometheus-external",
+          "--rpc-cors",
+          "all",
+          "--rpc-methods",
+          "unsafe",
+          "--prometheus-port",
+          "54758",
+          "--rpc-port",
+          "9990",
+          "--collator",
+          "--rpc-external",
+          "--unsafe-rpc-external",
+          "--force-authoring",
+          "--",
+          "--base-path",
+          "/var/folders/96/1fvx3_752wvbzbd2vnmk6y2c0000gn/T/zombie-4362b06b7caa33f2b3590b78d99076e9_-39275-gjti5crkOxMm/collator01/relay-data",
+          "--chain",
+          "/var/folders/96/1fvx3_752wvbzbd2vnmk6y2c0000gn/T/zombie-4362b06b7caa33f2b3590b78d99076e9_-39275-gjti5crkOxMm/collator01/cfg/rococo-local.json",
+          "--execution",
+          "wasm",
+          "--port",
+          "54784",
+          "--rpc-port",
+          "54785",
+          "--prometheus-port",
+          "54786"
+        ],
+        "argvExact": false,
+        "cwd": "/Volumes/WorkFiles/Projects/Cross-Chain_Content_Rights_Management_Service/content-rights-parachain",
+        "restartLog": "/tmp/ccrms-reliability/2026-09-28T18-09-34-798Z-sigkill-run1-collator.log"
+      },
+      "preKill": {
+        "bestNumber": 179,
+        "bestHash": "0x76d13c294179aa23c74b9d09ce5893f22e25dde47e6e9601ddd9913133b044bb",
+        "finalizedNumber": 173,
+        "finalizedHash": "0x895f4ba5d281c1c96213508d38266912d6f9b1a8aca7e3df8353fac3ed3747f7"
+      },
+      "timesMs": {
+        "killToExit": 67,
+        "killToRestart": 67,
+        "killToRpcReady": 3815,
+        "killToFirstNewBestSeen": 5975,
+        "killToFirstNewBestTimestamp": 5929,
+        "killToFirstCanonicalTimestamp": 17929,
+        "killToCanonicalChainBest": 30200,
+        "killToFirstNewFinalizedSeen": 46988
+      },
+      "firstNewBlock": {
+        "best": {
+          "number": 180,
+          "hash": "0x20289b2ed885c7c91c51d24250cf184751179bcf3dd04167dc19ce01641c7e34",
+          "timestamp": 1790619108000,
+          "observedAt": 1790619108046
+        },
+        "finalized": {
+          "number": 180,
+          "hash": "0x3c345fff304266c56321d30aa63b01584ce774c7d2bf56259fa3e2ff6ef3bcd6",
+          "timestamp": 1790619120000,
+          "observedAt": 1790619149059
+        },
+        "canonical": {
+          "number": 180,
+          "hash": "0x3c345fff304266c56321d30aa63b01584ce774c7d2bf56259fa3e2ff6ef3bcd6",
+          "timestamp": 1790619120000
+        },
+        "canonicalChainFirstBest": {
+          "number": 183,
+          "hash": "0x17be85fe473f12c23ed983f3422977f054b11bb17851dfac30bb877b7ca3ecd2",
+          "observedAt": 1790619132271
+        }
+      },
+      "abandonedPostKillHeads": [
+        {
+          "number": 180,
+          "hash": "0x20289b2ed885c7c91c51d24250cf184751179bcf3dd04167dc19ce01641c7e34",
+          "timestamp": 1790619108000,
+          "observedAt": 1790619108045
+        },
+        {
+          "number": 181,
+          "hash": "0x9317da2a8c9a8e4418e98d09de4043c00e3fddc84ef16b46925b07e77c3b9a88",
+          "timestamp": 1790619114000,
+          "observedAt": 1790619114061
+        },
+        {
+          "number": 182,
+          "hash": "0x1782f08af367158741e479329882030399860a9a74105552d0f0d3f1fbeeaee8",
+          "timestamp": 1790619126000,
+          "observedAt": 1790619126289
+        },
+        {
+          "number": 189,
+          "hash": "0xe256df728fa1dc17d55157af16b105da5bb1abd589bca7640529c7d0b0dea239",
+          "timestamp": 1790619168000,
+          "observedAt": 1790619168063
+        },
+        {
+          "number": 190,
+          "hash": "0x582469ee83e2a4b3ec1a940bc883581927cff41584f284e99454bbfeca687808",
+          "timestamp": 1790619174000,
+          "observedAt": 1790619174045
+        },
+        {
+          "number": 198,
+          "hash": "0xf005f8ee78d0ea09a6b81627f3fc1b4d99eb8aeba3e25dda216e69a80fe70f71",
+          "timestamp": 1790619228000,
+          "observedAt": 1790619228060
+        }
+      ],
+      "lostPreKillBlocks": 0,
+      "state": {
+        "contentId": 0,
+        "finalizedStillCanonical": true,
+        "contentUnchanged": true,
+        "subscriptionUnchanged": true,
+        "newTxIncluded": true,
+        "newTxError": null,
+        "intact": true
+      },
+      "baseline": {
+        "durationMs": 120000,
+        "startBest": 161,
+        "endBest": 179,
+        "blocksProduced": 18,
+        "expectedBlocks": 20,
+        "uptimePct": 90,
+        "blockIntervalMs": {
+          "n": 17,
+          "median": 6000,
+          "mean": 6705.882352941177,
+          "min": 6000,
+          "max": 12000
+        },
+        "blocks": [
+          {
+            "number": 162,
+            "hash": "0xd8885a5711fe38dd1ee48a4bb9ccc264f6f4b966fe59262787a09b9da764f6a0",
+            "timestamp": 1790618988000,
+            "observedAt": 1790618988062
+          },
+          {
+            "number": 163,
+            "hash": "0xf785c7cdfc3b37c4eede887439d060fab09e344b0466a105450ad60631927fe4",
+            "timestamp": 1790618994000,
+            "observedAt": 1790618994068
+          },
+          {
+            "number": 164,
+            "hash": "0xbf63d596a6939caf212e821ac658d4e29fddccaaed02c99dec74127b1b93a29f",
+            "timestamp": 1790619006000,
+            "observedAt": 1790619006285
+          },
+          {
+            "number": 165,
+            "hash": "0x5f7f2c4a5894ced09a5a84b2eb5a350d0681be3c7b5965bcb5fe12b5e1b9bd9f",
+            "timestamp": 1790619012000,
+            "observedAt": 1790619012067
+          },
+          {
+            "number": 166,
+            "hash": "0xcc4abc79d1f2e4a65de35287a0ebce5fea09e01f759090d388b10c9249732e3c",
+            "timestamp": 1790619018000,
+            "observedAt": 1790619018072
+          },
+          {
+            "number": 167,
+            "hash": "0xe418aedb26b39c57addab210f3ac77dd633d9fcacbf696acf90b48587993306d",
+            "timestamp": 1790619024000,
+            "observedAt": 1790619024278
+          },
+          {
+            "number": 168,
+            "hash": "0x39cf544694e2efb708bdf69837a92ff7db7f8c078d8f82ac60d5675ba1b8743f",
+            "timestamp": 1790619030000,
+            "observedAt": 1790619030091
+          },
+          {
+            "number": 169,
+            "hash": "0x54624d736bcc0df86d6357f228488f652f5b420af8283a45b444ab47cbc724e7",
+            "timestamp": 1790619036000,
+            "observedAt": 1790619036051
+          },
+          {
+            "number": 170,
+            "hash": "0x17a1ee489966b9b45a36fed271ed25de250ac45bf8702f7994e33dfbb8f756aa",
+            "timestamp": 1790619042000,
+            "observedAt": 1790619042024
+          },
+          {
+            "number": 171,
+            "hash": "0x748433360159afed4229800243ae5afc5356bd27be3b60ad8f02a1737aceab10",
+            "timestamp": 1790619048000,
+            "observedAt": 1790619048035
+          },
+          {
+            "number": 172,
+            "hash": "0x08d03a5ae8f3c0ecbb480b025b951f7a71195b876c53d8192c131c50146e4d4b",
+            "timestamp": 1790619054000,
+            "observedAt": 1790619054068
+          },
+          {
+            "number": 173,
+            "hash": "0x895f4ba5d281c1c96213508d38266912d6f9b1a8aca7e3df8353fac3ed3747f7",
+            "timestamp": 1790619066000,
+            "observedAt": 1790619066272
+          },
+          {
+            "number": 174,
+            "hash": "0xf7ed1cf3e2fc839bafe5d70d4c4c23db1f9135f96335984044d7248f03ed1b19",
+            "timestamp": 1790619072000,
+            "observedAt": 1790619072047
+          },
+          {
+            "number": 175,
+            "hash": "0x1eca6ce5e0dbf76724b23f4c87ba73b19e9ccc4d52ad962d62df9ca7a4f8dbd3",
+            "timestamp": 1790619078000,
+            "observedAt": 1790619078062
+          },
+          {
+            "number": 176,
+            "hash": "0x2d422f665b86549663e97947a1ae4a85cd3807bbd1328bea1a3881b247ed40de",
+            "timestamp": 1790619084000,
+            "observedAt": 1790619084031
+          },
+          {
+            "number": 177,
+            "hash": "0xfd0e9160c89a027289b9d350f2e2d4246e616e0a3372bbfc10b0cf9e0229335b",
+            "timestamp": 1790619090000,
+            "observedAt": 1790619090048
+          },
+          {
+            "number": 178,
+            "hash": "0x1831d970b11a43683bfdbf50cb34181d22805d2e11f64bcbf1c3d44546f65ba4",
+            "timestamp": 1790619096000,
+            "observedAt": 1790619096051
+          },
+          {
+            "number": 179,
+            "hash": "0x76d13c294179aa23c74b9d09ce5893f22e25dde47e6e9601ddd9913133b044bb",
+            "timestamp": 1790619102000,
+            "observedAt": 1790619102056
+          }
+        ]
+      },
+      "recovery": {
+        "durationMs": 120000,
+        "startBest": 186,
+        "endBest": 204,
+        "blocksProduced": 18,
+        "expectedBlocks": 20,
+        "uptimePct": 90,
+        "blockIntervalMs": {
+          "n": 17,
+          "median": 6000,
+          "mean": 6705.882352941177,
+          "min": 6000,
+          "max": 12000
+        },
+        "blocks": [
+          {
+            "number": 187,
+            "hash": "0xdc5444e7ae72dcc5b1df9f9adc9ccc8be9accd323a181f974cfcf0660dbcf584",
+            "timestamp": 1790619156000,
+            "observedAt": 1790619156066
+          },
+          {
+            "number": 188,
+            "hash": "0x7630ab7ced26931b155b5febf53eec0743710f5182bdcee1e90922da4386e79b",
+            "timestamp": 1790619162000,
+            "observedAt": 1790619162051
+          },
+          {
+            "number": 189,
+            "hash": "0xe256df728fa1dc17d55157af16b105da5bb1abd589bca7640529c7d0b0dea239",
+            "timestamp": 1790619168000,
+            "observedAt": 1790619168063
+          },
+          {
+            "number": 190,
+            "hash": "0x582469ee83e2a4b3ec1a940bc883581927cff41584f284e99454bbfeca687808",
+            "timestamp": 1790619174000,
+            "observedAt": 1790619174046
+          },
+          {
+            "number": 191,
+            "hash": "0xc162df0ae8e225b5a09474b4e174cc80bf0d2752af9d561b43f2a536345a2de0",
+            "timestamp": 1790619186000,
+            "observedAt": 1790619186292
+          },
+          {
+            "number": 192,
+            "hash": "0x49a7911774bc992abfc047d62af4378a2e0957cef8fc5cb4ebc4b009ebf8a6a9",
+            "timestamp": 1790619192000,
+            "observedAt": 1790619192058
+          },
+          {
+            "number": 193,
+            "hash": "0x098d95ce72105eda2c33afda7d90b50e134b0e571e5f0f4aa84cfb387ad49eef",
+            "timestamp": 1790619198000,
+            "observedAt": 1790619198041
+          },
+          {
+            "number": 194,
+            "hash": "0xd568ffd52fac514f65683b7e87d5c6f0824f561d3be9d2ddd7a638ef9b172b44",
+            "timestamp": 1790619204000,
+            "observedAt": 1790619204064
+          },
+          {
+            "number": 195,
+            "hash": "0x60b71411d2dc0ac67c9628721cf0045b7a51196cefe395cbaa11970a232576a8",
+            "timestamp": 1790619210000,
+            "observedAt": 1790619210064
+          },
+          {
+            "number": 196,
+            "hash": "0x6e98c30ea5d8d2035a39229e7f7d885c33a6ccb08404594d48bda713c41bb3a2",
+            "timestamp": 1790619216000,
+            "observedAt": 1790619216053
+          },
+          {
+            "number": 197,
+            "hash": "0xfb097b8696f03dfeabe8bdc63491feacf4939b570dd9af50140baa3cd9574350",
+            "timestamp": 1790619222000,
+            "observedAt": 1790619222060
+          },
+          {
+            "number": 198,
+            "hash": "0xf005f8ee78d0ea09a6b81627f3fc1b4d99eb8aeba3e25dda216e69a80fe70f71",
+            "timestamp": 1790619228000,
+            "observedAt": 1790619228060
+          },
+          {
+            "number": 199,
+            "hash": "0x91617c58411cf58656d7e913dc30a5a4b80d21e57f833a726d672a0af320289a",
+            "timestamp": 1790619234000,
+            "observedAt": 1790619234040
+          },
+          {
+            "number": 200,
+            "hash": "0x3e336a4ae3dfdefc965641b912b3a6c71853e82c149fd289a68e81c389d963e2",
+            "timestamp": 1790619246000,
+            "observedAt": 1790619246296
+          },
+          {
+            "number": 201,
+            "hash": "0x27adc4a119767967b4ec3c54e3b3f247965bbd019d59f6805c3971d5a991b98b",
+            "timestamp": 1790619252000,
+            "observedAt": 1790619252274
+          },
+          {
+            "number": 202,
+            "hash": "0x98a074e6c7515d50b481e0297ab124de17e4841882808300e52c510cd5cd09ca",
+            "timestamp": 1790619258000,
+            "observedAt": 1790619258031
+          },
+          {
+            "number": 203,
+            "hash": "0x17718fbbcaf430a839acf45ad2a24bde98f336efe25ed66d56fcb72a35420ad5",
+            "timestamp": 1790619264000,
+            "observedAt": 1790619264047
+          },
+          {
+            "number": 204,
+            "hash": "0xda7564f1698dd8e242dad58cacb9decf81f44524bc99e6b83a05b341ba2d4ca0",
+            "timestamp": 1790619270000,
+            "observedAt": 1790619270058
+          }
+        ]
+      }
+    },
+    {
+      "run": 2,
+      "provenance": {
+        "scriptVersion": 2,
+        "gitCommit": "d88ec4e4ce7ecae8bb97fe3ed6f56762d41dc637",
+        "gitDirty": false,
+        "collatorBinary": "/Volumes/WorkFiles/Projects/Cross-Chain_Content_Rights_Management_Service/content-rights-parachain/target/release/parachain-template-node",
+        "collatorBinaryVersion": "parachain-template-node 0.1.0",
+        "collatorBinaryMtime": "2026-09-27T15:39:40Z",
+        "node": "v26.3.0",
+        "platform": "darwin arm64",
+        "host": "14InchMacbook.local"
+      },
+      "signal": "SIGKILL",
+      "collator": {
+        "pidBefore": 40887,
+        "pidAfter": 41211,
+        "argv": [
+          "/Volumes/WorkFiles/Projects/Cross-Chain_Content_Rights_Management_Service/content-rights-parachain/target/release/parachain-template-node",
+          "--name",
+          "collator01",
+          "--node-key",
+          "5e123980fad4770d9ab5b7df7bbee8499943822a8555d11995e8203210065342",
+          "--chain",
+          "/var/folders/96/1fvx3_752wvbzbd2vnmk6y2c0000gn/T/zombie-4362b06b7caa33f2b3590b78d99076e9_-39275-gjti5crkOxMm/collator01/cfg/local_rococo-local-100.json",
+          "--base-path",
+          "/var/folders/96/1fvx3_752wvbzbd2vnmk6y2c0000gn/T/zombie-4362b06b7caa33f2b3590b78d99076e9_-39275-gjti5crkOxMm/collator01/data",
+          "--listen-addr",
+          "/ip4/127.0.0.1/tcp/54757/ws",
+          "--prometheus-external",
+          "--rpc-cors",
+          "all",
+          "--rpc-methods",
+          "unsafe",
+          "--prometheus-port",
+          "54758",
+          "--rpc-port",
+          "9990",
+          "--collator",
+          "--rpc-external",
+          "--unsafe-rpc-external",
+          "--force-authoring",
+          "--",
+          "--base-path",
+          "/var/folders/96/1fvx3_752wvbzbd2vnmk6y2c0000gn/T/zombie-4362b06b7caa33f2b3590b78d99076e9_-39275-gjti5crkOxMm/collator01/relay-data",
+          "--chain",
+          "/var/folders/96/1fvx3_752wvbzbd2vnmk6y2c0000gn/T/zombie-4362b06b7caa33f2b3590b78d99076e9_-39275-gjti5crkOxMm/collator01/cfg/rococo-local.json",
+          "--execution",
+          "wasm",
+          "--port",
+          "54784",
+          "--rpc-port",
+          "54785",
+          "--prometheus-port",
+          "54786"
+        ],
+        "argvExact": false,
+        "cwd": "/Volumes/WorkFiles/Projects/Cross-Chain_Content_Rights_Management_Service/content-rights-parachain",
+        "restartLog": "/tmp/ccrms-reliability/2026-09-28T18-09-34-798Z-sigkill-run2-collator.log"
+      },
+      "preKill": {
+        "bestNumber": 224,
+        "bestHash": "0xda65c075c75606e2018b3837b750a06261419654c03c1b79215921cce1817f82",
+        "finalizedNumber": 218,
+        "finalizedHash": "0x5f1620745395984126b1fae0ce6ac57ac6a6f9aa76e82d884c0c9eb0efde95de"
+      },
+      "timesMs": {
+        "killToExit": 66,
+        "killToRestart": 66,
+        "killToRpcReady": 3780,
+        "killToFirstNewBestSeen": 5991,
+        "killToFirstNewBestTimestamp": 5926,
+        "killToFirstCanonicalTimestamp": 17926,
+        "killToCanonicalChainBest": 24205,
+        "killToFirstNewFinalizedSeen": 47864
+      },
+      "firstNewBlock": {
+        "best": {
+          "number": 225,
+          "hash": "0xa9bbe6df34ffdcb747b3a623d09459c0d5bb214a344047911b84e85c7f656cb0",
+          "timestamp": 1790619408000,
+          "observedAt": 1790619408065
+        },
+        "finalized": {
+          "number": 225,
+          "hash": "0xe26bb2916d3baa8db84a4f463580a6a9d8039113338632103254e8ba4cb33723",
+          "timestamp": 1790619420000,
+          "observedAt": 1790619449938
+        },
+        "canonical": {
+          "number": 225,
+          "hash": "0xe26bb2916d3baa8db84a4f463580a6a9d8039113338632103254e8ba4cb33723",
+          "timestamp": 1790619420000
+        },
+        "canonicalChainFirstBest": {
+          "number": 227,
+          "hash": "0x9aff6c84e65d8d10dba12a35cacc69e417fedceafd651572a409b50178c70e35",
+          "observedAt": 1790619426279
+        }
+      },
+      "abandonedPostKillHeads": [
+        {
+          "number": 225,
+          "hash": "0xa9bbe6df34ffdcb747b3a623d09459c0d5bb214a344047911b84e85c7f656cb0",
+          "timestamp": 1790619408000,
+          "observedAt": 1790619408065
+        },
+        {
+          "number": 226,
+          "hash": "0x2dc94ec9ac472dc47591e42adb939d27a9c8405a1b6164b8e952a2c2f208dc4e",
+          "timestamp": 1790619414000,
+          "observedAt": 1790619414058
+        },
+        {
+          "number": 234,
+          "hash": "0xecaf57f28d7affcb7f371980951aece1b67724a16b0dd469c8308172a4991ef1",
+          "timestamp": 1790619468000,
+          "observedAt": 1790619468047
+        },
+        {
+          "number": 235,
+          "hash": "0x6786776c94feb9141daa7491c3303c8d5664b3d633e5ddbd2126555b9709d5e2",
+          "timestamp": 1790619474000,
+          "observedAt": 1790619474031
+        },
+        {
+          "number": 243,
+          "hash": "0x17f9b7ab775fc168d67715070043cc81ecf47045c25e6517028eaf63e9c13309",
+          "timestamp": 1790619528000,
+          "observedAt": 1790619528029
+        }
+      ],
+      "lostPreKillBlocks": 0,
+      "state": {
+        "contentId": 2,
+        "finalizedStillCanonical": true,
+        "contentUnchanged": true,
+        "subscriptionUnchanged": true,
+        "newTxIncluded": true,
+        "newTxError": null,
+        "intact": true
+      },
+      "baseline": {
+        "durationMs": 120000,
+        "startBest": 206,
+        "endBest": 224,
+        "blocksProduced": 18,
+        "expectedBlocks": 20,
+        "uptimePct": 90,
+        "blockIntervalMs": {
+          "n": 17,
+          "median": 6000,
+          "mean": 6705.882352941177,
+          "min": 6000,
+          "max": 12000
+        },
+        "blocks": [
+          {
+            "number": 207,
+            "hash": "0xfe513576bd7cfa2ecae20d9d99c94f9e12fb007c0b5b1b664315754b8d1583eb",
+            "timestamp": 1790619288000,
+            "observedAt": 1790619288024
+          },
+          {
+            "number": 208,
+            "hash": "0x721f77943e97c6487ee6395562bc12c5916f8affbe82e05101ca105a57098ee0",
+            "timestamp": 1790619294000,
+            "observedAt": 1790619294045
+          },
+          {
+            "number": 209,
+            "hash": "0xb6df48cd4020e926d1f2d7b56068b2a45ac9a9921352cb9b65adf03324479d21",
+            "timestamp": 1790619306000,
+            "observedAt": 1790619306282
+          },
+          {
+            "number": 210,
+            "hash": "0xd83c53d2d3a166b88cc6a67dfe3c385723d500dd21194191232df4ad1c9c7cfd",
+            "timestamp": 1790619312000,
+            "observedAt": 1790619312054
+          },
+          {
+            "number": 211,
+            "hash": "0xd554851f95dc23595a31c3e0fbb0baf152b96d9c869cc082f71735ab50aed7d2",
+            "timestamp": 1790619318000,
+            "observedAt": 1790619318050
+          },
+          {
+            "number": 212,
+            "hash": "0x9e7a948cf983e7a00e2e1b15c9f3d354d5d4c40569007d48403bd8ba5263e4b1",
+            "timestamp": 1790619324000,
+            "observedAt": 1790619324068
+          },
+          {
+            "number": 213,
+            "hash": "0x1750b10cd5884d3e2c9d849328c88d28abc00d2e5b4f4d89951272d1037cadc3",
+            "timestamp": 1790619330000,
+            "observedAt": 1790619330069
+          },
+          {
+            "number": 214,
+            "hash": "0xda1ec946c027d50d85f77ef6d56bb43d7f4ad67c3dce04e4a511d4b82e87521b",
+            "timestamp": 1790619336000,
+            "observedAt": 1790619336044
+          },
+          {
+            "number": 215,
+            "hash": "0x33f8f532952b58db777f099d9d735d18e14852770f6c75515674a32b83f5f1f1",
+            "timestamp": 1790619342000,
+            "observedAt": 1790619342025
+          },
+          {
+            "number": 216,
+            "hash": "0x7542c4449e0254d287d51e10244774563f1a478b7925663e2e947f2f3b71a00b",
+            "timestamp": 1790619348000,
+            "observedAt": 1790619348052
+          },
+          {
+            "number": 217,
+            "hash": "0x936d72b3ad1066dacc3502bcd084cb694f403f05b62663c2dd9c89efc70c0439",
+            "timestamp": 1790619354000,
+            "observedAt": 1790619354055
+          },
+          {
+            "number": 218,
+            "hash": "0x5f1620745395984126b1fae0ce6ac57ac6a6f9aa76e82d884c0c9eb0efde95de",
+            "timestamp": 1790619366000,
+            "observedAt": 1790619366285
+          },
+          {
+            "number": 219,
+            "hash": "0x888f4082492a93da9df79c8876733eeb921a60c34f62b860bd081098fb40c950",
+            "timestamp": 1790619372000,
+            "observedAt": 1790619372061
+          },
+          {
+            "number": 220,
+            "hash": "0x28c6d499941a7cc392cac7a3856732de7220efee33e1a3c2f2ca12a828a59e36",
+            "timestamp": 1790619378000,
+            "observedAt": 1790619378036
+          },
+          {
+            "number": 221,
+            "hash": "0xd10fac4b8905f12c5955a5e648ad369f601b77ced7b9ce0ecd796c3528ab6d8e",
+            "timestamp": 1790619384000,
+            "observedAt": 1790619384052
+          },
+          {
+            "number": 222,
+            "hash": "0xb42bd3511c72242c37177fd0c519bbe86f2b5515bc97d61220798ecf9c1800e5",
+            "timestamp": 1790619390000,
+            "observedAt": 1790619390049
+          },
+          {
+            "number": 223,
+            "hash": "0xe9a450c70ef3a2e1827fa22d768f1f379adaebaf73b4a14e04dc40101a4f928e",
+            "timestamp": 1790619396000,
+            "observedAt": 1790619396065
+          },
+          {
+            "number": 224,
+            "hash": "0xda65c075c75606e2018b3837b750a06261419654c03c1b79215921cce1817f82",
+            "timestamp": 1790619402000,
+            "observedAt": 1790619402043
+          }
+        ]
+      },
+      "recovery": {
+        "durationMs": 120000,
+        "startBest": 231,
+        "endBest": 248,
+        "blocksProduced": 17,
+        "expectedBlocks": 20,
+        "uptimePct": 85,
+        "blockIntervalMs": {
+          "n": 16,
+          "median": 6000,
+          "mean": 6750,
+          "min": 6000,
+          "max": 12000
+        },
+        "blocks": [
+          {
+            "number": 232,
+            "hash": "0x54227a45bea179a71e004dcab62bb4ab055be7c076415774820b50b778156f42",
+            "timestamp": 1790619456000,
+            "observedAt": 1790619456067
+          },
+          {
+            "number": 233,
+            "hash": "0xad9dd4973a165be9ec42355a422451e493cdfd53e66c35a8125131a4f038918e",
+            "timestamp": 1790619462000,
+            "observedAt": 1790619462047
+          },
+          {
+            "number": 234,
+            "hash": "0xecaf57f28d7affcb7f371980951aece1b67724a16b0dd469c8308172a4991ef1",
+            "timestamp": 1790619468000,
+            "observedAt": 1790619468048
+          },
+          {
+            "number": 235,
+            "hash": "0x6786776c94feb9141daa7491c3303c8d5664b3d633e5ddbd2126555b9709d5e2",
+            "timestamp": 1790619474000,
+            "observedAt": 1790619474031
+          },
+          {
+            "number": 236,
+            "hash": "0x3e176ce47fffa20ee86d15a706ab37c0128741d347a042eaf983ff9abf6d8f70",
+            "timestamp": 1790619486000,
+            "observedAt": 1790619486294
+          },
+          {
+            "number": 237,
+            "hash": "0xf86dfe4995118a76d5bbcb7262199fecbd1c1e257e1030d5725ccc6679d52df0",
+            "timestamp": 1790619492000,
+            "observedAt": 1790619492031
+          },
+          {
+            "number": 238,
+            "hash": "0xc7cd035a5a12e83d3f917b43a0bd03e004c2a3aea0bb641a54fdc7c6cc509da9",
+            "timestamp": 1790619498000,
+            "observedAt": 1790619498064
+          },
+          {
+            "number": 239,
+            "hash": "0x979d8d90f6ff004d9b09f7235f9d7f1e3e0f758b55f51cefbf906facf972b5fb",
+            "timestamp": 1790619504000,
+            "observedAt": 1790619504049
+          },
+          {
+            "number": 240,
+            "hash": "0x86182f1e5c52ba4df91d48257780428dd87684c33e760bbc260e4b5c3166bcf7",
+            "timestamp": 1790619510000,
+            "observedAt": 1790619510062
+          },
+          {
+            "number": 241,
+            "hash": "0xf1ea616eed81a591fd0f9c5d29c9cbb2865f61c91ab39178fa219f1b055f2e66",
+            "timestamp": 1790619516000,
+            "observedAt": 1790619516059
+          },
+          {
+            "number": 242,
+            "hash": "0x320ce3e94d2e77943bfa55139afbdba224999c57980b018b3b84df52b37d5a83",
+            "timestamp": 1790619522000,
+            "observedAt": 1790619522052
+          },
+          {
+            "number": 243,
+            "hash": "0x17f9b7ab775fc168d67715070043cc81ecf47045c25e6517028eaf63e9c13309",
+            "timestamp": 1790619528000,
+            "observedAt": 1790619528030
+          },
+          {
+            "number": 244,
+            "hash": "0x265cadda348cde603724396a743be60aaf3e3cfcb64d0c8cf989401cd27515e9",
+            "timestamp": 1790619534000,
+            "observedAt": 1790619534081
+          },
+          {
+            "number": 245,
+            "hash": "0xed4896268db04f77766af25be543341009c9d20a175e1419d6b44358948b0955",
+            "timestamp": 1790619546000,
+            "observedAt": 1790619546273
+          },
+          {
+            "number": 246,
+            "hash": "0x9f704ac85b181e39cde0940be847bba688f96f53542be3e9e9c64d79d44e8af5",
+            "timestamp": 1790619552000,
+            "observedAt": 1790619552037
+          },
+          {
+            "number": 247,
+            "hash": "0xaf6cb2097c8ff381ee42c1eea4c751a0bcb24218a628b6ab008d9c5f8ecb526e",
+            "timestamp": 1790619558000,
+            "observedAt": 1790619558063
+          },
+          {
+            "number": 248,
+            "hash": "0xa1512d17f44571f789215667455775f8db1d3b0685bcb4232d1a067dd2d9ec97",
+            "timestamp": 1790619564000,
+            "observedAt": 1790619564057
+          }
+        ]
+      }
+    },
+    {
+      "run": 3,
+      "provenance": {
+        "scriptVersion": 2,
+        "gitCommit": "d88ec4e4ce7ecae8bb97fe3ed6f56762d41dc637",
+        "gitDirty": false,
+        "collatorBinary": "/Volumes/WorkFiles/Projects/Cross-Chain_Content_Rights_Management_Service/content-rights-parachain/target/release/parachain-template-node",
+        "collatorBinaryVersion": "parachain-template-node 0.1.0",
+        "collatorBinaryMtime": "2026-09-27T15:39:40Z",
+        "node": "v26.3.0",
+        "platform": "darwin arm64",
+        "host": "14InchMacbook.local"
+      },
+      "signal": "SIGKILL",
+      "collator": {
+        "pidBefore": 41211,
+        "pidAfter": 41613,
+        "argv": [
+          "/Volumes/WorkFiles/Projects/Cross-Chain_Content_Rights_Management_Service/content-rights-parachain/target/release/parachain-template-node",
+          "--name",
+          "collator01",
+          "--node-key",
+          "5e123980fad4770d9ab5b7df7bbee8499943822a8555d11995e8203210065342",
+          "--chain",
+          "/var/folders/96/1fvx3_752wvbzbd2vnmk6y2c0000gn/T/zombie-4362b06b7caa33f2b3590b78d99076e9_-39275-gjti5crkOxMm/collator01/cfg/local_rococo-local-100.json",
+          "--base-path",
+          "/var/folders/96/1fvx3_752wvbzbd2vnmk6y2c0000gn/T/zombie-4362b06b7caa33f2b3590b78d99076e9_-39275-gjti5crkOxMm/collator01/data",
+          "--listen-addr",
+          "/ip4/127.0.0.1/tcp/54757/ws",
+          "--prometheus-external",
+          "--rpc-cors",
+          "all",
+          "--rpc-methods",
+          "unsafe",
+          "--prometheus-port",
+          "54758",
+          "--rpc-port",
+          "9990",
+          "--collator",
+          "--rpc-external",
+          "--unsafe-rpc-external",
+          "--force-authoring",
+          "--",
+          "--base-path",
+          "/var/folders/96/1fvx3_752wvbzbd2vnmk6y2c0000gn/T/zombie-4362b06b7caa33f2b3590b78d99076e9_-39275-gjti5crkOxMm/collator01/relay-data",
+          "--chain",
+          "/var/folders/96/1fvx3_752wvbzbd2vnmk6y2c0000gn/T/zombie-4362b06b7caa33f2b3590b78d99076e9_-39275-gjti5crkOxMm/collator01/cfg/rococo-local.json",
+          "--execution",
+          "wasm",
+          "--port",
+          "54784",
+          "--rpc-port",
+          "54785",
+          "--prometheus-port",
+          "54786"
+        ],
+        "argvExact": false,
+        "cwd": "/Volumes/WorkFiles/Projects/Cross-Chain_Content_Rights_Management_Service/content-rights-parachain",
+        "restartLog": "/tmp/ccrms-reliability/2026-09-28T18-09-34-798Z-sigkill-run3-collator.log"
+      },
+      "preKill": {
+        "bestNumber": 269,
+        "bestHash": "0x50dc309a4fb1a1f54652a9b54e438fc3cd5281f1329c1f3d73eb45ccf836cee1",
+        "finalizedNumber": 263,
+        "finalizedHash": "0x274cc8705c161e8b190d86cac3bb081ece4b88f6cf24730f195456dd4fa744cd"
+      },
+      "timesMs": {
+        "killToExit": 63,
+        "killToRestart": 63,
+        "killToRpcReady": 3804,
+        "killToFirstNewBestSeen": 5999,
+        "killToFirstNewBestTimestamp": 5933,
+        "killToFirstCanonicalTimestamp": 17933,
+        "killToCanonicalChainBest": 30237,
+        "killToFirstNewFinalizedSeen": 44708
+      },
+      "firstNewBlock": {
+        "best": {
+          "number": 270,
+          "hash": "0x0758b263449b162e23c1aedd055d83e32ffa8fe1db959f77ddd6a10db50b5b19",
+          "timestamp": 1790619708000,
+          "observedAt": 1790619708066
+        },
+        "finalized": {
+          "number": 270,
+          "hash": "0xfc26d8d09e31f59eff305d8f0a34fa169622cbbba4863ecbf0b6d95e67fb825f",
+          "timestamp": 1790619720000,
+          "observedAt": 1790619746775
+        },
+        "canonical": {
+          "number": 270,
+          "hash": "0xfc26d8d09e31f59eff305d8f0a34fa169622cbbba4863ecbf0b6d95e67fb825f",
+          "timestamp": 1790619720000
+        },
+        "canonicalChainFirstBest": {
+          "number": 273,
+          "hash": "0x4b0d789d75a86f2cecd2fb4ee408011685ac6a604beb606847c989bb0b36b78c",
+          "observedAt": 1790619732304
+        }
+      },
+      "abandonedPostKillHeads": [
+        {
+          "number": 270,
+          "hash": "0x0758b263449b162e23c1aedd055d83e32ffa8fe1db959f77ddd6a10db50b5b19",
+          "timestamp": 1790619708000,
+          "observedAt": 1790619708065
+        },
+        {
+          "number": 271,
+          "hash": "0x26debd309ed95f747410f176d8eaabb4e32bc0be433811c47fd3dad14ae5d107",
+          "timestamp": 1790619714000,
+          "observedAt": 1790619714044
+        },
+        {
+          "number": 272,
+          "hash": "0x176827ecbb3895d3a216b44a421c55a94912f47f545dac23162dcc789d74085b",
+          "timestamp": 1790619726000,
+          "observedAt": 1790619726289
+        },
+        {
+          "number": 279,
+          "hash": "0x0d6e1e2b602dc4e7f6786b3180196383586c8714fd948c950430f7bdf2223db0",
+          "timestamp": 1790619768000,
+          "observedAt": 1790619768056
+        },
+        {
+          "number": 280,
+          "hash": "0x5edec7319900050755a50a2e83e0d00423ca0be69731c03ee596eeee8ee9b662",
+          "timestamp": 1790619774000,
+          "observedAt": 1790619774047
+        },
+        {
+          "number": 286,
+          "hash": "0x42f8960e185b52ed1e7bca2e9c8674a60d1e4590f78a773d236e2aec2a8051d2",
+          "timestamp": 1790619816000,
+          "observedAt": 1790619816066
+        },
+        {
+          "number": 288,
+          "hash": "0x065da1fc0554dde269760207402bd0ef17e6d81ae5e87277a9c247349e62b7d3",
+          "timestamp": 1790619828000,
+          "observedAt": 1790619828061
+        }
+      ],
+      "lostPreKillBlocks": 0,
+      "state": {
+        "contentId": 4,
+        "finalizedStillCanonical": true,
+        "contentUnchanged": true,
+        "subscriptionUnchanged": true,
+        "newTxIncluded": true,
+        "newTxError": null,
+        "intact": true
+      },
+      "baseline": {
+        "durationMs": 120000,
+        "startBest": 251,
+        "endBest": 269,
+        "blocksProduced": 18,
+        "expectedBlocks": 20,
+        "uptimePct": 90,
+        "blockIntervalMs": {
+          "n": 17,
+          "median": 6000,
+          "mean": 6705.882352941177,
+          "min": 6000,
+          "max": 12000
+        },
+        "blocks": [
+          {
+            "number": 252,
+            "hash": "0x6b9e8e63f71d6be2c485e8c6aee1be61f94f76a6ae7a17e91858d69032aaa87f",
+            "timestamp": 1790619588000,
+            "observedAt": 1790619588057
+          },
+          {
+            "number": 253,
+            "hash": "0x961ac4f66876d34c64309bcb637e30e3306d75232b4085953a363b2260909564",
+            "timestamp": 1790619594000,
+            "observedAt": 1790619594064
+          },
+          {
+            "number": 254,
+            "hash": "0xc8976957c5523fa05c6a1a6e84f644ef54c92c7d5785a3611f365f285d6db7c3",
+            "timestamp": 1790619606000,
+            "observedAt": 1790619606281
+          },
+          {
+            "number": 255,
+            "hash": "0x2a71866dc0e33fe3c93654b110fe19fa19628a2850a63d6cf91caf56b41f816d",
+            "timestamp": 1790619612000,
+            "observedAt": 1790619612070
+          },
+          {
+            "number": 256,
+            "hash": "0xe7b874a34387a737f74b60714ef64b883bb6d903d8cf548b7c774e3b86a1ab14",
+            "timestamp": 1790619618000,
+            "observedAt": 1790619618272
+          },
+          {
+            "number": 257,
+            "hash": "0x3c77d044fdbd4208e050c466817481516b8ac9443c37433c1c35ed56fa96f83b",
+            "timestamp": 1790619624000,
+            "observedAt": 1790619624047
+          },
+          {
+            "number": 258,
+            "hash": "0x7a93534a637e28815f0224304db554753056872a73e45cece3119bdb6a1a3303",
+            "timestamp": 1790619630000,
+            "observedAt": 1790619630036
+          },
+          {
+            "number": 259,
+            "hash": "0x0a705ad1ed1b9e1f4572db3fc468481b2672f268a7d7f70365443cd685945d05",
+            "timestamp": 1790619636000,
+            "observedAt": 1790619636047
+          },
+          {
+            "number": 260,
+            "hash": "0xbe94a144b6240dc161feee5aec733a4f1d56972c800c7ae21add7ab06ee3d8c4",
+            "timestamp": 1790619642000,
+            "observedAt": 1790619642028
+          },
+          {
+            "number": 261,
+            "hash": "0x07ce327e1b3b035a9d6848fa23f166a6bee7c6139b09c6971f437d666061ed96",
+            "timestamp": 1790619648000,
+            "observedAt": 1790619648052
+          },
+          {
+            "number": 262,
+            "hash": "0xb1f9026821c741fac6238b36fd2ec02e152482bbfdb3e750b3255a1411d6146a",
+            "timestamp": 1790619654000,
+            "observedAt": 1790619654064
+          },
+          {
+            "number": 263,
+            "hash": "0x274cc8705c161e8b190d86cac3bb081ece4b88f6cf24730f195456dd4fa744cd",
+            "timestamp": 1790619666000,
+            "observedAt": 1790619666282
+          },
+          {
+            "number": 264,
+            "hash": "0x029fe8ea0c6bc03237b2c7b1cd58630eb7c029c9c284c66cd5d437cfbf60ef10",
+            "timestamp": 1790619672000,
+            "observedAt": 1790619672040
+          },
+          {
+            "number": 265,
+            "hash": "0xc93376936bcebbd8fe4f2b732208938edf13569c0072cc5832c2f4a718b62d95",
+            "timestamp": 1790619678000,
+            "observedAt": 1790619678041
+          },
+          {
+            "number": 266,
+            "hash": "0xc5c14c997d077e605128e6b2a0d6260fe60010ef2da0d36dede48cb43b8c62d1",
+            "timestamp": 1790619684000,
+            "observedAt": 1790619684065
+          },
+          {
+            "number": 267,
+            "hash": "0x550754f06f80725d0c992811149ce9e19fb5490d5d8f1cc7b1418590a06e9102",
+            "timestamp": 1790619690000,
+            "observedAt": 1790619690055
+          },
+          {
+            "number": 268,
+            "hash": "0x55e5a2686ac56c1796f39830ee8a4360529efbb50339118f36542a92157f3ed2",
+            "timestamp": 1790619696000,
+            "observedAt": 1790619696295
+          },
+          {
+            "number": 269,
+            "hash": "0x50dc309a4fb1a1f54652a9b54e438fc3cd5281f1329c1f3d73eb45ccf836cee1",
+            "timestamp": 1790619702000,
+            "observedAt": 1790619702051
+          }
+        ]
+      },
+      "recovery": {
+        "durationMs": 120000,
+        "startBest": 276,
+        "endBest": 294,
+        "blocksProduced": 18,
+        "expectedBlocks": 20,
+        "uptimePct": 90,
+        "blockIntervalMs": {
+          "n": 17,
+          "median": 6000,
+          "mean": 6705.882352941177,
+          "min": 6000,
+          "max": 12000
+        },
+        "blocks": [
+          {
+            "number": 277,
+            "hash": "0x92c9ce654018487d44f7a3f32b3a70b69156e173cdce2af86d073ca36af30d28",
+            "timestamp": 1790619756000,
+            "observedAt": 1790619756055
+          },
+          {
+            "number": 278,
+            "hash": "0x7a3151c578e2264d26946add94fe351749f3d65740ac51bf77135aeca1defd18",
+            "timestamp": 1790619762000,
+            "observedAt": 1790619762064
+          },
+          {
+            "number": 279,
+            "hash": "0x0d6e1e2b602dc4e7f6786b3180196383586c8714fd948c950430f7bdf2223db0",
+            "timestamp": 1790619768000,
+            "observedAt": 1790619768056
+          },
+          {
+            "number": 280,
+            "hash": "0x5edec7319900050755a50a2e83e0d00423ca0be69731c03ee596eeee8ee9b662",
+            "timestamp": 1790619774000,
+            "observedAt": 1790619774047
+          },
+          {
+            "number": 281,
+            "hash": "0xfeb79ef8060c6a30191c662c6e198cb71e152c406d0d0ec3f46ab792a1bb77bf",
+            "timestamp": 1790619786000,
+            "observedAt": 1790619786292
+          },
+          {
+            "number": 282,
+            "hash": "0xad63581ddced1bf6004d084b7db657071a148b84147ec1d4d9a6eef7ca78ffd9",
+            "timestamp": 1790619792000,
+            "observedAt": 1790619792062
+          },
+          {
+            "number": 283,
+            "hash": "0xbb8de8035686b87449acab4869565d0b310c8fec579be160c06e86e392ee10c3",
+            "timestamp": 1790619798000,
+            "observedAt": 1790619798056
+          },
+          {
+            "number": 284,
+            "hash": "0xc1c9b31c3132ecf5687c60dbc23caf1f073c77409075d5a22bc56c8a7cd9a071",
+            "timestamp": 1790619804000,
+            "observedAt": 1790619804046
+          },
+          {
+            "number": 285,
+            "hash": "0x1088fb6778c03c489f4132ffcb3682f7bc4718875b9390e55f7895dcb92d0775",
+            "timestamp": 1790619810000,
+            "observedAt": 1790619810068
+          },
+          {
+            "number": 286,
+            "hash": "0x42f8960e185b52ed1e7bca2e9c8674a60d1e4590f78a773d236e2aec2a8051d2",
+            "timestamp": 1790619816000,
+            "observedAt": 1790619816066
+          },
+          {
+            "number": 287,
+            "hash": "0x61153a5ed22b42999400df50d8fb552316a8a8be4bcfd372fc0f4bca93fed609",
+            "timestamp": 1790619822000,
+            "observedAt": 1790619822276
+          },
+          {
+            "number": 288,
+            "hash": "0x065da1fc0554dde269760207402bd0ef17e6d81ae5e87277a9c247349e62b7d3",
+            "timestamp": 1790619828000,
+            "observedAt": 1790619828061
+          },
+          {
+            "number": 289,
+            "hash": "0x65cf994bff707e405025174fb16ec5773cf4e930638d9000564b21856fab35de",
+            "timestamp": 1790619834000,
+            "observedAt": 1790619834042
+          },
+          {
+            "number": 290,
+            "hash": "0x37c654cc98479f700730130130cdd200a153d23ac4024873e93ef66714cfe9ed",
+            "timestamp": 1790619846000,
+            "observedAt": 1790619846287
+          },
+          {
+            "number": 291,
+            "hash": "0x69a43e78243c694cca780367aa420aa8467d7b20f1fb946863031f63f3c6edd7",
+            "timestamp": 1790619852000,
+            "observedAt": 1790619852044
+          },
+          {
+            "number": 292,
+            "hash": "0x4e6c58ff05d221c355c6ce65433ed4a0047548599684f123f47e781cc476106b",
+            "timestamp": 1790619858000,
+            "observedAt": 1790619858042
+          },
+          {
+            "number": 293,
+            "hash": "0x7030ef41ca348b55c884f3f955a8724e3ca8bcfe767ae2b8bd2f503872f85794",
+            "timestamp": 1790619864000,
+            "observedAt": 1790619864061
+          },
+          {
+            "number": 294,
+            "hash": "0x0c7eb7b45a94a27f4c60268ae2843b7e7320bcd79aecd4747b723a26deeef4bd",
+            "timestamp": 1790619870000,
+            "observedAt": 1790619870053
+          }
+        ]
+      }
+    }
+  ]
+}
