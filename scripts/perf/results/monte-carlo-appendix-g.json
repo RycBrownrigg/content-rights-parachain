@@ -1,0 +1,251 @@
+{
+  "noSecondary": false,
+  "grid": {
+    "nCreators": 200,
+    "nIterations": 2000,
+    "seed": 42
+  },
+  "baseline": {
+    "advantagePct": 4.650713927639871,
+    "winRatePct": 20.5555
+  },
+  "feeSweep": [
+    {
+      "feePct": 5,
+      "advantagePct": 2.460897067651624,
+      "winRatePct": 19.21
+    },
+    {
+      "feePct": 6,
+      "advantagePct": 1.3821788973165106,
+      "winRatePct": 18.540499999999998
+    },
+    {
+      "feePct": 7.000000000000001,
+      "advantagePct": 0.30346072697986504,
+      "winRatePct": 17.84725
+    },
+    {
+      "feePct": 8,
+      "advantagePct": -0.7752574433571691,
+      "winRatePct": 17.158
+    },
+    {
+      "feePct": 9,
+      "advantagePct": -1.853975613689396,
+      "winRatePct": 16.45825
+    },
+    {
+      "feePct": 10,
+      "advantagePct": -2.932693784024065,
+      "winRatePct": 15.7415
+    },
+    {
+      "feePct": 15,
+      "advantagePct": -8.326284635702653,
+      "winRatePct": 12.091000000000001
+    }
+  ],
+  "discoverySweep": [
+    {
+      "factor": 0,
+      "advantagePct": 28.929619263150187,
+      "winRatePct": 97.13175
+    },
+    {
+      "factor": 0.25,
+      "advantagePct": 21.861660506751022,
+      "winRatePct": 49.25225
+    },
+    {
+      "factor": 0.5,
+      "advantagePct": 15.5283624951972,
+      "winRatePct": 32.54675
+    },
+    {
+      "factor": 0.75,
+      "advantagePct": 9.82084047618823,
+      "winRatePct": 25.01725
+    },
+    {
+      "factor": 1,
+      "advantagePct": 4.650713927639871,
+      "winRatePct": 20.5555
+    },
+    {
+      "factor": 1.5,
+      "advantagePct": -4.354820531348835,
+      "winRatePct": 15.38025
+    },
+    {
+      "factor": 2,
+      "advantagePct": -11.933250857600285,
+      "winRatePct": 12.321250000000001
+    }
+  ],
+  "crossoverBuckets": [
+    {
+      "lo": 1500,
+      "hi": 2000,
+      "scenarios": 21959,
+      "winRatePct": 8.666150553303885,
+      "meanAdvantagePct": -32.79658391064816
+    },
+    {
+      "lo": 2000,
+      "hi": 2500,
+      "scenarios": 16463,
+      "winRatePct": 14.06790985847051,
+      "meanAdvantagePct": -25.015013279066277
+    },
+    {
+      "lo": 2500,
+      "hi": 3000,
+      "scenarios": 12933,
+      "winRatePct": 20.536611768344546,
+      "meanAdvantagePct": -19.176881128276314
+    },
+    {
+      "lo": 3000,
+      "hi": 3500,
+      "scenarios": 10308,
+      "winRatePct": 25.814901047729922,
+      "meanAdvantagePct": -14.650864182992585
+    },
+    {
+      "lo": 3500,
+      "hi": 4000,
+      "scenarios": 8625,
+      "winRatePct": 31.594202898550726,
+      "meanAdvantagePct": -10.66653181451045
+    },
+    {
+      "lo": 4000,
+      "hi": 4500,
+      "scenarios": 7115,
+      "winRatePct": 36.654954321855236,
+      "meanAdvantagePct": -7.928539097285547
+    },
+    {
+      "lo": 4500,
+      "hi": 5000,
+      "scenarios": 6177,
+      "winRatePct": 42.285899303869186,
+      "meanAdvantagePct": -5.091109436143892
+    },
+    {
+      "lo": 5000,
+      "hi": 6000,
+      "scenarios": 10155,
+      "winRatePct": 48.60659773510586,
+      "meanAdvantagePct": -1.6545387691211388
+    },
+    {
+      "lo": 6000,
+      "hi": 7000,
+      "scenarios": 7765,
+      "winRatePct": 57.10238248551192,
+      "meanAdvantagePct": 1.6832148631737764
+    },
+    {
+      "lo": 7000,
+      "hi": 8000,
+      "scenarios": 6502,
+      "winRatePct": 63.90341433405106,
+      "meanAdvantagePct": 4.8129198207221835
+    },
+    {
+      "lo": 8000,
+      "hi": 9000,
+      "scenarios": 5322,
+      "winRatePct": 68.50807966929726,
+      "meanAdvantagePct": 7.124501216083012
+    },
+    {
+      "lo": 9000,
+      "hi": 10000,
+      "scenarios": 4509,
+      "winRatePct": 70.76957196717676,
+      "meanAdvantagePct": 8.389523538822473
+    },
+    {
+      "lo": 10000,
+      "hi": 12500,
+      "scenarios": 8566,
+      "winRatePct": 76.38337613822087,
+      "meanAdvantagePct": 11.226800003225135
+    },
+    {
+      "lo": 12500,
+      "hi": 15000,
+      "scenarios": 6053,
+      "winRatePct": 79.44820750041302,
+      "meanAdvantagePct": 13.484177711811341
+    },
+    {
+      "lo": 15000,
+      "hi": 20000,
+      "scenarios": 8313,
+      "winRatePct": 83.85661012871407,
+      "meanAdvantagePct": 16.40743444569854
+    },
+    {
+      "lo": 20000,
+      "hi": 30000,
+      "scenarios": 9027,
+      "winRatePct": 86.62900188323917,
+      "meanAdvantagePct": 19.124985965232355
+    },
+    {
+      "lo": 30000,
+      "hi": 50000,
+      "scenarios": 7905,
+      "winRatePct": 90.00632511068943,
+      "meanAdvantagePct": 22.413564064657777
+    },
+    {
+      "lo": 50000,
+      "hi": 100000,
+      "scenarios": 5912,
+      "winRatePct": 91.914749661705,
+      "meanAdvantagePct": 24.814149704915046
+    }
+  ],
+  "web3Sensitivity": [
+    {
+      "case": "Baseline",
+      "advantagePct": 4.5902328112954915,
+      "winRatePct": 29.05425
+    },
+    {
+      "case": "Discovery same as CCRMS",
+      "advantagePct": 9.408043433087343,
+      "winRatePct": 68.111
+    },
+    {
+      "case": "Discovery doubled",
+      "advantagePct": -1.0147014143504607,
+      "winRatePct": 17.3215
+    },
+    {
+      "case": "Churn same as CCRMS",
+      "advantagePct": -6.017523959722726,
+      "winRatePct": 13.76
+    },
+    {
+      "case": "Churn 8-15%",
+      "advantagePct": 33.938898773762126,
+      "winRatePct": 57.2725
+    },
+    {
+      "case": "Cost/tx same as CCRMS",
+      "advantagePct": 4.514486832133846,
+      "winRatePct": 28.824749999999998
+    },
+    {
+      "case": "All non-fee dynamics same as CCRMS",
+      "advantagePct": -1.7503698894817066,
+      "winRatePct": 45.58425
+    }
+  ]
+}

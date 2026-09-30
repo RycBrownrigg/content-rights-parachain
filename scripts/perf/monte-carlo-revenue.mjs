@@ -20,7 +20,7 @@
 
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RESULTS_DIR = join(__dirname, "results");
@@ -695,4 +695,18 @@ function main() {
   console.log("\nDone.");
 }
 
-main();
+// Run main() only when executed directly, so monte-carlo-appendix-g.mjs can
+// import the model without re-running the headline simulation.
+if (import.meta.url === pathToFileURL(process.argv[1]).href) main();
+
+export {
+  simulateCreatorRevenue,
+  DEFAULT_PARAMS,
+  PLATFORMS,
+  STREAM_WEIGHTS,
+  createRng,
+  lognormalSample,
+  uniformSample,
+  betaSample,
+  exponentialSample,
+};
