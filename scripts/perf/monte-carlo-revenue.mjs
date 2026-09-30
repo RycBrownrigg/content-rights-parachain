@@ -303,6 +303,10 @@ function summarisePlatform(name, net, nCreators, nIterations) {
     platform: name,
     meanCreatorRevenue: mean,
     medianCreatorRevenue: median,
+    // Median over all (iteration, creator) scenarios; the figure reported in
+    // the dissertation (Chapter 7, Monte Carlo table). medianCreatorRevenue above is the median of
+    // per-creator means, which averages out scenario variance.
+    medianScenarioRevenue: percentile(net, 50),
     stdCreatorRevenue: Math.sqrt(variance),
     p5CreatorRevenue: percentile(meanPerCreator, 5),
     p95CreatorRevenue: percentile(meanPerCreator, 95),
@@ -538,7 +542,8 @@ function main() {
     writeCsv('monte-carlo-summary.csv', summaries.map(s => ({
       platform: s.platform,
       mean_creator_revenue: s.meanCreatorRevenue,
-      median_creator_revenue: s.medianCreatorRevenue,
+      median_of_creator_means: s.medianCreatorRevenue,
+      median_scenario_revenue: s.medianScenarioRevenue,
       std_creator_revenue: s.stdCreatorRevenue,
       p5_creator_revenue: s.p5CreatorRevenue,
       p95_creator_revenue: s.p95CreatorRevenue,
