@@ -18,12 +18,12 @@
  * - sensitivityAnalysis — Varies each parameter to measure output sensitivity.
  */
 
-import { writeFileSync, mkdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { writeFileSync, mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const RESULTS_DIR = join(__dirname, 'results');
+const RESULTS_DIR = join(__dirname, "results");
 
 // ---------------------------------------------------------------------------
 // Seeded PRNG (xoshiro128** — fast, reproducible, good quality)
@@ -47,9 +47,12 @@ function createRng(seed = 42) {
     const result = Math.imul(s1, 5);
     const r = (((result << 7) | (result >>> 25)) * 9) >>> 0;
     const t = s1 << 9;
-    s2 ^= s0; s3 ^= s1; s1 ^= s2; s0 ^= s3;
+    s2 ^= s0;
+    s3 ^= s1;
+    s1 ^= s2;
+    s0 ^= s3;
     s2 ^= t;
-    s3 = ((s3 << 11) | (s3 >>> 21));
+    s3 = (s3 << 11) | (s3 >>> 21);
     return r / 4294967296;
   }
 
@@ -76,7 +79,9 @@ function uniformSample(rng, low, high) {
 
 function gammaSample(rng, alpha) {
   if (alpha < 1) {
-    return gammaSample(rng, alpha + 1) * Math.pow(rng.random() || 1e-15, 1 / alpha);
+    return (
+      gammaSample(rng, alpha + 1) * Math.pow(rng.random() || 1e-15, 1 / alpha)
+    );
   }
   const d = alpha - 1 / 3;
   const c = 1 / Math.sqrt(9 * d);
@@ -122,10 +127,13 @@ const NUM_ITERATIONS = 10_000;
  */
 const PLATFORMS = {
   centralised: {
-    feeLow: 0.30, feeHigh: 0.45,
-    discoveryAddLow: 500, discoveryAddHigh: 3_000,  // algorithm adds 500-3k viewers
-    churnLow: 0.02, churnHigh: 0.05,                // 2-5% monthly churn (sticky UX)
-    txCostPerUnit: 0.0,                              // near-zero marginal cost
+    feeLow: 0.3,
+    feeHigh: 0.45,
+    discoveryAddLow: 500,
+    discoveryAddHigh: 3_000, // algorithm adds 500-3k viewers
+    churnLow: 0.02,
+    churnHigh: 0.05, // 2-5% monthly churn (sticky UX)
+    txCostPerUnit: 0.0, // near-zero marginal cost
   },
   web3: {
     // Marketplace fees 0–2.5%: OpenSea 0% (promotional; originally 2.5%),
@@ -133,51 +141,62 @@ const PLATFORMS = {
     // "State of NFT Marketplaces", 2023); Blur proposal for a 0.5% protocol
     // fee (The Block, 2024). Creator royalties are income to the creator,
     // not a cost, so they are excluded. (Previously 7.5–15%, uncited.)
-    feeLow: 0.0, feeHigh: 0.025,
-    discoveryAddLow: 100, discoveryAddHigh: 800,     // marketplace adds some discovery
-    churnLow: 0.05, churnHigh: 0.10,                 // moderate churn
-    txCostPerUnit: 0.005,                             // gas fees per tx (~$0.005 L2)
+    feeLow: 0.0,
+    feeHigh: 0.025,
+    discoveryAddLow: 100,
+    discoveryAddHigh: 800, // marketplace adds some discovery
+    churnLow: 0.05,
+    churnHigh: 0.1, // moderate churn
+    txCostPerUnit: 0.005, // gas fees per tx (~$0.005 L2)
   },
   bridge_based: {
-    feeLow: 0.08, feeHigh: 0.15,
-    discoveryAddLow: 50, discoveryAddHigh: 400,      // minimal discovery
-    churnLow: 0.06, churnHigh: 0.12,                 // higher churn (bridge friction)
-    txCostPerUnit: 0.02,                              // bridge + gas fees
+    feeLow: 0.08,
+    feeHigh: 0.15,
+    discoveryAddLow: 50,
+    discoveryAddHigh: 400, // minimal discovery
+    churnLow: 0.06,
+    churnHigh: 0.12, // higher churn (bridge friction)
+    txCostPerUnit: 0.02, // bridge + gas fees
   },
   ccrms: {
-    feeLow: 0.01, feeHigh: 0.05,
-    discoveryAddLow: 0, discoveryAddHigh: 200,       // organic only, minimal
-    churnLow: 0.04, churnHigh: 0.08,                 // self-custody friction adds churn
-    txCostPerUnit: 0.001,                             // parachain tx fees (~$0.001)
+    feeLow: 0.01,
+    feeHigh: 0.05,
+    discoveryAddLow: 0,
+    discoveryAddHigh: 200, // organic only, minimal
+    churnLow: 0.04,
+    churnHigh: 0.08, // self-custody friction adds churn
+    txCostPerUnit: 0.001, // parachain tx fees (~$0.001)
   },
 };
 
 const STREAM_WEIGHTS = {
-  subscription: 0.50,
-  ppv:          0.30,
-  secondary:    0.20,
+  subscription: 0.5,
+  ppv: 0.3,
+  secondary: 0.2,
 };
 
 const DEFAULT_PARAMS = {
   // Creator base audience (before discovery multiplier)
-  audienceMu:   1_000,
+  audienceMu: 1_000,
   audienceSigma: 2.0,
   // Content price per unit
-  priceLow:     1.0,
-  priceHigh:    50.0,
+  priceLow: 1.0,
+  priceHigh: 50.0,
   // Subscription adoption rate: beta(a, b)
-  subAlpha:     2.0,
-  subBeta:      5.0,
+  subAlpha: 2.0,
+  subBeta: 5.0,
   // PPV conversion rate: beta(a, b)
-  ppvAlpha:     1.0,
-  ppvBeta:      10.0,
-  // Secondary-sale probability: exponential(lambda)
-  resaleLambda: 0.1,
+  ppvAlpha: 1.0,
+  ppvBeta: 10.0,
+  // Secondary-sale probability: exponential with rate lambda (mean 1/lambda),
+  // capped at 1.0. lambda = 10 gives a mean of about 0.1. (Before this fix the
+  // value was 0.1, i.e. mean 10, so about 90% of draws hit the cap.)
+  resaleLambda: 10,
   // Subscription period (months) — churn compounds over this duration
-  subMonths:    12,
+  subMonths: 12,
   // Simulation dimensions
-  nCreators:    NUM_CREATORS,
-  nIterations:  NUM_ITERATIONS,
+  nCreators: NUM_CREATORS,
+  nIterations: NUM_ITERATIONS,
 };
 
 // ---------------------------------------------------------------------------
@@ -200,17 +219,21 @@ function simulateCreatorRevenue(params = DEFAULT_PARAMS, rng = createRng(42)) {
 
   // Pre-compute base creator attributes per (iteration, creator)
   const baseAudience = new Float64Array(len);
-  const price        = new Float64Array(len);
-  const subRate      = new Float64Array(len);
-  const ppvRate      = new Float64Array(len);
-  const resaleProb   = new Float64Array(len);
+  const price = new Float64Array(len);
+  const subRate = new Float64Array(len);
+  const ppvRate = new Float64Array(len);
+  const resaleProb = new Float64Array(len);
 
   for (let i = 0; i < len; i++) {
-    baseAudience[i] = lognormalSample(rng, params.audienceMu, params.audienceSigma);
-    price[i]        = uniformSample(rng, params.priceLow, params.priceHigh);
-    subRate[i]      = betaSample(rng, params.subAlpha, params.subBeta);
-    ppvRate[i]      = betaSample(rng, params.ppvAlpha, params.ppvBeta);
-    resaleProb[i]   = Math.min(exponentialSample(rng, params.resaleLambda), 1.0);
+    baseAudience[i] = lognormalSample(
+      rng,
+      params.audienceMu,
+      params.audienceSigma,
+    );
+    price[i] = uniformSample(rng, params.priceLow, params.priceHigh);
+    subRate[i] = betaSample(rng, params.subAlpha, params.subBeta);
+    ppvRate[i] = betaSample(rng, params.ppvAlpha, params.ppvBeta);
+    resaleProb[i] = Math.min(exponentialSample(rng, params.resaleLambda), 1.0);
   }
 
   const results = {};
@@ -220,10 +243,14 @@ function simulateCreatorRevenue(params = DEFAULT_PARAMS, rng = createRng(42)) {
 
     for (let i = 0; i < iters; i++) {
       // Per-iteration platform draws
-      const feeRate      = uniformSample(rng, cfg.feeLow, cfg.feeHigh);
-      const discoveryAdd = uniformSample(rng, cfg.discoveryAddLow, cfg.discoveryAddHigh);
-      const churnRate    = uniformSample(rng, cfg.churnLow, cfg.churnHigh);
-      const retention    = 1.0 - feeRate;
+      const feeRate = uniformSample(rng, cfg.feeLow, cfg.feeHigh);
+      const discoveryAdd = uniformSample(
+        rng,
+        cfg.discoveryAddLow,
+        cfg.discoveryAddHigh,
+      );
+      const churnRate = uniformSample(rng, cfg.churnLow, cfg.churnHigh);
+      const retention = 1.0 - feeRate;
 
       // Subscriber retention over the subscription period (compounding monthly churn)
       const retainedFraction = Math.pow(1 - churnRate, params.subMonths);
@@ -238,24 +265,32 @@ function simulateCreatorRevenue(params = DEFAULT_PARAMS, rng = createRng(42)) {
         const audience = baseAudience[idx] + discoveryAdd;
 
         // Subscription revenue (affected by churn — only retained subscribers pay full period)
-        const subRevGross = audience * subRate[idx] * price[idx]
-          * STREAM_WEIGHTS.subscription * retainedFraction;
+        const subRevGross =
+          audience *
+          subRate[idx] *
+          price[idx] *
+          STREAM_WEIGHTS.subscription *
+          retainedFraction;
 
         // PPV revenue (one-time, not affected by churn)
-        const ppvRevGross = audience * ppvRate[idx] * price[idx]
-          * STREAM_WEIGHTS.ppv;
+        const ppvRevGross =
+          audience * ppvRate[idx] * price[idx] * STREAM_WEIGHTS.ppv;
 
         // Secondary sales (one-time, not affected by churn)
-        const secRevGross = audience * resaleProb[idx] * price[idx]
-          * STREAM_WEIGHTS.secondary;
+        const secRevGross =
+          audience * resaleProb[idx] * price[idx] * STREAM_WEIGHTS.secondary;
 
         const grossRevenue = subRevGross + ppvRevGross + secRevGross;
 
         // Total transactions = subscribers + PPV buyers + secondary buyers
-        const totalTx = audience * (subRate[idx] + ppvRate[idx] + resaleProb[idx]);
+        const totalTx =
+          audience * (subRate[idx] + ppvRate[idx] + resaleProb[idx]);
 
         // Net = gross × (1 - platform fee) − transaction costs
-        net[idx] = Math.max(0, grossRevenue * retention - totalTx * cfg.txCostPerUnit);
+        net[idx] = Math.max(
+          0,
+          grossRevenue * retention - totalTx * cfg.txCostPerUnit,
+        );
       }
     }
 
@@ -297,7 +332,8 @@ function summarisePlatform(name, net, nCreators, nIterations) {
   const mean = meanPerCreator.reduce((a, b) => a + b, 0) / nCreators;
   const sorted = Float64Array.from(meanPerCreator).sort();
   const median = sorted[Math.floor(nCreators / 2)];
-  const variance = meanPerCreator.reduce((a, v) => a + (v - mean) ** 2, 0) / nCreators;
+  const variance =
+    meanPerCreator.reduce((a, v) => a + (v - mean) ** 2, 0) / nCreators;
 
   return {
     platform: name,
@@ -317,13 +353,19 @@ function summarisePlatform(name, net, nCreators, nIterations) {
 }
 
 function computeSavings(summaries) {
-  const ccrms = summaries.find(s => s.platform === 'ccrms');
+  const ccrms = summaries.find((s) => s.platform === "ccrms");
   return summaries
-    .filter(s => s.platform !== 'ccrms')
-    .map(s => {
+    .filter((s) => s.platform !== "ccrms")
+    .map((s) => {
       const absSaving = ccrms.meanCreatorRevenue - s.meanCreatorRevenue;
-      const pctSaving = s.meanCreatorRevenue ? (absSaving / s.meanCreatorRevenue) * 100 : 0;
-      return { vsPlatform: s.platform, absoluteSavingUsd: absSaving, percentageSaving: pctSaving };
+      const pctSaving = s.meanCreatorRevenue
+        ? (absSaving / s.meanCreatorRevenue) * 100
+        : 0;
+      return {
+        vsPlatform: s.platform,
+        absoluteSavingUsd: absSaving,
+        percentageSaving: pctSaving,
+      };
     });
 }
 
@@ -333,7 +375,7 @@ function breakEvenAnalysis(results, nCreators, nIterations) {
   const len = nCreators * nIterations;
   const breakEven = {};
   for (const [platform, net] of Object.entries(results)) {
-    if (platform === 'ccrms') continue;
+    if (platform === "ccrms") continue;
     let wins = 0;
     for (let i = 0; i < len; i++) {
       if (ccrms[i] > net[i]) wins++;
@@ -357,7 +399,11 @@ function creatorSizeAnalysis(results, params, rng) {
   // Regenerate base audiences (same seed = same draws)
   const baseAudience = new Float64Array(len);
   for (let i = 0; i < len; i++) {
-    baseAudience[i] = lognormalSample(analysisRng, params.audienceMu, params.audienceSigma);
+    baseAudience[i] = lognormalSample(
+      analysisRng,
+      params.audienceMu,
+      params.audienceSigma,
+    );
     // consume the other draws to stay in sync
     uniformSample(analysisRng, params.priceLow, params.priceHigh);
     betaSample(analysisRng, params.subAlpha, params.subBeta);
@@ -366,36 +412,40 @@ function creatorSizeAnalysis(results, params, rng) {
   }
 
   const buckets = [
-    { label: 'tiny (<100)',       lo: 0,      hi: 100 },
-    { label: 'small (100-500)',   lo: 100,    hi: 500 },
-    { label: 'medium (500-2k)',   lo: 500,    hi: 2_000 },
-    { label: 'large (2k-10k)',    lo: 2_000,  hi: 10_000 },
-    { label: 'huge (10k-100k)',   lo: 10_000, hi: 100_000 },
-    { label: 'mega (100k+)',      lo: 100_000, hi: Infinity },
+    { label: "tiny (<100)", lo: 0, hi: 100 },
+    { label: "small (100-500)", lo: 100, hi: 500 },
+    { label: "medium (500-2k)", lo: 500, hi: 2_000 },
+    { label: "large (2k-10k)", lo: 2_000, hi: 10_000 },
+    { label: "huge (10k-100k)", lo: 10_000, hi: 100_000 },
+    { label: "mega (100k+)", lo: 100_000, hi: Infinity },
   ];
 
   const ccrms = results.ccrms;
-  const cent  = results.centralised;
+  const cent = results.centralised;
 
-  return buckets.map(({ label, lo, hi }) => {
-    let wins = 0, total = 0;
-    let ccrmsMean = 0, centMean = 0;
-    for (let i = 0; i < len; i++) {
-      if (baseAudience[i] >= lo && baseAudience[i] < hi) {
-        total++;
-        if (ccrms[i] > cent[i]) wins++;
-        ccrmsMean += ccrms[i];
-        centMean += cent[i];
+  return buckets
+    .map(({ label, lo, hi }) => {
+      let wins = 0,
+        total = 0;
+      let ccrmsMean = 0,
+        centMean = 0;
+      for (let i = 0; i < len; i++) {
+        if (baseAudience[i] >= lo && baseAudience[i] < hi) {
+          total++;
+          if (ccrms[i] > cent[i]) wins++;
+          ccrmsMean += ccrms[i];
+          centMean += cent[i];
+        }
       }
-    }
-    return {
-      bucket: label,
-      count: total,
-      ccrmsWinRate: total ? wins / total : 0,
-      ccrmsMeanRev: total ? ccrmsMean / total : 0,
-      centMeanRev: total ? centMean / total : 0,
-    };
-  }).filter(b => b.count > 0);
+      return {
+        bucket: label,
+        count: total,
+        ccrmsWinRate: total ? wins / total : 0,
+        ccrmsMeanRev: total ? ccrmsMean / total : 0,
+        centMeanRev: total ? centMean / total : 0,
+      };
+    })
+    .filter((b) => b.count > 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -403,26 +453,32 @@ function creatorSizeAnalysis(results, params, rng) {
 // ---------------------------------------------------------------------------
 
 const SENSITIVITY_PARAMS = {
-  audienceMu:    [500, 1_000, 2_000, 5_000],
+  audienceMu: [500, 1_000, 2_000, 5_000],
   audienceSigma: [1.0, 1.5, 2.0, 3.0],
-  priceLow:      [0.50, 1.0, 2.0, 5.0],
-  priceHigh:     [20.0, 50.0, 100.0, 200.0],
-  subAlpha:      [1.0, 2.0, 3.0, 5.0],
-  ppvAlpha:      [0.5, 1.0, 2.0, 3.0],
-  resaleLambda:  [0.05, 0.1, 0.2, 0.5],
-  subMonths:     [1, 6, 12, 24],
+  priceLow: [0.5, 1.0, 2.0, 5.0],
+  priceHigh: [20.0, 50.0, 100.0, 200.0],
+  subAlpha: [1.0, 2.0, 3.0, 5.0],
+  ppvAlpha: [0.5, 1.0, 2.0, 3.0],
+  resaleLambda: [5, 10, 20, 50],
+  subMonths: [1, 6, 12, 24],
 };
 
 function sensitivityAnalysis() {
   const rows = [];
   for (const [paramName, values] of Object.entries(SENSITIVITY_PARAMS)) {
     for (const val of values) {
-      const p = { ...DEFAULT_PARAMS, nCreators: 200, nIterations: 2_000, [paramName]: val };
+      const p = {
+        ...DEFAULT_PARAMS,
+        nCreators: 200,
+        nIterations: 2_000,
+        [paramName]: val,
+      };
       const rng = createRng(42);
       const res = simulateCreatorRevenue(p, rng);
 
       const len = p.nCreators * p.nIterations;
-      let ccrmsMean = 0, centMean = 0;
+      let ccrmsMean = 0,
+        centMean = 0;
       let ccrmsWins = 0;
       for (let i = 0; i < len; i++) {
         ccrmsMean += res.ccrms[i];
@@ -437,7 +493,9 @@ function sensitivityAnalysis() {
         value: val,
         ccrmsMeanRevenue: ccrmsMean,
         centralisedMeanRevenue: centMean,
-        savingPctVsCentralised: centMean ? ((ccrmsMean - centMean) / centMean) * 100 : 0,
+        savingPctVsCentralised: centMean
+          ? ((ccrmsMean - centMean) / centMean) * 100
+          : 0,
         ccrmsWinRate: ccrmsWins / len,
       });
     }
@@ -449,60 +507,95 @@ function sensitivityAnalysis() {
 // Output
 // ---------------------------------------------------------------------------
 
-function fmt(n) { return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-function pad(s, w) { return String(s).padStart(w); }
-function padEnd(s, w) { return String(s).padEnd(w); }
+function fmt(n) {
+  return n.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+function pad(s, w) {
+  return String(s).padStart(w);
+}
+function padEnd(s, w) {
+  return String(s).padEnd(w);
+}
 
 function printSummary(summaries, savings, breakEven, sizeAnalysis) {
-  console.log('\n' + '='.repeat(78));
-  console.log('MONTE CARLO CREATOR REVENUE SIMULATION — RESULTS (with competing dynamics)');
-  console.log(`  Creators: ${NUM_CREATORS.toLocaleString()}  |  Iterations: ${NUM_ITERATIONS.toLocaleString()}`);
-  console.log('  Dynamics: discovery effects, churn, tx costs, platform fees');
-  console.log('='.repeat(78));
+  console.log("\n" + "=".repeat(78));
+  console.log(
+    "MONTE CARLO CREATOR REVENUE SIMULATION — RESULTS (with competing dynamics)",
+  );
+  console.log(
+    `  Creators: ${NUM_CREATORS.toLocaleString()}  |  Iterations: ${NUM_ITERATIONS.toLocaleString()}`,
+  );
+  console.log("  Dynamics: discovery effects, churn, tx costs, platform fees");
+  console.log("=".repeat(78));
 
-  console.log(`\n${padEnd('Platform', 16)} ${padEnd('Mean Rev ($)', 14)} ${padEnd('Median ($)', 12)} ${padEnd('Std ($)', 12)} ${padEnd('P5 ($)', 12)} ${padEnd('P95 ($)', 12)}`);
-  console.log('-'.repeat(78));
+  console.log(
+    `\n${padEnd("Platform", 16)} ${padEnd("Mean Rev ($)", 14)} ${padEnd("Median ($)", 12)} ${padEnd("Std ($)", 12)} ${padEnd("P5 ($)", 12)} ${padEnd("P95 ($)", 12)}`,
+  );
+  console.log("-".repeat(78));
   for (const s of summaries) {
-    console.log(`${padEnd(s.platform, 16)} ${pad(fmt(s.meanCreatorRevenue), 12)} ${pad(fmt(s.medianCreatorRevenue), 10)} ${pad(fmt(s.stdCreatorRevenue), 10)} ${pad(fmt(s.p5CreatorRevenue), 10)} ${pad(fmt(s.p95CreatorRevenue), 10)}`);
+    console.log(
+      `${padEnd(s.platform, 16)} ${pad(fmt(s.meanCreatorRevenue), 12)} ${pad(fmt(s.medianCreatorRevenue), 10)} ${pad(fmt(s.stdCreatorRevenue), 10)} ${pad(fmt(s.p5CreatorRevenue), 10)} ${pad(fmt(s.p95CreatorRevenue), 10)}`,
+    );
   }
 
-  console.log(`\n${padEnd('Platform', 16)} ${padEnd('95% CI Low ($)', 16)} ${padEnd('95% CI High ($)', 16)}`);
-  console.log('-'.repeat(48));
+  console.log(
+    `\n${padEnd("Platform", 16)} ${padEnd("95% CI Low ($)", 16)} ${padEnd("95% CI High ($)", 16)}`,
+  );
+  console.log("-".repeat(48));
   for (const s of summaries) {
-    console.log(`${padEnd(s.platform, 16)} ${pad(fmt(s.ci95Low), 14)} ${pad(fmt(s.ci95High), 14)}`);
+    console.log(
+      `${padEnd(s.platform, 16)} ${pad(fmt(s.ci95Low), 14)} ${pad(fmt(s.ci95High), 14)}`,
+    );
   }
 
-  console.log('\n--- CCRMS Savings vs Other Platforms ---');
+  console.log("\n--- CCRMS Savings vs Other Platforms ---");
   for (const sv of savings) {
-    const sign = sv.percentageSaving >= 0 ? '+' : '';
-    console.log(`  vs ${padEnd(sv.vsPlatform, 14)}: ${sign}$${pad(fmt(sv.absoluteSavingUsd), 12)}/creator  (${sign}${sv.percentageSaving.toFixed(1)}%)`);
+    const sign = sv.percentageSaving >= 0 ? "+" : "";
+    console.log(
+      `  vs ${padEnd(sv.vsPlatform, 14)}: ${sign}$${pad(fmt(sv.absoluteSavingUsd), 12)}/creator  (${sign}${sv.percentageSaving.toFixed(1)}%)`,
+    );
   }
 
-  console.log('\n--- Break-Even Analysis (fraction where CCRMS > alternative) ---');
+  console.log(
+    "\n--- Break-Even Analysis (fraction where CCRMS > alternative) ---",
+  );
   for (const [platform, frac] of Object.entries(breakEven)) {
-    console.log(`  vs ${padEnd(platform, 14)}: ${(frac * 100).toFixed(1)}% of scenarios`);
+    console.log(
+      `  vs ${padEnd(platform, 14)}: ${(frac * 100).toFixed(1)}% of scenarios`,
+    );
   }
 
-  console.log('\n--- Creator Size Analysis (CCRMS vs Centralised by audience bucket) ---');
-  console.log(`  ${padEnd('Bucket', 22)} ${padEnd('Scenarios', 12)} ${padEnd('CCRMS Win%', 12)} ${padEnd('CCRMS Mean ($)', 16)} ${padEnd('Cent. Mean ($)', 16)}`);
-  console.log('  ' + '-'.repeat(76));
+  console.log(
+    "\n--- Creator Size Analysis (CCRMS vs Centralised by audience bucket) ---",
+  );
+  console.log(
+    `  ${padEnd("Bucket", 22)} ${padEnd("Scenarios", 12)} ${padEnd("CCRMS Win%", 12)} ${padEnd("CCRMS Mean ($)", 16)} ${padEnd("Cent. Mean ($)", 16)}`,
+  );
+  console.log("  " + "-".repeat(76));
   for (const b of sizeAnalysis) {
-    console.log(`  ${padEnd(b.bucket, 22)} ${pad(b.count.toLocaleString(), 10)} ${pad((b.ccrmsWinRate * 100).toFixed(1) + '%', 10)} ${pad(fmt(b.ccrmsMeanRev), 14)} ${pad(fmt(b.centMeanRev), 14)}`);
+    console.log(
+      `  ${padEnd(b.bucket, 22)} ${pad(b.count.toLocaleString(), 10)} ${pad((b.ccrmsWinRate * 100).toFixed(1) + "%", 10)} ${pad(fmt(b.ccrmsMeanRev), 14)} ${pad(fmt(b.centMeanRev), 14)}`,
+    );
   }
 
-  console.log('='.repeat(78));
+  console.log("=".repeat(78));
 }
 
 function toCsvRow(obj) {
-  return Object.values(obj).map(v => typeof v === 'string' ? v : String(v)).join(',');
+  return Object.values(obj)
+    .map((v) => (typeof v === "string" ? v : String(v)))
+    .join(",");
 }
 
 function writeCsv(filename, rows) {
   if (!rows.length) return;
-  const header = Object.keys(rows[0]).join(',');
-  const body = rows.map(toCsvRow).join('\n');
+  const header = Object.keys(rows[0]).join(",");
+  const body = rows.map(toCsvRow).join("\n");
   const path = join(RESULTS_DIR, filename);
-  writeFileSync(path, header + '\n' + body + '\n');
+  writeFileSync(path, header + "\n" + body + "\n");
   console.log(`  Written: ${path}`);
 }
 
@@ -512,70 +605,94 @@ function writeCsv(filename, rows) {
 
 function main() {
   const args = process.argv.slice(2);
-  const seed = parseInt(args.find((_, i, a) => a[i - 1] === '--seed') || '42', 10);
-  const noSensitivity = args.includes('--no-sensitivity');
-  const noCsv = args.includes('--no-csv');
+  const seed = parseInt(
+    args.find((_, i, a) => a[i - 1] === "--seed") || "42",
+    10,
+  );
+  const noSensitivity = args.includes("--no-sensitivity");
+  const noCsv = args.includes("--no-csv");
+  // --no-secondary: drop the secondary-sale stream ("prototype as built":
+  // transfer_ownership pays creators no resale royalty; Appendix E.7).
+  const noSecondary = args.includes("--no-secondary");
+  if (noSecondary) STREAM_WEIGHTS.secondary = 0;
+  const suffix = noSecondary ? "-no-secondary" : "";
 
   const rng = createRng(seed);
   const params = { ...DEFAULT_PARAMS };
 
-  console.log('Running main simulation (with discovery, churn, tx costs)...');
+  console.log("Running main simulation (with discovery, churn, tx costs)...");
   const results = simulateCreatorRevenue(params, rng);
 
-  const summaries = Object.entries(results).map(
-    ([name, net]) => summarisePlatform(name, net, params.nCreators, params.nIterations)
+  const summaries = Object.entries(results).map(([name, net]) =>
+    summarisePlatform(name, net, params.nCreators, params.nIterations),
   );
   const savings = computeSavings(summaries);
-  const breakEven = breakEvenAnalysis(results, params.nCreators, params.nIterations);
+  const breakEven = breakEvenAnalysis(
+    results,
+    params.nCreators,
+    params.nIterations,
+  );
   const sizeAnalysis = creatorSizeAnalysis(results, params, rng);
   printSummary(summaries, savings, breakEven, sizeAnalysis);
 
   let sensitivity = [];
   if (!noSensitivity) {
-    console.log('\nRunning sensitivity analysis...');
+    console.log("\nRunning sensitivity analysis...");
     sensitivity = sensitivityAnalysis();
     console.log(`  ${sensitivity.length} parameter combinations evaluated.`);
   }
 
   if (!noCsv) {
     mkdirSync(RESULTS_DIR, { recursive: true });
-    writeCsv('monte-carlo-summary.csv', summaries.map(s => ({
-      platform: s.platform,
-      mean_creator_revenue: s.meanCreatorRevenue,
-      median_of_creator_means: s.medianCreatorRevenue,
-      median_scenario_revenue: s.medianScenarioRevenue,
-      std_creator_revenue: s.stdCreatorRevenue,
-      p5_creator_revenue: s.p5CreatorRevenue,
-      p95_creator_revenue: s.p95CreatorRevenue,
-      mean_total_revenue: s.meanTotalRevenue,
-      ci_95_low: s.ci95Low,
-      ci_95_high: s.ci95High,
-    })));
-    writeCsv('monte-carlo-savings.csv', savings.map(s => ({
-      vs_platform: s.vsPlatform,
-      absolute_saving_usd: s.absoluteSavingUsd,
-      percentage_saving: s.percentageSaving,
-    })));
-    writeCsv('monte-carlo-size-analysis.csv', sizeAnalysis.map(b => ({
-      bucket: b.bucket,
-      scenario_count: b.count,
-      ccrms_win_rate: b.ccrmsWinRate,
-      ccrms_mean_revenue: b.ccrmsMeanRev,
-      centralised_mean_revenue: b.centMeanRev,
-    })));
+    writeCsv(
+      `monte-carlo-summary${suffix}.csv`,
+      summaries.map((s) => ({
+        platform: s.platform,
+        mean_creator_revenue: s.meanCreatorRevenue,
+        median_of_creator_means: s.medianCreatorRevenue,
+        median_scenario_revenue: s.medianScenarioRevenue,
+        std_creator_revenue: s.stdCreatorRevenue,
+        p5_creator_revenue: s.p5CreatorRevenue,
+        p95_creator_revenue: s.p95CreatorRevenue,
+        mean_total_revenue: s.meanTotalRevenue,
+        ci_95_low: s.ci95Low,
+        ci_95_high: s.ci95High,
+      })),
+    );
+    writeCsv(
+      `monte-carlo-savings${suffix}.csv`,
+      savings.map((s) => ({
+        vs_platform: s.vsPlatform,
+        absolute_saving_usd: s.absoluteSavingUsd,
+        percentage_saving: s.percentageSaving,
+      })),
+    );
+    writeCsv(
+      `monte-carlo-size-analysis${suffix}.csv`,
+      sizeAnalysis.map((b) => ({
+        bucket: b.bucket,
+        scenario_count: b.count,
+        ccrms_win_rate: b.ccrmsWinRate,
+        ccrms_mean_revenue: b.ccrmsMeanRev,
+        centralised_mean_revenue: b.centMeanRev,
+      })),
+    );
     if (sensitivity.length) {
-      writeCsv('monte-carlo-sensitivity.csv', sensitivity.map(s => ({
-        parameter: s.parameter,
-        value: s.value,
-        ccrms_mean_revenue: s.ccrmsMeanRevenue,
-        centralised_mean_revenue: s.centralisedMeanRevenue,
-        saving_pct_vs_centralised: s.savingPctVsCentralised,
-        ccrms_win_rate: s.ccrmsWinRate,
-      })));
+      writeCsv(
+        `monte-carlo-sensitivity${suffix}.csv`,
+        sensitivity.map((s) => ({
+          parameter: s.parameter,
+          value: s.value,
+          ccrms_mean_revenue: s.ccrmsMeanRevenue,
+          centralised_mean_revenue: s.centralisedMeanRevenue,
+          saving_pct_vs_centralised: s.savingPctVsCentralised,
+          ccrms_win_rate: s.ccrmsWinRate,
+        })),
+      );
     }
   }
 
-  console.log('\nDone.');
+  console.log("\nDone.");
 }
 
 main();
