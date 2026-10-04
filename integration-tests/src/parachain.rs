@@ -19,11 +19,11 @@ use sp_runtime::{
 
 use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, EnsureXcmOrigin,
-	FixedRateOfFungible, FixedWeightBounds, FrameTransactionalProcessor,
-	FungibleAdapter, IsConcrete, NativeAsset, ParentIsPreset,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation,
-	TakeWeightCredit,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, DescribeAllTerminal,
+	DescribeFamily, EnsureXcmOrigin, FixedRateOfFungible, FixedWeightBounds,
+	FrameTransactionalProcessor, FungibleAdapter, HashedDescription, IsConcrete,
+	NativeAsset, ParentIsPreset, SignedAccountId32AsNative, SignedToAccountId32,
+	SovereignSignedViaLocation, TakeWeightCredit, WithComputedOrigin,
 };
 use xcm_executor::XcmExecutor;
 use xcm_simulator::mock_message_queue;
@@ -127,6 +127,10 @@ pub type LocationToAccountId = (
 		AccountId,
 	>,
 	AccountId32Aliases<RelayNetwork, AccountId>,
+	// Matches the production runtime (runtime/src/configs/xcm_config.rs):
+	// a user location on a sibling chain, (1, [Parachain(n), AccountId32]),
+	// converts to a per-user account derived by hashing its description.
+	HashedDescription<AccountId, DescribeFamily<DescribeAllTerminal>>,
 );
 
 pub type LocalAssetTransactor = FungibleAdapter<
@@ -144,7 +148,14 @@ type XcmOriginToCallOrigin = (
 
 pub type Barrier = (
 	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<Everything>,
+	// Matches production: allow up to eight origin-altering prefixes
+	// (e.g. the DescendOrigin that pallet-xcm prepends for a signed sender)
+	// before the paid-execution check.
+	WithComputedOrigin<
+		AllowTopLevelPaidExecutionFrom<Everything>,
+		UniversalLocation,
+		ConstU32<8>,
+	>,
 );
 
 pub struct XcmConfig;

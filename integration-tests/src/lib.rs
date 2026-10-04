@@ -108,6 +108,72 @@ fn fund_sovereign_on_para_a(para_id: u32, amount: u128) {
 	});
 }
 
+// --- P1.1: signed cross-chain users (DescendOrigin + HashedDescription) ---
+
+const ALICE: AccountId32 = AccountId32::new([0xA1; 32]);
+const BOB: AccountId32 = AccountId32::new([0xB0; 32]);
+
+/// The account a user on a sibling parachain controls on ParaA, derived the
+/// same way the runtime derives it: HashedDescription over the location
+/// (1, [Parachain(para_id), AccountId32]).
+fn derived_account_on_para_a(para_id: u32, user: &AccountId32) -> AccountId32 {
+	use xcm_executor::traits::ConvertLocation;
+	let id: [u8; 32] = user.clone().into();
+	let location = Location::new(
+		1,
+		[Parachain(para_id), Junction::AccountId32 { network: None, id }],
+	);
+	xcm_builder::HashedDescription::<
+		AccountId32,
+		xcm_builder::DescribeFamily<xcm_builder::DescribeAllTerminal>,
+	>::convert_location(&location)
+	.expect("a sibling user location is describable; qed")
+}
+
+/// Set an account's balance on ParaA.
+fn fund_on_para_a(who: &AccountId32, amount: u128) {
+	ParaA::execute_with(|| {
+		frame_support::assert_ok!(
+			pallet_balances::Pallet::<parachain::Runtime>::force_set_balance(
+				parachain::RuntimeOrigin::root(),
+				who.clone(),
+				amount,
+			)
+		);
+	});
+}
+
+/// Send `call` to ParaA as a signed user on ParaB, through the ordinary
+/// `polkadotXcm.send` extrinsic. pallet-xcm prepends DescendOrigin(AccountId32),
+/// so ParaA sees the origin (1, [Parachain(200), AccountId32]) and both fees
+/// and the dispatched call use that user's derived account, not ParaB's
+/// sovereign account.
+fn signed_send_from_para_b(sender: AccountId32, call: parachain::RuntimeCall) {
+	let message: Xcm<()> = Xcm(vec![
+		WithdrawAsset((Parent, 50_000u128).into()),
+		BuyExecution { fees: (Parent, 50_000u128).into(), weight_limit: Unlimited },
+		Transact {
+			origin_kind: OriginKind::SovereignAccount,
+			call: codec::Encode::encode(&call).into(),
+			fallback_max_weight: None,
+		},
+	]);
+	ParaB::execute_with(|| {
+		frame_support::assert_ok!(
+			pallet_balances::Pallet::<parachain::Runtime>::force_set_balance(
+				parachain::RuntimeOrigin::root(),
+				sender.clone(),
+				1_000_000_000,
+			)
+		);
+		frame_support::assert_ok!(parachain::XcmPallet::send(
+			parachain::RuntimeOrigin::signed(sender),
+			Box::new(xcm::VersionedLocation::from(Location::new(1, [Parachain(100)]))),
+			Box::new(xcm::VersionedXcm::from(message)),
+		));
+	});
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -455,6 +521,156 @@ mod tests {
 				&BENEFICIARY,
 			);
 			assert!(sub.is_some(), "Beneficiary should have a subscription from relay Transact");
+		});
+	}
+
+	/// Test 7 (P1.1): a signed user on ParaB holds ownership through their
+	/// derived account on ParaA and transfers it with xcm_transfer_ownership.
+	/// The Finding B check (authorizer == from) holds remotely because the
+	/// dispatch origin and `from` are the same HashedDescription-derived account.
+	#[test]
+	fn xcm_signed_user_transfers_own_ownership() {
+		MockNet::reset();
+
+		let content_id = register_content_on_para_a();
+		let alice_on_a = derived_account_on_para_a(200, &ALICE);
+		assert_ne!(alice_on_a, ALICE, "derived account differs from the raw key");
+		assert_ne!(alice_on_a, sovereign_account_of(200), "and from ParaB's sovereign");
+		// Two messages x 50_000 fees, plus the 5_000 ownership price.
+		fund_on_para_a(&alice_on_a, 200_000);
+
+		// Step 1: Alice buys ownership for her own derived account.
+		signed_send_from_para_b(
+			ALICE,
+			parachain::RuntimeCall::ContentRights(
+				pallet_content_rights::Call::xcm_purchase_ownership {
+					content_id,
+					beneficiary: alice_on_a.clone(),
+				},
+			),
+		);
+		ParaA::execute_with(|| {
+			assert!(
+				pallet_content_rights::Ownership::<parachain::Runtime>::get(content_id, &alice_on_a)
+					.is_some(),
+				"Alice's derived account should own the content"
+			);
+		});
+
+		// Step 2: Alice transfers it to BENEFICIARY, from ParaB.
+		signed_send_from_para_b(
+			ALICE,
+			parachain::RuntimeCall::ContentRights(
+				pallet_content_rights::Call::xcm_transfer_ownership {
+					content_id,
+					from: alice_on_a.clone(),
+					to: BENEFICIARY,
+				},
+			),
+		);
+		ParaA::execute_with(|| {
+			assert!(
+				pallet_content_rights::Ownership::<parachain::Runtime>::get(content_id, &BENEFICIARY)
+					.is_some(),
+				"BENEFICIARY should now own the content"
+			);
+			assert!(
+				pallet_content_rights::Ownership::<parachain::Runtime>::get(content_id, &alice_on_a)
+					.is_none(),
+				"Alice's derived account should no longer own it"
+			);
+			let authorized_by_alice = parachain::System::events().iter().any(|r| {
+				matches!(
+					&r.event,
+					parachain::RuntimeEvent::ContentRights(
+						pallet_content_rights::Event::CrossChainOwnershipTransferred {
+							authorizer, ..
+						}
+					) if *authorizer == alice_on_a
+				)
+			});
+			assert!(authorized_by_alice, "transfer should record Alice's derived account as authorizer");
+		});
+	}
+
+	/// Test 8 (P1.1): a different signed user on ParaB cannot transfer
+	/// Alice's ownership. Bob's message executes under Bob's own derived
+	/// account (his fee is withdrawn), so the rejection comes from the
+	/// Finding B check in the pallet, not from the XCM barrier.
+	#[test]
+	fn xcm_signed_user_cannot_transfer_others_ownership() {
+		MockNet::reset();
+
+		let content_id = register_content_on_para_a();
+		let alice_on_a = derived_account_on_para_a(200, &ALICE);
+		let bob_on_a = derived_account_on_para_a(200, &BOB);
+		assert_ne!(alice_on_a, bob_on_a, "different users derive different accounts");
+		fund_on_para_a(&alice_on_a, 200_000);
+		fund_on_para_a(&bob_on_a, 100_000);
+
+		// Alice owns the content through her derived account.
+		signed_send_from_para_b(
+			ALICE,
+			parachain::RuntimeCall::ContentRights(
+				pallet_content_rights::Call::xcm_purchase_ownership {
+					content_id,
+					beneficiary: alice_on_a.clone(),
+				},
+			),
+		);
+
+		// Bob, also on ParaB, tries to move Alice's ownership to himself.
+		signed_send_from_para_b(
+			BOB,
+			parachain::RuntimeCall::ContentRights(
+				pallet_content_rights::Call::xcm_transfer_ownership {
+					content_id,
+					from: alice_on_a.clone(),
+					to: bob_on_a.clone(),
+				},
+			),
+		);
+
+		ParaA::execute_with(|| {
+			assert!(
+				pallet_content_rights::Ownership::<parachain::Runtime>::get(content_id, &alice_on_a)
+					.is_some(),
+				"Alice should still own the content"
+			);
+			assert!(
+				pallet_content_rights::Ownership::<parachain::Runtime>::get(content_id, &bob_on_a)
+					.is_none(),
+				"Bob should not own the content"
+			);
+			let any_transfer = parachain::System::events().iter().any(|r| {
+				matches!(
+					&r.event,
+					parachain::RuntimeEvent::ContentRights(
+						pallet_content_rights::Event::CrossChainOwnershipTransferred { .. }
+					)
+				)
+			});
+			assert!(!any_transfer, "no cross-chain transfer should have happened");
+
+			// The message passed the barrier and ran under Bob's derived account:
+			// its 50_000 fee was withdrawn from that account (no refund instruction).
+			assert_eq!(
+				pallet_balances::Pallet::<parachain::Runtime>::free_balance(&bob_on_a),
+				50_000,
+				"Bob's message should have executed under his derived account"
+			);
+
+			// The call Bob's Transact dispatched, made directly with the same
+			// origin, fails with the Finding B error.
+			frame_support::assert_noop!(
+				pallet_content_rights::Pallet::<parachain::Runtime>::xcm_transfer_ownership(
+					parachain::RuntimeOrigin::signed(bob_on_a.clone()),
+					content_id,
+					alice_on_a.clone(),
+					bob_on_a.clone(),
+				),
+				pallet_content_rights::Error::<parachain::Runtime>::Unauthorized
+			);
 		});
 	}
 }
