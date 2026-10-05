@@ -36,8 +36,6 @@ content-rights-parachain/
 │       │   ├── mod.rs        # Pallet configurations (revive, nfts, balances, etc.)
 │       │   └── xcm_config.rs # XCM executor, router, barriers, Snowbridge origins
 │       └── precompiles.rs    # Custom pallet-revive precompile at 0x0000...0400
-├── contracts/
-│   └── rights_manager/       # ink! 6 contract (thin API layer over pallet)
 ├── node/                     # Collator binary (parachain-template-node)
 ├── scripts/
 │   ├── perf/                 # 7 performance benchmark scripts + results
@@ -50,7 +48,6 @@ content-rights-parachain/
 │   └── xcm-e2e-test.mjs     # XCM end-to-end test script
 ├── integration-tests/        # XCM simulator integration tests
 ├── docs/
-│   ├── DEPLOY_AND_CALL.md    # How to deploy and call ink! contracts
 │   ├── SNOWBRIDGE_SETUP.md   # Snowbridge setup plan (7 phases)
 │   └── SNOWBRIDGE_SESSION_LOG.md  # Detailed bridge session log with lessons
 ├── zombienet-xcm-test.toml   # 2-chain topology (performance testing)
@@ -194,9 +191,9 @@ Key runtime constants in `runtime/src/configs/mod.rs`:
 
 ## Thesis Context
 
-This implementation supports the research question: *"How can a shared-security, multi-chain framework built on Polkadot's XCM and ink! smart contracts deliver a unified rights token that natively supports recurring subscriptions, pay-per-view micro-transactions, and permanent ownership transfers across heterogeneous blockchain networks?"*
+This implementation is the artifact of an MSc dissertation (University of Malta) on the research question: *"How can a shared-security, multi-chain framework built on Polkadot's Cross-Consensus Messaging (XCM) and FRAME pallet primitives deliver a unified rights record that natively supports recurring subscriptions, pay-per-view microtransactions, and permanent ownership transfers across heterogeneous blockchain networks, and what levels of transaction finality, cost efficiency, and creator revenue retention can it achieve?"*
 
-The system achieves 26.2 TPS sustained throughput with ~6s deterministic latency, 100% XCM success rate across chains, and 100% creator revenue retention via a self-publishing model. Block weight utilization at 300 transactions is only 12.9%, meaning scaling to higher TPS is achievable via shorter block times or Elastic Scaling (multiple cores per parachain), without any pallet-level changes.
+Measured results, their caveats and the economic simulation are reported in the dissertation; all figures come from a local Zombienet test network, not a production deployment.
 
 ## License
 

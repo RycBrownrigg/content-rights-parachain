@@ -2066,3 +2066,155 @@ fn consume_view_on_empty_pack_fails() {
 		);
 	});
 }
+
+// ==================== Metered pay-per-view ====================
+
+/// Only the creator can set or clear the metering account.
+#[test]
+fn set_meter_only_creator() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let server = account(9);
+		let content_id = register_default_content(creator.clone());
+
+		assert_noop!(
+			ContentRights::set_meter(
+				RuntimeOrigin::signed(account(2)),
+				content_id,
+				Some(server.clone())
+			),
+			crate::Error::<Test>::NotContentCreator
+		);
+		assert_noop!(
+			ContentRights::set_meter(RuntimeOrigin::signed(creator.clone()), 99, Some(server.clone())),
+			crate::Error::<Test>::ContentNotFound
+		);
+
+		assert_ok!(ContentRights::set_meter(
+			RuntimeOrigin::signed(creator.clone()),
+			content_id,
+			Some(server.clone())
+		));
+		assert_eq!(pallet::Meters::<Test>::get(content_id), Some(server));
+
+		assert_ok!(ContentRights::set_meter(RuntimeOrigin::signed(creator), content_id, None));
+		assert_eq!(pallet::Meters::<Test>::get(content_id), None);
+	});
+}
+
+/// The meter consumes a viewer's views without the viewer's signature, and the
+/// pack's child NFT is burned when the last view is consumed.
+#[test]
+fn meter_consumes_views_for_viewer() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let viewer = account(2);
+		let server = account(9);
+		let content_id = register_default_content(creator.clone());
+		assert_ok!(ContentRights::set_meter(
+			RuntimeOrigin::signed(creator),
+			content_id,
+			Some(server.clone())
+		));
+		assert_ok!(ContentRights::purchase_views(
+			RuntimeOrigin::signed(viewer.clone()),
+			content_id,
+			2
+		));
+
+		assert_ok!(ContentRights::consume_view_for(
+			RuntimeOrigin::signed(server.clone()),
+			content_id,
+			viewer.clone()
+		));
+		assert_eq!(pallet::ViewPacks::<Test>::get(content_id, &viewer).unwrap().views_remaining, 1);
+		assert_eq!(ContentRights::access_rights(content_id, &viewer), Some(RightsType::PayPerView));
+
+		assert_ok!(ContentRights::consume_view_for(
+			RuntimeOrigin::signed(server.clone()),
+			content_id,
+			viewer.clone()
+		));
+		assert!(pallet::ViewPacks::<Test>::get(content_id, &viewer).is_none());
+		assert_eq!(ContentRights::access_rights(content_id, &viewer), None);
+		let content = pallet::Contents::<Test>::get(content_id).unwrap();
+		assert!(children_of(content.collection_id, content.content_item_id).is_empty());
+
+		// Nothing left to consume.
+		assert_noop!(
+			ContentRights::consume_view_for(RuntimeOrigin::signed(server), content_id, viewer),
+			crate::Error::<Test>::ViewPackNotFound
+		);
+	});
+}
+
+/// Accounts other than the meter, including the viewer, cannot use
+/// `consume_view_for`; with no meter set, nobody can.
+#[test]
+fn consume_view_for_rejects_non_meter() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let viewer = account(2);
+		let server = account(9);
+		let content_id = register_default_content(creator.clone());
+		assert_ok!(ContentRights::purchase_views(
+			RuntimeOrigin::signed(viewer.clone()),
+			content_id,
+			3
+		));
+
+		// No meter set.
+		assert_noop!(
+			ContentRights::consume_view_for(
+				RuntimeOrigin::signed(server.clone()),
+				content_id,
+				viewer.clone()
+			),
+			crate::Error::<Test>::Unauthorized
+		);
+
+		assert_ok!(ContentRights::set_meter(
+			RuntimeOrigin::signed(creator.clone()),
+			content_id,
+			Some(server)
+		));
+		for caller in [creator, viewer.clone(), account(3)] {
+			assert_noop!(
+				ContentRights::consume_view_for(
+					RuntimeOrigin::signed(caller),
+					content_id,
+					viewer.clone()
+				),
+				crate::Error::<Test>::Unauthorized
+			);
+		}
+		assert_eq!(pallet::ViewPacks::<Test>::get(content_id, &viewer).unwrap().views_remaining, 3);
+	});
+}
+
+/// A meter set for one content item has no authority over another.
+#[test]
+fn meter_is_scoped_to_its_content() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let viewer = account(2);
+		let server = account(9);
+		let first = register_default_content(creator.clone());
+		let second = register_default_content(creator.clone());
+		assert_ok!(ContentRights::set_meter(
+			RuntimeOrigin::signed(creator),
+			first,
+			Some(server.clone())
+		));
+		assert_ok!(ContentRights::purchase_views(
+			RuntimeOrigin::signed(viewer.clone()),
+			second,
+			1
+		));
+
+		assert_noop!(
+			ContentRights::consume_view_for(RuntimeOrigin::signed(server), second, viewer),
+			crate::Error::<Test>::Unauthorized
+		);
+	});
+}

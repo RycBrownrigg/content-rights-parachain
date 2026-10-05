@@ -16,7 +16,6 @@ members = [
     "integration-tests",
 ]
 resolver = "2"
-exclude = ["contracts/rights_manager"]
 
 [workspace.dependencies]
 parachain-template-runtime = { path = "./runtime", default-features = false }

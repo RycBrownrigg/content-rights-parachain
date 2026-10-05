@@ -143,6 +143,13 @@ pub mod pallet {
 	pub type Parent<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, u32, Blake2_128Concat, u32, (u32, u32)>;
 
+	/// Content ID -> metering account. The creator names the account that serves the
+	/// content (for example a content server); only it may consume a viewer's
+	/// pay-per-view views with `consume_view_for`, so view limits do not depend on
+	/// viewers reporting their own views.
+	#[pallet::storage]
+	pub type Meters<T: Config> = StorageMap<_, Blake2_128Concat, u32, T::AccountId>;
+
 	// --------------- Events ---------------
 
 	#[pallet::event]
@@ -255,6 +262,11 @@ pub mod pallet {
 			content_id: u32,
 			subscriber: T::AccountId,
 			reason: AutoRenewFailReason,
+		},
+		/// The creator set (`Some`) or cleared (`None`) the content's metering account.
+		MeterSet {
+			content_id: u32,
+			meter: Option<T::AccountId>,
 		},
 	}
 
@@ -548,6 +560,40 @@ pub mod pallet {
 					ViewPackInfo { views_remaining: num_views, child_item_id },
 				);
 			}
+
+			Ok(())
+		}
+
+		/// Shared view-consumption logic for `consume_view` and `consume_view_for`:
+		/// decrements the viewer's pack and burns its child NFT when it reaches zero.
+		fn do_consume_view(content_id: u32, viewer: T::AccountId) -> DispatchResult {
+			let mut pack =
+				ViewPacks::<T>::get(content_id, &viewer).ok_or(Error::<T>::ViewPackNotFound)?;
+			ensure!(pack.views_remaining > 0, Error::<T>::NoViewsRemaining);
+
+			pack.views_remaining = pack.views_remaining.saturating_sub(1);
+
+			if pack.views_remaining == 0 {
+				let content =
+					Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
+				// Burn the child NFT
+				pallet_nfts::Pallet::<T>::do_burn(
+					content.collection_id,
+					pack.child_item_id,
+					|_| Ok(()),
+				)?;
+				// Clean up nesting index
+				Parent::<T>::remove(content.collection_id, pack.child_item_id);
+				ViewPacks::<T>::remove(content_id, &viewer);
+			} else {
+				ViewPacks::<T>::insert(content_id, &viewer, pack.clone());
+			}
+
+			Self::deposit_event(Event::ViewConsumed {
+				content_id,
+				viewer,
+				views_remaining: pack.views_remaining,
+			});
 
 			Ok(())
 		}
@@ -878,41 +924,14 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Consume one view from a pay-per-view pack.
+		/// Consume one of the caller's own pay-per-view views. A content server that
+		/// meters views should use `consume_view_for` instead, so that consumption
+		/// does not depend on the viewer.
 		#[pallet::call_index(4)]
 		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::consume_view())]
 		pub fn consume_view(origin: OriginFor<T>, content_id: u32) -> DispatchResult {
 			let viewer = ensure_signed(origin)?;
-
-			let mut pack =
-				ViewPacks::<T>::get(content_id, &viewer).ok_or(Error::<T>::ViewPackNotFound)?;
-			ensure!(pack.views_remaining > 0, Error::<T>::NoViewsRemaining);
-
-			pack.views_remaining = pack.views_remaining.saturating_sub(1);
-
-			if pack.views_remaining == 0 {
-				let content =
-					Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
-				// Burn the child NFT
-				pallet_nfts::Pallet::<T>::do_burn(
-					content.collection_id,
-					pack.child_item_id,
-					|_| Ok(()),
-				)?;
-				// Clean up nesting index
-				Parent::<T>::remove(content.collection_id, pack.child_item_id);
-				ViewPacks::<T>::remove(content_id, &viewer);
-			} else {
-				ViewPacks::<T>::insert(content_id, &viewer, pack.clone());
-			}
-
-			Self::deposit_event(Event::ViewConsumed {
-				content_id,
-				viewer,
-				views_remaining: pack.views_remaining,
-			});
-
-			Ok(())
+			Self::do_consume_view(content_id, viewer)
 		}
 
 		/// Purchase permanent ownership of content.
@@ -1381,6 +1400,50 @@ pub mod pallet {
 			});
 
 			Ok(())
+		}
+
+		/// Set or clear the metering account for content. Only the creator can call
+		/// this. The meter is the account that serves the content: before serving a
+		/// pay-per-view viewing it calls `consume_view_for`, so a viewer cannot keep
+		/// access by never consuming. The meter is trusted by the creator, as the
+		/// server delivering the content already is.
+		#[pallet::call_index(17)]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::set_meter())]
+		pub fn set_meter(
+			origin: OriginFor<T>,
+			content_id: u32,
+			meter: Option<T::AccountId>,
+		) -> DispatchResult {
+			let caller = ensure_signed(origin)?;
+
+			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
+			ensure!(caller == content.creator, Error::<T>::NotContentCreator);
+
+			match &meter {
+				Some(m) => Meters::<T>::insert(content_id, m),
+				None => Meters::<T>::remove(content_id),
+			}
+
+			Self::deposit_event(Event::MeterSet { content_id, meter });
+
+			Ok(())
+		}
+
+		/// Consume one pay-per-view view on behalf of `viewer`. Only the content's
+		/// metering account (see `set_meter`) can call this.
+		#[pallet::call_index(18)]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::consume_view_for())]
+		pub fn consume_view_for(
+			origin: OriginFor<T>,
+			content_id: u32,
+			viewer: T::AccountId,
+		) -> DispatchResult {
+			let caller = ensure_signed(origin)?;
+			ensure!(
+				Meters::<T>::get(content_id).as_ref() == Some(&caller),
+				Error::<T>::Unauthorized
+			);
+			Self::do_consume_view(content_id, viewer)
 		}
 	}
 }

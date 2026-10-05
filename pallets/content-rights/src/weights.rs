@@ -15,6 +15,8 @@ pub trait WeightInfo {
 	fn xcm_purchase_ownership() -> Weight;
 	fn transfer_ownership() -> Weight;
 	fn xcm_transfer_ownership() -> Weight;
+	fn set_meter() -> Weight;
+	fn consume_view_for() -> Weight;
 }
 
 pub struct SubstrateWeight<T>(core::marker::PhantomData<T>);
@@ -100,5 +102,18 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_parts(80_000_000, 0)
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(5))
+	}
+
+	fn set_meter() -> Weight {
+		Weight::from_parts(20_000_000, 0)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+
+	fn consume_view_for() -> Weight {
+		// consume_view plus the Meters read
+		Weight::from_parts(50_000_000, 0)
+			.saturating_add(T::DbWeight::get().reads(3))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 }
