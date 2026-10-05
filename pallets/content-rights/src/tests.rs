@@ -1924,6 +1924,67 @@ fn enable_auto_renew_rejects_zero_period_and_accepts_minimum() {
 	});
 }
 
+// ==================== access_rights_of view function ====================
+
+/// The free view function resolves rights in the same priority order as
+/// `check_access` (Ownership > Subscription > PayPerView) and returns `None`
+/// for unknown content or no rights.
+#[test]
+fn access_rights_view_function_follows_priority() {
+	new_test_ext().execute_with(|| {
+		let user = account(2);
+		let content_id = register_default_content(account(1));
+		assert_eq!(ContentRights::access_rights_of(999, user.clone()), None);
+		assert_eq!(ContentRights::access_rights_of(content_id, user.clone()), None);
+
+		assert_ok!(ContentRights::purchase_views(RuntimeOrigin::signed(user.clone()), content_id, 2));
+		assert_eq!(
+			ContentRights::access_rights_of(content_id, user.clone()),
+			Some(RightsType::PayPerView)
+		);
+
+		assert_ok!(ContentRights::subscribe(RuntimeOrigin::signed(user.clone()), content_id));
+		assert_eq!(
+			ContentRights::access_rights_of(content_id, user.clone()),
+			Some(RightsType::Subscription)
+		);
+
+		assert_ok!(ContentRights::purchase_ownership(RuntimeOrigin::signed(user.clone()), content_id));
+		assert_eq!(
+			ContentRights::access_rights_of(content_id, user),
+			Some(RightsType::Ownership)
+		);
+	});
+}
+
+/// The view function emits no events and charges nothing, and after expiry it
+/// agrees with the `check_access` extrinsic.
+#[test]
+fn access_rights_view_function_is_read_only_and_matches_check_access() {
+	new_test_ext().execute_with(|| {
+		let user = account(2);
+		let content_id = register_default_content(account(1));
+		assert_ok!(ContentRights::subscribe(RuntimeOrigin::signed(user.clone()), content_id));
+
+		let events_before = System::events().len();
+		let balance_before = Balances::free_balance(&user);
+		assert_eq!(
+			ContentRights::access_rights_of(content_id, user.clone()),
+			Some(RightsType::Subscription)
+		);
+		assert_eq!(System::events().len(), events_before);
+		assert_eq!(Balances::free_balance(&user), balance_before);
+
+		let expiry = pallet::Subscriptions::<Test>::get(content_id, &user).unwrap().expiry_block;
+		run_to_block(expiry);
+		assert_eq!(ContentRights::access_rights_of(content_id, user.clone()), None);
+		assert_ok!(ContentRights::check_access(RuntimeOrigin::signed(user.clone()), content_id));
+		System::assert_last_event(
+			crate::Event::<Test>::AccessChecked { content_id, who: user, has_access: false }.into(),
+		);
+	});
+}
+
 // ---------------------------------------------------------------------------
 // Error-variant coverage: reachable variants not otherwise asserted
 // ---------------------------------------------------------------------------

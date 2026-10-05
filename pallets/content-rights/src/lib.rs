@@ -650,6 +650,44 @@ pub mod pallet {
 			)?;
 			Ok(())
 		}
+
+		/// The right through which `who` can currently access `content_id`, in
+		/// priority order Ownership > Subscription > PayPerView, or `None`.
+		/// Read-only; shared by `check_access` and the `access_rights_of` view function.
+		pub fn access_rights(content_id: u32, who: &T::AccountId) -> Option<RightsType> {
+			if Ownership::<T>::contains_key(content_id, who) {
+				return Some(RightsType::Ownership);
+			}
+			if let Some(sub) = Subscriptions::<T>::get(content_id, who) {
+				let now: u32 =
+					<frame_system::Pallet<T>>::block_number().try_into().unwrap_or(0u32);
+				if now < sub.expiry_block {
+					return Some(RightsType::Subscription);
+				}
+			}
+			if let Some(pack) = ViewPacks::<T>::get(content_id, who) {
+				if pack.views_remaining > 0 {
+					return Some(RightsType::PayPerView);
+				}
+			}
+			None
+		}
+	}
+
+	// --------------- View functions ---------------
+
+	#[pallet::view_functions]
+	impl<T: Config> Pallet<T> {
+		/// Free, read-only access query for content servers and other clients:
+		/// the right through which `who` can access `content_id`, or `None` (also
+		/// for unknown content). Unlike `check_access`, it is not a transaction,
+		/// pays no fee and records nothing on-chain.
+		pub fn access_rights_of(content_id: u32, who: T::AccountId) -> Option<RightsType> {
+			if !Contents::<T>::contains_key(content_id) {
+				return None;
+			}
+			Self::access_rights(content_id, &who)
+		}
 	}
 
 	// --------------- Extrinsics ---------------
@@ -920,48 +958,8 @@ pub mod pallet {
 				Error::<T>::ContentNotFound
 			);
 
-			// Check ownership first (cheapest)
-			if Ownership::<T>::contains_key(content_id, &who) {
-				Self::deposit_event(Event::AccessChecked {
-					content_id,
-					who,
-					has_access: true,
-				});
-				return Ok(());
-			}
-
-			// Check active subscription
-			if let Some(sub) = Subscriptions::<T>::get(content_id, &who) {
-				let current_block: u32 = <frame_system::Pallet<T>>::block_number()
-					.try_into()
-					.unwrap_or(0u32);
-				if current_block < sub.expiry_block {
-					Self::deposit_event(Event::AccessChecked {
-						content_id,
-						who,
-						has_access: true,
-					});
-					return Ok(());
-				}
-			}
-
-			// Check PPV views
-			if let Some(pack) = ViewPacks::<T>::get(content_id, &who) {
-				if pack.views_remaining > 0 {
-					Self::deposit_event(Event::AccessChecked {
-						content_id,
-						who,
-						has_access: true,
-					});
-					return Ok(());
-				}
-			}
-
-			Self::deposit_event(Event::AccessChecked {
-				content_id,
-				who,
-				has_access: false,
-			});
+			let has_access = Self::access_rights(content_id, &who).is_some();
+			Self::deposit_event(Event::AccessChecked { content_id, who, has_access });
 
 			Ok(())
 		}
