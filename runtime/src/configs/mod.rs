@@ -447,14 +447,12 @@ impl pallet_nfts::Config for Runtime {
 // --- pallet-content-rights ---
 
 parameter_types! {
-	pub const MaxChildrenPerNft: u32 = 50;
 	/// Finding M: auto-renewal only for periods of at least one day (6 s blocks).
 	pub const MinAutoRenewPeriod: u32 = 14_400;
 }
 
 impl pallet_content_rights::Config for Runtime {
 	type PaymentCurrency = Balances;
-	type MaxChildren = MaxChildrenPerNft;
 	type MinAutoRenewPeriod = MinAutoRenewPeriod;
 	type ContentRightsWeightInfo = pallet_content_rights::weights::SubstrateWeight<Runtime>;
 }

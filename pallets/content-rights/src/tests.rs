@@ -9,6 +9,14 @@ fn default_title() -> BoundedVec<u8, ConstU32<128>> {
 	b"Test Content".to_vec().try_into().unwrap()
 }
 
+/// Children nested under `parent` in `collection`, read from the `Parent` index.
+fn children_of(collection: u32, parent: u32) -> Vec<(u32, u32)> {
+	pallet::Parent::<Test>::iter_prefix(collection)
+		.filter(|(_, p)| *p == (collection, parent))
+		.map(|(item, _)| (collection, item))
+		.collect()
+}
+
 /// Helper: register content and return the content_id (0 for first call).
 fn register_default_content(creator: AccountId) -> u32 {
 	let content_id = pallet::NextContentId::<Test>::get();
@@ -104,7 +112,7 @@ fn subscribe_works() {
 
 		// Child NFT nested
 		let content = pallet::Contents::<Test>::get(content_id).unwrap();
-		let children = pallet::Children::<Test>::get(content.collection_id, content.content_item_id);
+		let children = children_of(content.collection_id, content.content_item_id);
 		assert_eq!(children.len(), 1);
 	});
 }
@@ -273,7 +281,7 @@ fn consume_view_burns_nft_at_zero() {
 
 		// Nesting cleaned up
 		let content = pallet::Contents::<Test>::get(content_id).unwrap();
-		let children = pallet::Children::<Test>::get(content.collection_id, content.content_item_id);
+		let children = children_of(content.collection_id, content.content_item_id);
 		assert_eq!(children.len(), 0);
 	});
 }
@@ -657,7 +665,7 @@ fn xcm_purchase_views_adds_to_existing_pack() {
 		assert_eq!(second.views_remaining, 8);
 		assert_eq!(second.child_item_id, first.child_item_id);
 		assert_eq!(
-			pallet::Children::<Test>::get(content.collection_id, content.content_item_id).len(),
+			children_of(content.collection_id, content.content_item_id).len(),
 			1
 		);
 	});
@@ -687,7 +695,7 @@ fn local_then_xcm_purchase_views_share_one_pack() {
 
 		assert_eq!(pallet::ViewPacks::<Test>::get(content_id, &user).unwrap().views_remaining, 10);
 		assert_eq!(
-			pallet::Children::<Test>::get(content.collection_id, content.content_item_id).len(),
+			children_of(content.collection_id, content.content_item_id).len(),
 			1
 		);
 	});
@@ -774,7 +782,7 @@ fn nesting_multiple_children() {
 		));
 
 		let content = pallet::Contents::<Test>::get(content_id).unwrap();
-		let children = pallet::Children::<Test>::get(content.collection_id, content.content_item_id);
+		let children = children_of(content.collection_id, content.content_item_id);
 		assert_eq!(children.len(), 2);
 
 		// Both children have parent records
@@ -817,7 +825,7 @@ fn transfer_ownership_works() {
 		// NFT nesting updated: still 1 child (old burned, new minted)
 		let content = pallet::Contents::<Test>::get(content_id).unwrap();
 		let children =
-			pallet::Children::<Test>::get(content.collection_id, content.content_item_id);
+			children_of(content.collection_id, content.content_item_id);
 		assert_eq!(children.len(), 1);
 
 		System::assert_has_event(
@@ -1020,7 +1028,7 @@ fn security_zero_views_purchase_rejected() {
 		);
 
 		assert!(pallet::ViewPacks::<Test>::get(content_id, &buyer).is_none());
-		assert!(pallet::Children::<Test>::get(content.collection_id, content.content_item_id)
+		assert!(children_of(content.collection_id, content.content_item_id)
 			.is_empty());
 	});
 }
@@ -1046,7 +1054,7 @@ fn security_xcm_zero_views_purchase_rejected() {
 		);
 
 		assert!(pallet::ViewPacks::<Test>::get(content_id, &beneficiary).is_none());
-		assert!(pallet::Children::<Test>::get(content.collection_id, content.content_item_id)
+		assert!(children_of(content.collection_id, content.content_item_id)
 			.is_empty());
 	});
 }
@@ -1071,29 +1079,36 @@ fn security_self_subscribe_as_creator() {
 	});
 }
 
-/// Fill to MaxChildren (50) boundary and verify the 51st fails.
+/// There is no per-item holder cap: the 51st and later holders are accepted
+/// (the former bounded `Children` vector rejected the 51st with MaxChildrenReached).
 #[test]
-fn security_max_children_boundary() {
+fn security_no_holder_cap() {
 	new_test_ext().execute_with(|| {
 		let creator = account(1);
 		let content_id = register_default_content(creator);
+		let content = pallet::Contents::<Test>::get(content_id).unwrap();
 
-		// Fund accounts 100-150 with enough balance
-		for i in 100u8..=150u8 {
+		for i in 100u8..160u8 {
 			let _ = Balances::force_set_balance(RuntimeOrigin::root(), account(i).into(), 10_000);
+			assert_ok!(ContentRights::subscribe(RuntimeOrigin::signed(account(i)), content_id));
 		}
 
-		for i in 100u8..150u8 {
-			assert_ok!(ContentRights::subscribe(
-				RuntimeOrigin::signed(account(i)),
-				content_id,
-			));
-		}
+		assert_eq!(children_of(content.collection_id, content.content_item_id).len(), 60);
+	});
+}
 
-		assert_noop!(
-			ContentRights::subscribe(RuntimeOrigin::signed(account(150u8)), content_id),
-			crate::Error::<Test>::MaxChildrenReached
-		);
+/// Each child NFT reserves pallet-nfts deposits from the creator (the depositor),
+/// so a creator's reserved balance grows with the number of holders.
+#[test]
+fn child_mint_reserves_creator_deposit() {
+	new_test_ext().execute_with(|| {
+		let creator = account(1);
+		let content_id = register_default_content(creator.clone());
+		let before = Balances::reserved_balance(&creator);
+
+		assert_ok!(ContentRights::subscribe(RuntimeOrigin::signed(account(2)), content_id));
+
+		assert!(Balances::reserved_balance(&creator) > before);
 	});
 }
 

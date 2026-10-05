@@ -35,10 +35,6 @@ pub mod pallet {
 		type PaymentCurrency: frame::traits::fungible::Inspect<Self::AccountId>
 			+ frame::traits::fungible::Mutate<Self::AccountId>;
 
-		/// Maximum number of child NFTs per parent.
-		#[pallet::constant]
-		type MaxChildren: Get<u32>;
-
 		/// Minimum `period_length` of content on which auto-renewal may be enabled
 		/// (Finding M). Keeping every `RenewalQueue` bucket full needs about
 		/// `MAX_RENEWALS_PER_BLOCK * max(period, MAX_RENEWAL_SLOT_SEARCH)` queued
@@ -105,18 +101,6 @@ pub mod pallet {
 		Blake2_128Concat,
 		T::AccountId,
 		OwnershipInfo,
-	>;
-
-	/// Parent (collection, item) -> list of children (collection, item).
-	#[pallet::storage]
-	pub type Children<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		u32,
-		Blake2_128Concat,
-		u32,
-		BoundedVec<(u32, u32), ConstU32<50>>,
-		ValueQuery,
 	>;
 
 	/// Set of (content_id, subscriber) pairs with auto-renew enabled.
@@ -296,8 +280,6 @@ pub mod pallet {
 		NoViewsRemaining,
 		AlreadyOwned,
 		InsufficientPayment,
-		MaxChildrenReached,
-		ChildAlreadyNested,
 		NftOperationFailed,
 		ContentIdOverflow,
 		ItemIdOverflow,
@@ -511,12 +493,9 @@ pub mod pallet {
 				rights_value,
 			)?;
 
-			// Update nesting index
-			Children::<T>::try_mutate(collection_id, parent_item_id, |children| {
-				children
-					.try_push((collection_id, child_item_id))
-					.map_err(|_| Error::<T>::MaxChildrenReached)
-			})?;
+			// Record nesting. `Parent` is the only nesting index: the former bounded
+			// `Children` vector duplicated it and capped each content item at 50
+			// holders over its lifetime, so it was removed (no per-item holder cap).
 			Parent::<T>::insert(collection_id, child_item_id, (collection_id, parent_item_id));
 
 			NextItemId::<T>::insert(collection_id, next_id);
@@ -883,13 +862,6 @@ pub mod pallet {
 					|_| Ok(()),
 				)?;
 				// Clean up nesting index
-				Children::<T>::mutate(
-					content.collection_id,
-					content.content_item_id,
-					|children| {
-						children.retain(|&(_, item)| item != pack.child_item_id);
-					},
-				);
 				Parent::<T>::remove(content.collection_id, pack.child_item_id);
 				ViewPacks::<T>::remove(content_id, &viewer);
 			} else {
@@ -1175,13 +1147,6 @@ pub mod pallet {
 				ownership_info.child_item_id,
 				|_| Ok(()),
 			)?;
-			Children::<T>::mutate(
-				content.collection_id,
-				content.content_item_id,
-				|children| {
-					children.retain(|&(_, item)| item != ownership_info.child_item_id);
-				},
-			);
 			Parent::<T>::remove(content.collection_id, ownership_info.child_item_id);
 
 			// Mint new child NFT for recipient
@@ -1241,13 +1206,6 @@ pub mod pallet {
 				ownership_info.child_item_id,
 				|_| Ok(()),
 			)?;
-			Children::<T>::mutate(
-				content.collection_id,
-				content.content_item_id,
-				|children| {
-					children.retain(|&(_, item)| item != ownership_info.child_item_id);
-				},
-			);
 			Parent::<T>::remove(content.collection_id, ownership_info.child_item_id);
 
 			// Mint new child NFT for recipient
