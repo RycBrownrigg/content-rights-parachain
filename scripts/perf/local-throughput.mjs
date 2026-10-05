@@ -389,7 +389,7 @@ async function main() {
     // Register fresh content and subscribe each account
     const arHash = '0x' + Buffer.from(`autorenew-${batchSize}-${Date.now()}`).toString('hex').padEnd(64, '0');
     const arReg = await sendAndWait(api, api.tx.contentRights.registerContent(
-      arHash, `AutoRenew ${batchSize}`, 500000, 0, 0, 500,
+      arHash, `AutoRenew ${batchSize}`, 500000, 0, 0, 14400, // >= MinAutoRenewPeriod (Finding M)
     ), alice);
     const arId = extractContentId(arReg.events);
     // Subscribe accounts first
@@ -412,7 +412,7 @@ async function main() {
     // Register, subscribe, enable auto-renew, then disable
     const darHash = '0x' + Buffer.from(`disableauto-${batchSize}-${Date.now()}`).toString('hex').padEnd(64, '0');
     const darReg = await sendAndWait(api, api.tx.contentRights.registerContent(
-      darHash, `DisableAR ${batchSize}`, 500000, 0, 0, 500,
+      darHash, `DisableAR ${batchSize}`, 500000, 0, 0, 14400, // >= MinAutoRenewPeriod (Finding M)
     ), alice);
     const darId = extractContentId(darReg.events);
     const darSet = accounts.slice(0, batchSize);

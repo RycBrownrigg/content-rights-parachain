@@ -1841,6 +1841,74 @@ fn enable_auto_renew_fails_when_queue_full() {
 	});
 }
 
+// ==================== Finding M: minimum auto-renewal period ====================
+
+/// Register content with the given period and subscribe `subscriber` to it.
+fn register_and_subscribe_with_period(period_length: u32, subscriber: &AccountId) -> u32 {
+	let content_id = pallet::NextContentId::<Test>::get();
+	assert_ok!(ContentRights::register_content(
+		RuntimeOrigin::signed(account(1)),
+		[0u8; 32],
+		default_title(),
+		100,
+		10,
+		500,
+		period_length,
+	));
+	assert_ok!(ContentRights::subscribe(RuntimeOrigin::signed(subscriber.clone()), content_id));
+	content_id
+}
+
+/// A period one block below the minimum cannot be auto-renewed, and nothing is
+/// queued. Short periods are what let a few accounts keep the queue full.
+#[test]
+fn enable_auto_renew_rejects_period_below_minimum() {
+	new_test_ext().execute_with(|| {
+		let subscriber = account(2);
+		let min = <Test as crate::Config>::MinAutoRenewPeriod::get();
+		let content_id = register_and_subscribe_with_period(min - 1, &subscriber);
+
+		assert_noop!(
+			ContentRights::enable_auto_renew(RuntimeOrigin::signed(subscriber.clone()), content_id),
+			crate::Error::<Test>::AutoRenewPeriodTooShort
+		);
+		assert!(!pallet::AutoRenewIndex::<Test>::contains_key((content_id, &subscriber)));
+		assert!(pallet::RenewalQueue::<Test>::iter().next().is_none());
+
+		// Manual renewal of short-period content is unaffected.
+		let expiry = pallet::Subscriptions::<Test>::get(content_id, &subscriber)
+			.unwrap()
+			.expiry_block;
+		run_to_block(expiry);
+		assert_ok!(ContentRights::renew_subscription(
+			RuntimeOrigin::signed(subscriber),
+			content_id,
+		));
+	});
+}
+
+/// A zero period (which would orphan the queue entry in the bucket just
+/// processed) is rejected; exactly the minimum period is accepted.
+#[test]
+fn enable_auto_renew_rejects_zero_period_and_accepts_minimum() {
+	new_test_ext().execute_with(|| {
+		let subscriber = account(2);
+		let zero_id = register_and_subscribe_with_period(0, &subscriber);
+		assert_noop!(
+			ContentRights::enable_auto_renew(RuntimeOrigin::signed(subscriber.clone()), zero_id),
+			crate::Error::<Test>::AutoRenewPeriodTooShort
+		);
+
+		let min = <Test as crate::Config>::MinAutoRenewPeriod::get();
+		let min_id = register_and_subscribe_with_period(min, &subscriber);
+		assert_ok!(ContentRights::enable_auto_renew(
+			RuntimeOrigin::signed(subscriber.clone()),
+			min_id,
+		));
+		assert!(pallet::AutoRenewIndex::<Test>::contains_key((min_id, &subscriber)));
+	});
+}
+
 // ---------------------------------------------------------------------------
 // Error-variant coverage: reachable variants not otherwise asserted
 // ---------------------------------------------------------------------------

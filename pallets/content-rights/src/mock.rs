@@ -79,11 +79,14 @@ impl pallet_nfts::Config for Test {
 
 parameter_types! {
 	pub const MaxChildrenPerNft: u32 = 50;
+	// Short for tests; equal to the period used by `register_default_content`.
+	pub const MinAutoRenewPeriod: u32 = 100;
 }
 
 impl crate::Config for Test {
 	type PaymentCurrency = Balances;
 	type MaxChildren = MaxChildrenPerNft;
+	type MinAutoRenewPeriod = MinAutoRenewPeriod;
 	type ContentRightsWeightInfo = crate::weights::SubstrateWeight<Test>;
 }
 

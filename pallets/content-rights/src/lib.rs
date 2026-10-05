@@ -39,6 +39,15 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxChildren: Get<u32>;
 
+		/// Minimum `period_length` of content on which auto-renewal may be enabled
+		/// (Finding M). Keeping every `RenewalQueue` bucket full needs about
+		/// `MAX_RENEWALS_PER_BLOCK * max(period, MAX_RENEWAL_SLOT_SEARCH)` queued
+		/// entries, so a longer minimum period makes the queue costly to occupy.
+		/// A zero period would also re-queue an entry into the bucket that was just
+		/// processed, where it would never run.
+		#[pallet::constant]
+		type MinAutoRenewPeriod: Get<u32>;
+
 		/// Weight information for extrinsics.
 		type ContentRightsWeightInfo: crate::weights::WeightInfo;
 	}
@@ -301,6 +310,9 @@ pub mod pallet {
 		RenewalQueueFull,
 		/// A pay-per-view purchase must be for at least one view (Finding I).
 		ZeroViews,
+		/// The content's period is below `MinAutoRenewPeriod`, so auto-renewal
+		/// cannot be enabled for it (Finding M).
+		AutoRenewPeriodTooShort,
 	}
 
 	// --------------- Hooks ---------------
@@ -1276,6 +1288,14 @@ pub mod pallet {
 			content_id: u32,
 		) -> DispatchResult {
 			let subscriber = ensure_signed(origin)?;
+
+			// Finding M: short periods would let a few accounts keep the shared
+			// renewal queue full; a zero period would orphan the queue entry.
+			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
+			ensure!(
+				content.period_length >= T::MinAutoRenewPeriod::get(),
+				Error::<T>::AutoRenewPeriodTooShort
+			);
 
 			let expiry_block = Subscriptions::<T>::try_mutate(
 				content_id,
