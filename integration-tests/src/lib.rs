@@ -674,3 +674,196 @@ mod tests {
 		});
 	}
 }
+
+// --- pallet-rights-client: complete message, outcome report, compensation ---
+
+#[cfg(test)]
+mod client_tests {
+	use super::*;
+	use frame_support::{assert_noop, assert_ok};
+	use pallet_rights_client::RightsRequest;
+	use xcm_simulator::TestExt;
+
+	const USER: AccountId32 = AccountId32::new([0xC1; 32]);
+	const OPERATOR: AccountId32 = AccountId32::new([0xEE; 32]);
+	const ESCROW: u128 = 1_000;
+	const FEE: u128 = 50_000;
+	const SOVEREIGN_FUNDS: u128 = 1_000_000_000;
+
+	fn balance_on_b(who: &AccountId32) -> u128 {
+		ParaB::execute_with(|| pallet_balances::Pallet::<parachain::Runtime>::free_balance(who))
+	}
+
+	fn balance_on_a(who: &AccountId32) -> u128 {
+		ParaA::execute_with(|| pallet_balances::Pallet::<parachain::Runtime>::free_balance(who))
+	}
+
+	/// Fund USER on ParaB, ParaB's sovereign account on ParaA, and send `request`
+	/// through pallet-rights-client. Returns the query ID.
+	fn send_request(request: RightsRequest) -> u64 {
+		fund_sovereign_on_para_a(200, SOVEREIGN_FUNDS);
+		ParaB::execute_with(|| {
+			assert_ok!(pallet_balances::Pallet::<parachain::Runtime>::force_set_balance(
+				parachain::RuntimeOrigin::root(),
+				USER,
+				1_000_000,
+			));
+			assert_ok!(parachain::RightsClient::request(
+				parachain::RuntimeOrigin::signed(USER),
+				request,
+				ESCROW,
+			));
+			let query_id = pallet_rights_client::Pending::<parachain::Runtime>::iter_keys()
+				.next()
+				.expect("request is pending until the report arrives");
+			query_id
+		})
+	}
+
+	fn no_trapped_assets_on_a() -> bool {
+		ParaA::execute_with(|| {
+			!parachain::System::events().iter().any(|r| {
+				matches!(
+					r.event,
+					parachain::RuntimeEvent::XcmPallet(pallet_xcm::Event::AssetsTrapped { .. })
+				)
+			})
+		})
+	}
+
+	/// Success: CCRMS issues the right to the user's own key, refunds unused
+	/// fees to ParaB's sovereign account, and reports success; ParaB releases the
+	/// escrow to the operator.
+	#[test]
+	fn client_request_success_reports_and_releases_escrow() {
+		MockNet::reset();
+		let content_id = register_content_on_para_a();
+		let query_id = send_request(RightsRequest::Subscribe { content_id });
+
+		ParaA::execute_with(|| {
+			assert!(pallet_content_rights::Subscriptions::<parachain::Runtime>::get(
+				content_id, &USER
+			)
+			.is_some());
+		});
+		// Price 1,000 paid; of the 50,000 fee only the weight actually used is kept.
+		let sovereign = sovereign_account_of(200);
+		let spent = SOVEREIGN_FUNDS - balance_on_a(&sovereign);
+		assert!(spent >= 1_000 && spent < 1_000 + FEE, "surplus fee refunded; spent {spent}");
+		assert!(no_trapped_assets_on_a());
+
+		ParaB::execute_with(|| {
+			assert!(pallet_rights_client::Pending::<parachain::Runtime>::get(query_id).is_none());
+			assert!(parachain::System::events().iter().any(|r| matches!(
+				&r.event,
+				parachain::RuntimeEvent::RightsClient(
+					pallet_rights_client::Event::OutcomeReported { success: true, .. }
+				)
+			)));
+		});
+		assert_eq!(balance_on_b(&OPERATOR), ESCROW);
+		assert_eq!(balance_on_b(&USER), 1_000_000 - ESCROW);
+	}
+
+	/// Failure: the dispatched call fails on CCRMS (unknown content), CCRMS
+	/// reports the error, and ParaB refunds the escrow to the user. Unused fees
+	/// still return to the sovereign account rather than the asset trap.
+	#[test]
+	fn client_request_failure_refunds_user() {
+		MockNet::reset();
+		let query_id = send_request(RightsRequest::Subscribe { content_id: 999 });
+
+		let sovereign = sovereign_account_of(200);
+		let spent = SOVEREIGN_FUNDS - balance_on_a(&sovereign);
+		assert!(spent < FEE, "only execution was paid; spent {spent}");
+		assert!(no_trapped_assets_on_a());
+
+		ParaB::execute_with(|| {
+			assert!(pallet_rights_client::Pending::<parachain::Runtime>::get(query_id).is_none());
+			assert!(parachain::System::events().iter().any(|r| matches!(
+				&r.event,
+				parachain::RuntimeEvent::RightsClient(
+					pallet_rights_client::Event::OutcomeReported { success: false, .. }
+				)
+			)));
+		});
+		assert_eq!(balance_on_b(&USER), 1_000_000);
+		assert_eq!(balance_on_b(&OPERATOR), 0);
+	}
+
+	/// The other request kinds reach the matching CCRMS extrinsic.
+	#[test]
+	fn client_views_and_ownership_requests() {
+		MockNet::reset();
+		let content_id = register_content_on_para_a();
+		send_request(RightsRequest::PurchaseViews { content_id, num_views: 3 });
+		send_request(RightsRequest::PurchaseOwnership { content_id });
+		ParaA::execute_with(|| {
+			let pack =
+				pallet_content_rights::ViewPacks::<parachain::Runtime>::get(content_id, &USER)
+					.unwrap();
+			assert_eq!(pack.views_remaining, 3);
+			assert!(pallet_content_rights::Ownership::<parachain::Runtime>::contains_key(
+				content_id, &USER
+			));
+		});
+		assert_eq!(balance_on_b(&OPERATOR), 2 * ESCROW);
+	}
+
+	/// Contrast: the three-instruction message used in the latency benchmark
+	/// (no RefundSurplus/DepositAsset) leaves the unused fee in the asset trap.
+	#[test]
+	fn three_instruction_message_traps_unused_fee() {
+		MockNet::reset();
+		let content_id = register_content_on_para_a();
+		fund_sovereign_on_para_a(200, SOVEREIGN_FUNDS);
+		let call = parachain::RuntimeCall::ContentRights(
+			pallet_content_rights::Call::xcm_subscribe { content_id, beneficiary: USER },
+		);
+		ParaB::execute_with(|| {
+			assert_ok!(parachain::XcmPallet::send(
+				parachain::RuntimeOrigin::root(),
+				Box::new(xcm::VersionedLocation::from(Location::new(1, [Parachain(100)]))),
+				Box::new(xcm::VersionedXcm::from(Xcm::<()>(vec![
+					WithdrawAsset((Parent, FEE).into()),
+					BuyExecution { fees: (Parent, FEE).into(), weight_limit: Unlimited },
+					Transact {
+						origin_kind: OriginKind::SovereignAccount,
+						call: codec::Encode::encode(&call).into(),
+						fallback_max_weight: None,
+					},
+				]))),
+			));
+		});
+		let spent = SOVEREIGN_FUNDS - balance_on_a(&sovereign_account_of(200));
+		assert_eq!(spent, 1_000 + FEE, "the whole fee leaves the sovereign account");
+		assert!(!no_trapped_assets_on_a(), "the unused fee is trapped");
+	}
+
+	/// Only a pallet-xcm response from the CCRMS chain can settle a request.
+	#[test]
+	fn client_outcome_requires_response_origin() {
+		MockNet::reset();
+		ParaB::execute_with(|| {
+			assert_noop!(
+				parachain::RightsClient::on_outcome(
+					parachain::RuntimeOrigin::signed(USER),
+					0,
+					Response::DispatchResult(MaybeErrorCode::Success),
+				),
+				sp_runtime::DispatchError::BadOrigin
+			);
+			// A response origin from a chain other than CCRMS is rejected.
+			let other: parachain::RuntimeOrigin =
+				pallet_xcm::Origin::Response(Location::new(1, [Parachain(300)])).into();
+			assert_noop!(
+				parachain::RightsClient::on_outcome(
+					other,
+					0,
+					Response::DispatchResult(MaybeErrorCode::Success),
+				),
+				pallet_rights_client::Error::<parachain::Runtime>::WrongResponder
+			);
+		});
+	}
+}

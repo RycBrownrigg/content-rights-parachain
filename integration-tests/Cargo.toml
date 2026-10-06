@@ -36,3 +36,4 @@ polkadot-sdk = { workspace = true, features = [
 
 # Local pallets
 pallet-content-rights = { workspace = true, features = ["std"] }
+pallet-rights-client = { workspace = true, features = ["std"] }

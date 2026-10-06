@@ -6,12 +6,13 @@ repository = "https://github.com/paritytech/polkadot-sdk-parachain-template.git"
 edition = "2021"
 
 [workspace]
-default-members = ["pallets/template", "pallets/content-rights", "pallets/rights-verifier", "runtime", "integration-tests"]
+default-members = ["pallets/template", "pallets/content-rights", "pallets/rights-verifier", "pallets/rights-client", "runtime", "integration-tests"]
 members = [
     "node",
     "pallets/template",
     "pallets/content-rights",
     "pallets/rights-verifier",
+    "pallets/rights-client",
     "runtime",
     "integration-tests",
 ]
@@ -22,6 +23,7 @@ parachain-template-runtime = { path = "./runtime", default-features = false }
 pallet-parachain-template = { path = "./pallets/template", default-features = false }
 pallet-content-rights = { path = "./pallets/content-rights", default-features = false }
 pallet-rights-verifier = { path = "./pallets/rights-verifier", default-features = false }
+pallet-rights-client = { path = "./pallets/rights-client", default-features = false }
 clap = { version = "4.5.13" }
 color-print = { version = "0.3.4" }
 docify = { version = "0.2.9" }

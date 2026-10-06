@@ -19,11 +19,11 @@ use sp_runtime::{
 
 use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, DescribeAllTerminal,
+	AccountId32Aliases, AllowKnownQueryResponses, AllowTopLevelPaidExecutionFrom, DescribeAllTerminal,
 	DescribeFamily, EnsureXcmOrigin, FixedRateOfFungible, FixedWeightBounds,
 	FrameTransactionalProcessor, FungibleAdapter, HashedDescription, IsConcrete,
 	NativeAsset, ParentIsPreset, SignedAccountId32AsNative, SignedToAccountId32,
-	SovereignSignedViaLocation, TakeWeightCredit, WithComputedOrigin,
+	SovereignSignedViaLocation, TakeWeightCredit, TrailingSetTopicAsId, WithComputedOrigin,
 };
 use xcm_executor::XcmExecutor;
 use xcm_simulator::mock_message_queue;
@@ -146,8 +146,13 @@ type XcmOriginToCallOrigin = (
 	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
 );
 
-pub type Barrier = (
+// Matches production: a trailing SetTopic (which the executor appends to
+// query responses) is stripped before the barriers run.
+pub type Barrier = TrailingSetTopicAsId<(
 	TakeWeightCredit,
+	// Matches production: accept responses to queries this chain registered
+	// (the CCRMS outcome reports that pallet-rights-client waits for).
+	AllowKnownQueryResponses<XcmPallet>,
 	// Matches production: allow up to eight origin-altering prefixes
 	// (e.g. the DescendOrigin that pallet-xcm prepends for a signed sender)
 	// before the paid-execution check.
@@ -156,7 +161,7 @@ pub type Barrier = (
 		UniversalLocation,
 		ConstU32<8>,
 	>,
-);
+)>;
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -223,6 +228,33 @@ impl pallet_xcm::Config for Runtime {
 	type AuthorizedAliasConsideration = polkadot_sdk::polkadot_sdk_frame::traits::Disabled;
 }
 
+// --- pallet-rights-client (sending side; ParaB uses it to reach ParaA) ---
+
+parameter_types! {
+	pub RightsChain: Location = Location::new(1, [Parachain(100)]);
+	pub SelfLocation: Location =
+		Location::new(1, [Parachain(mock_message_queue::ParachainId::<Runtime>::get().into())]);
+	pub ExecutionFee: Asset = (Parent, 50_000u128).into();
+	pub const RightsPalletIndex: u8 = 5;
+	pub const QueryTimeout: u64 = 100;
+	pub const ClientOperator: AccountId = AccountId32::new([0xEE; 32]);
+	pub const ClientPalletId: frame_support::PalletId = frame_support::PalletId(*b"ccrms/cl");
+}
+
+impl pallet_rights_client::Config for Runtime {
+	type NotifyCall = RuntimeCall;
+	type ResponseOrigin = pallet_xcm::EnsureResponse<Everything>;
+	type EscrowCurrency = Balances;
+	type RightsChain = RightsChain;
+	type RightsPalletIndex = RightsPalletIndex;
+	type SelfLocation = SelfLocation;
+	type ExecutionFee = ExecutionFee;
+	type QueryTimeout = QueryTimeout;
+	type Operator = ClientOperator;
+	type PalletId = ClientPalletId;
+	type ClientWeightInfo = pallet_rights_client::weights::SubstrateWeight<Runtime>;
+}
+
 construct_runtime! {
 	pub enum Runtime {
 		System: frame_system,
@@ -231,6 +263,7 @@ construct_runtime! {
 		XcmPallet: pallet_xcm,
 		Nfts: pallet_nfts,
 		ContentRights: pallet_content_rights,
+		RightsClient: pallet_rights_client,
 	}
 }
 

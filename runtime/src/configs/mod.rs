@@ -461,6 +461,44 @@ impl pallet_rights_verifier::Config for Runtime {
 	type VerifierWeightInfo = pallet_rights_verifier::SubstrateWeight<Runtime>;
 }
 
+// --- pallet-rights-client (used when this binary runs as a consumer chain) ---
+
+parameter_types! {
+	/// The CCRMS chain (para 100 in the local topologies).
+	pub RightsChain: xcm::latest::Location =
+		xcm::latest::Location::new(1, [xcm::latest::Junction::Parachain(100)]);
+	/// This chain as seen from CCRMS: refund and report destination.
+	pub ClientSelfLocation: xcm::latest::Location = xcm::latest::Location::new(
+		1,
+		[xcm::latest::Junction::Parachain(crate::ParachainInfo::parachain_id().into())],
+	);
+	/// Execution fee withdrawn on CCRMS (Appendix A.6: proof-size dominated).
+	pub ClientExecutionFee: xcm::latest::Asset =
+		(xcm::latest::Location::parent(), 100_000_000_000u128).into();
+	pub const RightsPalletIndex: u8 = 51;
+	pub const ClientQueryTimeout: BlockNumber = 600;
+	/// Development operator (//Alice), which funds this chain's sovereign
+	/// account on CCRMS and receives escrows of successful requests.
+	pub ClientOperator: AccountId = AccountId::from([
+		0xd4, 0x35, 0x93, 0xc7, 0x15, 0xfd, 0xd3, 0x1c, 0x61, 0x14, 0x1a, 0xbd, 0x04, 0xa9, 0x9f, 0xd6, 0x82, 0x2c, 0x85, 0x58, 0x85, 0x4c, 0xcd, 0xe3, 0x9a, 0x56, 0x84, 0xe7, 0xa5, 0x6d, 0xa2, 0x7d,
+	]);
+	pub const ClientPalletId: PalletId = PalletId(*b"ccrms/cl");
+}
+
+impl pallet_rights_client::Config for Runtime {
+	type NotifyCall = RuntimeCall;
+	type ResponseOrigin = pallet_xcm::EnsureResponse<frame_support::traits::Everything>;
+	type EscrowCurrency = Balances;
+	type RightsChain = RightsChain;
+	type RightsPalletIndex = RightsPalletIndex;
+	type SelfLocation = ClientSelfLocation;
+	type ExecutionFee = ClientExecutionFee;
+	type QueryTimeout = ClientQueryTimeout;
+	type Operator = ClientOperator;
+	type PalletId = ClientPalletId;
+	type ClientWeightInfo = pallet_rights_client::weights::SubstrateWeight<Runtime>;
+}
+
 /// Configure the pallet template in pallets/template.
 impl pallet_parachain_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

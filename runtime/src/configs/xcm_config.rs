@@ -22,7 +22,8 @@ use polkadot_sdk::{
 };
 use xcm::latest::{prelude::*, ROCOCO_GENESIS_HASH};
 use xcm_builder::{
-	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom,
+	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowKnownQueryResponses,
+	AllowTopLevelPaidExecutionFrom,
 	DenyReserveTransferToRelayChain, DescribeAllTerminal, DescribeFamily, EnsureXcmOrigin,
 	FixedWeightBounds, FrameTransactionalProcessor, FungibleAdapter, GlobalConsensusParachainConvertsFor,
 	HashedDescription, IsConcrete, NativeAsset, ParentIsPreset, RelayChainAsNative,
@@ -114,6 +115,9 @@ pub type Barrier = TrailingSetTopicAsId<
 		DenyRecursively<DenyReserveTransferToRelayChain>,
 		(
 			TakeWeightCredit,
+			// Responses to queries this chain registered, e.g. the outcome reports
+			// that pallet-rights-client waits for (ReportTransactStatus).
+			AllowKnownQueryResponses<PolkadotXcm>,
 			WithComputedOrigin<
 				(
 					AllowTopLevelPaidExecutionFrom<Everything>,

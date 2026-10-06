@@ -330,6 +330,10 @@ mod runtime {
 	// Cross-chain rights verification via Merkle storage proofs
 	#[runtime::pallet_index(52)]
 	pub type RightsVerifier = pallet_rights_verifier;
+
+	// Sending-side client: buys rights on CCRMS over XCM and acts on the outcome report
+	#[runtime::pallet_index(53)]
+	pub type RightsClient = pallet_rights_client;
 }
 
 /// Aura consensus hook

@@ -2516,6 +2516,7 @@ version = "0.1.0"
 dependencies = [
  "log",
  "pallet-content-rights",
+ "pallet-rights-client",
  "parity-scale-codec",
  "polkadot-sdk",
  "scale-info",
@@ -9761,6 +9762,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-rights-client"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec",
+ "polkadot-sdk",
+ "polkadot-sdk-frame",
+ "scale-info",
+]
+
+[[package]]
 name = "pallet-rights-verifier"
 version = "0.1.0"
 dependencies = [
@@ -10418,6 +10429,7 @@ dependencies = [
  "log",
  "pallet-content-rights",
  "pallet-parachain-template",
+ "pallet-rights-client",
  "pallet-rights-verifier",
  "parity-scale-codec",
  "polkadot-sdk",
