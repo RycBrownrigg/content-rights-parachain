@@ -1,7 +1,7 @@
 //! Custom precompile for content rights management.
 //!
 //! This precompile exposes read-only access to `pallet-content-rights` storage,
-//! allowing ink! contracts (and Solidity/Ethereum clients) to verify content
+//! allowing Solidity contracts and Ethereum clients to verify content
 //! access rights by reading pallet state through a standard EVM precompile interface.
 //!
 //! Write operations (subscribe, purchase, etc.) remain as pallet extrinsics,

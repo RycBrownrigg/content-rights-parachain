@@ -6,10 +6,9 @@ repository = "https://github.com/paritytech/polkadot-sdk-parachain-template.git"
 edition = "2021"
 
 [workspace]
-default-members = ["pallets/template", "pallets/content-rights", "pallets/rights-verifier", "pallets/rights-client", "runtime", "integration-tests"]
+default-members = ["pallets/content-rights", "pallets/rights-verifier", "pallets/rights-client", "runtime", "integration-tests"]
 members = [
     "node",
-    "pallets/template",
     "pallets/content-rights",
     "pallets/rights-verifier",
     "pallets/rights-client",
@@ -20,7 +19,6 @@ resolver = "2"
 
 [workspace.dependencies]
 parachain-template-runtime = { path = "./runtime", default-features = false }
-pallet-parachain-template = { path = "./pallets/template", default-features = false }
 pallet-content-rights = { path = "./pallets/content-rights", default-features = false }
 pallet-rights-verifier = { path = "./pallets/rights-verifier", default-features = false }
 pallet-rights-client = { path = "./pallets/rights-client", default-features = false }
@@ -30,8 +28,7 @@ docify = { version = "0.2.9" }
 futures = { version = "0.3.31" }
 jsonrpsee = { version = "0.24.3" }
 log = { version = "0.4.22", default-features = false }
-# Use git to get pallet-revive with the API that cargo-contract 6 / ink! 6 expect.
-# Pin to a specific rev for reproducible builds (e.g. replace with a recent tag/rev).
+# polkadot-sdk from git; the exact commit (a20ac9bd) is pinned in Cargo.lock.
 polkadot-sdk = { git = "https://github.com/paritytech/polkadot-sdk.git", default-features = false }
 prometheus-endpoint = { version = "0.17.2", default-features = false, package = "substrate-prometheus-endpoint" }
 serde = { version = "1.0.214", default-features = false }

@@ -49,13 +49,6 @@ This builds the node and the runtime WASM. The binary must exist at:
 
 `target/release/parachain-template-node`
 
-Optional checks:
-
-- **Runtime / contract pallet in binary:**  
-  `./scripts/verify-runtime-has-contracts.sh`  
-  (should report the contracts pallet as found)
-- **Full contracts checklist:**  
-  `./scripts/contracts-checklist.sh`
 
 ---
 
@@ -70,7 +63,7 @@ From the **repo root**:
 - Wait 30–60 seconds (or until you see blocks) before connecting UIs.
 - **Parachain RPC:** the collator is configured with **`rpc_port = 9990`**.  
   Connect to: **`ws://127.0.0.1:9990`** (this is the **parachain**, not the relay).
-- Relay chain nodes (alice/bob) use other ports; they do **not** expose the parachain’s pallets (e.g. **revive**, contracts).
+- Relay chain nodes (alice/bob) use other ports; they do **not** expose the parachain’s pallets (e.g. **contentRights**).
 
 If nothing listens on 9990, check the Zombienet output for the collator’s “Direct Link (pjs)” URL and use that port, or run:
 
@@ -114,7 +107,7 @@ See "After changing the runtime" below for more troubleshooting.
 
 ## After changing the runtime
 
-If you add or change pallets (e.g. revive, contracts) and rebuild:
+If you add or change pallets and rebuild:
 
 1. Rebuild: `cargo build --release -p parachain-template-node`
 2. **Stop** Zombienet.

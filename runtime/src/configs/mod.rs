@@ -38,7 +38,7 @@ use frame_support::{
 	dispatch::DispatchClass,
 	parameter_types,
 	traits::{
-		ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, Nothing, TransformOrigin,
+		ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, TransformOrigin,
 		VariantCountOf,
 	},
 	weights::{ConstantMultiplier, Weight},
@@ -62,10 +62,10 @@ use xcm::latest::prelude::BodyId;
 use super::{
 	weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
 	AccountId, Aura, Balance, Balances, Block, BlockNumber, CollatorSelection, ConsensusHook,
-	Hash, MessageQueue, Nfts, Nonce, PalletInfo, ParachainSystem, PolkadotXcm,
-	RandomnessCollectiveFlip, Runtime, RuntimeCall, RuntimeEvent, RuntimeFreezeReason,
+	Hash, MessageQueue, Nonce, PalletInfo, ParachainSystem,
+	Runtime, RuntimeCall, RuntimeEvent, RuntimeFreezeReason,
 	RuntimeHoldReason, RuntimeOrigin, RuntimeTask, Session, SessionKeys, Signature, System,
-	Timestamp, WeightToFee, XcmpQueue, AVERAGE_ON_INITIALIZE_RATIO, EXISTENTIAL_DEPOSIT, HOURS,
+	WeightToFee, XcmpQueue, AVERAGE_ON_INITIALIZE_RATIO, EXISTENTIAL_DEPOSIT, HOURS,
 	MAXIMUM_BLOCK_WEIGHT, MICRO_UNIT, NORMAL_DISPATCH_RATIO, SLOT_DURATION, VERSION,
 };
 use xcm_config::{RelayLocation, XcmOriginToTransactDispatchOrigin};
@@ -321,52 +321,13 @@ impl pallet_collator_selection::Config for Runtime {
 	type WeightInfo = ();
 }
 
-impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
+// --- pallet-revive (hosts the ContentRightsPrecompile) ---
 
 parameter_types! {
 	pub const DepositPerItem: Balance = 100 * MICRO_UNIT;
 	pub const DepositPerByte: Balance = MICRO_UNIT;
-	pub const DefaultDepositLimit: Balance =
-		1024 * (100 * MICRO_UNIT) + (1024 * 1024) * MICRO_UNIT;
-	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
 	pub CodeHashLockupDepositPercent: Perbill = Perbill::from_percent(30);
 }
-
-impl pallet_contracts::Config for Runtime {
-	type Time = Timestamp;
-	type Randomness = RandomnessCollectiveFlip;
-	type Currency = Balances;
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
-	type RuntimeHoldReason = RuntimeHoldReason;
-	/// Contracts cannot dispatch. Use a custom `CallFilter` to allow specific dispatchables if needed.
-	type CallFilter = Nothing;
-	type DepositPerItem = DepositPerItem;
-	type DepositPerByte = DepositPerByte;
-	type DefaultDepositLimit = DefaultDepositLimit;
-	type CallStack = [pallet_contracts::Frame<Self>; 5];
-	type WeightPrice = pallet_transaction_payment::Pallet<Self>;
-	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
-	type ChainExtension = ();
-	type Schedule = Schedule;
-	type AddressGenerator = pallet_contracts::DefaultAddressGenerator;
-	type MaxCodeLen = ConstU32<{ 123 * 1024 }>;
-	type MaxStorageKeyLen = ConstU32<128>;
-	type UnsafeUnstableInterface = ConstBool<false>;
-	type UploadOrigin = EnsureSigned<Self::AccountId>;
-	type InstantiateOrigin = EnsureSigned<Self::AccountId>;
-	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
-	type MaxTransientStorageSize = ConstU32<{ 1 * 1024 * 1024 }>;
-	type Migrations = ();
-	type MaxDelegateDependencies = ConstU32<32>;
-	type CodeHashLockupDepositPercent = CodeHashLockupDepositPercent;
-	type Debug = ();
-	type Environment = ();
-	type ApiVersion = ();
-	type Xcm = PolkadotXcm;
-}
-
-// --- pallet-revive (PolkaVM / ink! 6) ---
 
 parameter_types! {
 	pub const DepositPerChildTrieItemRevive: Balance = 0;
@@ -457,8 +418,29 @@ impl pallet_content_rights::Config for Runtime {
 	type ContentRightsWeightInfo = pallet_content_rights::weights::SubstrateWeight<Runtime>;
 }
 
+/// Trusted relay parent for the rights verifier: the relay-parent number and
+/// relay-chain storage root that the validators supplied to this block
+/// through `set_validation_data`.
+pub struct RelayParentFromValidationData;
+impl pallet_rights_verifier::RelayStateSource for RelayParentFromValidationData {
+	fn current() -> Option<(u32, sp_core::H256)> {
+		cumulus_pallet_parachain_system::ValidationData::<Runtime>::get()
+			.map(|d| (d.relay_parent_number, d.relay_parent_storage_root))
+	}
+}
+
+parameter_types! {
+	/// The CCRMS chain whose head the verifier reads from relay state.
+	pub const VerifierRightsParaId: u32 = 100;
+	/// About ten minutes of relay blocks at 6 s.
+	pub const VerifierMaxRelayRoots: u32 = 100;
+}
+
 impl pallet_rights_verifier::Config for Runtime {
 	type VerifierWeightInfo = pallet_rights_verifier::SubstrateWeight<Runtime>;
+	type RelayState = RelayParentFromValidationData;
+	type RightsParaId = VerifierRightsParaId;
+	type MaxRelayRoots = VerifierMaxRelayRoots;
 }
 
 // --- pallet-rights-client (used when this binary runs as a consumer chain) ---
@@ -472,9 +454,13 @@ parameter_types! {
 		1,
 		[xcm::latest::Junction::Parachain(crate::ParachainInfo::parachain_id().into())],
 	);
-	/// Execution fee withdrawn on CCRMS (Appendix A.6: proof-size dominated).
+	/// Execution fee withdrawn on CCRMS. With the placeholder XCM weights
+	/// (FixedWeightBounds: 64 KiB proof per instruction) the fee is proof-size
+	/// dominated: the client's eight-instruction program (including the SetTopic
+	/// added by the router) costs 5% of the PoV limit, 100_000_000_000. The extra
+	/// margin is returned by RefundSurplus/DepositAsset.
 	pub ClientExecutionFee: xcm::latest::Asset =
-		(xcm::latest::Location::parent(), 100_000_000_000u128).into();
+		(xcm::latest::Location::parent(), 150_000_000_000u128).into();
 	pub const RightsPalletIndex: u8 = 51;
 	pub const ClientQueryTimeout: BlockNumber = 600;
 	/// Development operator (//Alice), which funds this chain's sovereign
@@ -499,8 +485,3 @@ impl pallet_rights_client::Config for Runtime {
 	type ClientWeightInfo = pallet_rights_client::weights::SubstrateWeight<Runtime>;
 }
 
-/// Configure the pallet template in pallets/template.
-impl pallet_parachain_template::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_parachain_template::weights::SubstrateWeight<Runtime>;
-}

@@ -127,7 +127,15 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// A rights request was sent to CCRMS.
-		RequestSent { query_id: QueryId, who: T::AccountId, request: RightsRequest, escrow: BalanceOf<T> },
+		/// A rights request was sent to CCRMS. `message_id` is the XCM topic, which
+		/// CCRMS reports in `messageQueue.Processed`.
+		RequestSent {
+			query_id: QueryId,
+			who: T::AccountId,
+			request: RightsRequest,
+			escrow: BalanceOf<T>,
+			message_id: XcmHash,
+		},
 		/// CCRMS reported the outcome; on failure the escrow was refunded.
 		OutcomeReported { query_id: QueryId, who: T::AccountId, success: bool },
 	}
@@ -219,14 +227,14 @@ pub mod pallet {
 			);
 
 			let message = Self::rights_message(Self::remote_call(&request, beneficiary), query_id);
-			pallet_xcm::Pallet::<T>::send_xcm(Here, T::RightsChain::get(), message)
+			let message_id = pallet_xcm::Pallet::<T>::send_xcm(Here, T::RightsChain::get(), message)
 				.map_err(|_| Error::<T>::SendFailed)?;
 
 			Pending::<T>::insert(
 				query_id,
 				PendingRequest { who: who.clone(), escrow, request: request.clone(), sent_at: now },
 			);
-			Self::deposit_event(Event::RequestSent { query_id, who, request, escrow });
+			Self::deposit_event(Event::RequestSent { query_id, who, request, escrow, message_id });
 			Ok(())
 		}
 

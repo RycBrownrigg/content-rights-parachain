@@ -13,8 +13,9 @@ This parachain provides a unified rights token model where a single on-chain pal
 - Rich metadata query for cross-chain consumers
 - Cross-chain operations via paid XCM execution (WithdrawAsset + BuyExecution + Transact)
 - Ethereum interoperability via Snowbridge v1 (token bridging demonstrated E2E)
-- Custom pallet-revive precompile for efficient contract-to-pallet calls
-- Merkle storage proof verification for trustless cross-chain rights checking
+- Custom pallet-revive precompile for read-only rights queries from Solidity/EVM clients
+- Merkle storage proof verification of rights against CCRMS state proven through relay-chain state
+- Sending-side client pallet that reports outcomes and refunds users on failure
 
 ## Architecture
 
@@ -28,7 +29,7 @@ content-rights-parachain/
 │   │   ├── src/mock.rs       # Mock runtime for testing
 │   │   └── src/weights.rs    # Placeholder weight definitions
 │   ├── rights-verifier/      # Cross-chain Merkle storage proof verification
-│   └── template/             # Original Polkadot SDK template pallet (unused)
+│   └── rights-client/        # Sending-side client (outcome reports, escrow refunds)
 ├── runtime/
 │   └── src/
 │       ├── lib.rs            # Runtime definition, pallet composition

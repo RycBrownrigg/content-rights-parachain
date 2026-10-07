@@ -32,8 +32,25 @@ impl pallet_balances::Config for Test {
 	type AccountStore = System;
 }
 
+frame::deps::frame_support::parameter_types! {
+	/// Relay parent the mock "validators" supply for the current block.
+	pub storage MockRelayParent: Option<(u32, polkadot_sdk::sp_core::H256)> = None;
+	pub const RightsParaId: u32 = 100;
+	pub const MaxRelayRoots: u32 = 4;
+}
+
+pub struct MockRelayState;
+impl crate::RelayStateSource for MockRelayState {
+	fn current() -> Option<(u32, polkadot_sdk::sp_core::H256)> {
+		MockRelayParent::get()
+	}
+}
+
 impl crate::Config for Test {
 	type VerifierWeightInfo = crate::SubstrateWeight<Test>;
+	type RelayState = MockRelayState;
+	type RightsParaId = RightsParaId;
+	type MaxRelayRoots = MaxRelayRoots;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

@@ -9536,15 +9536,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-parachain-template"
-version = "0.1.0"
-dependencies = [
- "parity-scale-codec",
- "polkadot-sdk-frame",
- "scale-info",
-]
-
-[[package]]
 name = "pallet-parameters"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/polkadot-sdk.git#a20ac9bd4fedd78da159fa4bbd8452dc8c17ec4b"
@@ -10428,7 +10419,6 @@ dependencies = [
  "hex-literal",
  "log",
  "pallet-content-rights",
- "pallet-parachain-template",
  "pallet-rights-client",
  "pallet-rights-verifier",
  "parity-scale-codec",

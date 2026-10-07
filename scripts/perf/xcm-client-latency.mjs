@@ -20,9 +20,9 @@
  *                  block that included the request
  *   reported       success flag in OutcomeReported
  *   feeKept        balance change of ParaB's sovereign account on ParaA in the
- *                  event block, minus the content price (execution fee actually
- *                  charged after RefundSurplus); null if the block also contained
- *                  other activity for that account
+ *                  event block, minus the content price: the execution fee actually
+ *                  charged after RefundSurplus returned the unused part of the
+ *                  150_000_000_000 withdrawn
  *   trapped        whether polkadotXcm.AssetsTrapped appeared in that block
  *
  * Failure runs request a nonexistent content ID: CCRMS reports the dispatch
@@ -112,8 +112,8 @@ async function oneRun(apiA, apiB, alice, user, request, op, contentId, expectSuc
   const sent = events.find(({ event }) => event.section === 'rightsClient' && event.method === 'RequestSent');
   if (!sent) return { label, op, success: false, reason: 'no RequestSent on ParaB' };
   const queryId = field(sent.event, 'query_id').toString();
-  const xcmSent = events.find(({ event }) => event.section === 'polkadotXcm' && event.method === 'Sent');
-  const messageId = xcmSent ? field(xcmSent.event, 'message_id').toHex() : null;
+  // pallet_xcm::send_xcm emits no polkadotXcm.Sent; the client reports the topic itself.
+  const messageId = field(sent.event, 'message_id').toHex();
   const r = { label, op, contentId, queryId, messageId, paraBBlock: bBlock, expectSuccess };
 
   // Delivery on ParaA: the CrossChain* event for this beneficiary (success runs),

@@ -179,7 +179,7 @@ pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, Tx
 ///
 /// This can be a tuple of types, each implementing `OnRuntimeUpgrade`.
 #[allow(unused_parens)]
-type Migrations = (pallet_contracts::Migration<Runtime>,);
+type Migrations = ();
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
@@ -272,8 +272,6 @@ mod runtime {
 	pub type ParachainInfo = parachain_info;
 	#[runtime::pallet_index(4)]
 	pub type WeightReclaim = cumulus_pallet_weight_reclaim;
-	#[runtime::pallet_index(5)]
-	pub type RandomnessCollectiveFlip = pallet_insecure_randomness_collective_flip;
 
 	// Monetary stuff.
 	#[runtime::pallet_index(10)]
@@ -307,21 +305,13 @@ mod runtime {
 	#[runtime::pallet_index(33)]
 	pub type MessageQueue = pallet_message_queue;
 
-	// Smart contracts (WASM)
-	#[runtime::pallet_index(40)]
-	pub type Contracts = pallet_contracts;
-
-	// Smart contracts (PolkaVM / ink! 6 – used by cargo-contract 6)
+	// pallet-revive hosts the ContentRightsPrecompile (read-only EVM/Solidity access).
 	#[runtime::pallet_index(41)]
 	pub type Revive = pallet_revive;
 
 	// NFTs (foundation for content rights nesting)
 	#[runtime::pallet_index(42)]
 	pub type Nfts = pallet_nfts;
-
-	// Template
-	#[runtime::pallet_index(50)]
-	pub type TemplatePallet = pallet_parachain_template;
 
 	// Content rights management (RMRK-inspired nesting on pallet-nfts)
 	#[runtime::pallet_index(51)]
