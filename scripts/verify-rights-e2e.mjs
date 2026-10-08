@@ -28,24 +28,30 @@ const OUTPUT = 'scripts/perf/results/verify-rights-e2e-results.json';
 if (!RELAY_WS) { console.error('Usage: node scripts/verify-rights-e2e.mjs <relay-ws> [paraA-ws] [paraB-ws]'); process.exit(2); }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Resolves once the transaction is FINALIZED (blocks on this single-collator
+// testnet are sometimes discarded and re-authored, Finding F), with its
+// dispatch error if any. Rejects on Invalid/Dropped/Usurped or after 3 minutes.
 function send(api, tx, signer) {
   return new Promise((resolve, reject) => {
     let done = false;
+    const finish = (fn, v) => { if (!done) { done = true; clearTimeout(timer); fn(v); } };
+    const timer = setTimeout(() => finish(reject, new Error('transaction not finalized after 180 s')), 180_000);
     tx.signAndSend(signer, ({ status, dispatchError, events }) => {
       if (done) return;
+      if (status.isInvalid || status.isDropped || status.isUsurped) return finish(reject, new Error(`transaction ${status.type}`));
+      if (!status.isFinalized) return;
       if (dispatchError) {
-        done = true;
         if (dispatchError.isModule) {
           const d = api.registry.findMetaError(dispatchError.asModule);
-          resolve({ error: `${d.section}.${d.name}`, events });
-        } else resolve({ error: dispatchError.toString(), events });
-        return;
+          return finish(resolve, { error: `${d.section}.${d.name}`, events, blockHash: status.asFinalized });
+        }
+        return finish(resolve, { error: dispatchError.toString(), events, blockHash: status.asFinalized });
       }
-      if (status.isInBlock) { done = true; resolve({ blockHash: status.asInBlock, events }); }
-    }).catch((e) => { if (!done) { done = true; reject(e); } });
+      finish(resolve, { blockHash: status.asFinalized, events });
+    }).catch((e) => finish(reject, e));
   });
 }
-const byteLen = (proof) => proof.reduce((a, n) => a + n.length, 0);
+const byteLen = (proof) => proof.reduce((a, hex) => a + (hex.length - 2) / 2, 0);
 
 async function main() {
   const apiR = await ApiPromise.create({ provider: new WsProvider(RELAY_WS) });
@@ -88,9 +94,11 @@ async function main() {
   console.log(`Relay block ${chosen.relayNumber} (recorded on ParaB) includes CCRMS block ${chosen.ccrmsNumber}`);
 
   // 3. Proofs.
-  const relayProof = (await apiR.rpc.state.getReadProof([apiR.query.paras.heads.key(100)], chosen.relayHash)).proof.map((p) => p.toU8a(true));
+  // Proof nodes go in as hex strings: polkadot.js treats a raw Uint8Array given
+  // for a Bytes argument as already length-prefixed.
+  const relayProof = (await apiR.rpc.state.getReadProof([apiR.query.paras.heads.key(100)], chosen.relayHash)).proof.map((p) => p.toHex());
   const proofFor = async (who) =>
-    (await apiA.rpc.state.getReadProof([apiA.query.contentRights.ownership.key(contentId, who)], chosen.ccrmsHash)).proof.map((p) => p.toU8a(true));
+    (await apiA.rpc.state.getReadProof([apiA.query.contentRights.ownership.key(contentId, who)], chosen.ccrmsHash)).proof.map((p) => p.toHex());
   const bobProof = await proofFor(bob.address);
   const charlieProof = await proofFor(charlie.address);
 

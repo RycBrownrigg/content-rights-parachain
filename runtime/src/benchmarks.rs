@@ -34,4 +34,7 @@ polkadot_sdk::frame_benchmarking::define_benchmarks!(
 	[cumulus_pallet_parachain_system, ParachainSystem]
 	[cumulus_pallet_xcmp_queue, XcmpQueue]
 	[cumulus_pallet_weight_reclaim, WeightReclaim]
+	[pallet_content_rights, ContentRights]
+	[pallet_rights_verifier, RightsVerifier]
+	[pallet_rights_client, RightsClient]
 );

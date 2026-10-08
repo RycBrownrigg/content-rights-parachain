@@ -38,12 +38,22 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+pub mod weights;
+pub use weights::*;
+
 /// Source of the trusted relay-parent state for the current block. In a
 /// parachain runtime, adapt `cumulus_pallet_parachain_system::RelaychainDataProvider`.
 pub trait RelayStateSource {
 	/// Relay-parent number and relay-chain storage root of the current block,
 	/// or `None` if not available (for example before `set_validation_data`).
 	fn current() -> Option<(u32, polkadot_sdk::sp_core::H256)>;
+
+	/// Make `current` return this relay parent (benchmarks only).
+	#[cfg(feature = "runtime-benchmarks")]
+	fn set_for_benchmarks(_number: u32, _root: polkadot_sdk::sp_core::H256) {}
 }
 
 /// Types shared with the remote content-rights pallet for decoding storage values.
@@ -83,6 +93,11 @@ pub mod pallet {
 	use polkadot_sdk::sp_trie::{LayoutV1, StorageProof};
 
 	use crate::{remote_types, RelayStateSource, WeightInfo};
+
+	/// Maximum total size in bytes of the two proofs in one call. Real proofs are
+	/// a few KiB; the cap bounds the hashing work a caller can demand, and the
+	/// weight is charged per byte below it.
+	pub const MAX_PROOF_BYTES: u32 = 16_384;
 
 	/// Header type of the CCRMS chain (32-bit block numbers, BLAKE2-256).
 	pub type RightsHeader = polkadot_sdk::sp_runtime::generic::Header<u32, BlakeTwo256>;
@@ -159,6 +174,8 @@ pub mod pallet {
 		UnknownRelayBlock,
 		/// The relay proof shows no head for the CCRMS para at that relay block.
 		NoRightsHead,
+		/// The two proofs together exceed `MAX_PROOF_BYTES`.
+		ProofTooLarge,
 	}
 
 	// --------------- Hooks ---------------
@@ -166,8 +183,8 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
-			// Accounts for the read and write in on_finalize.
-			T::DbWeight::get().reads_writes(1, 1)
+			// Charged here for the recording done in on_finalize.
+			<T as Config>::VerifierWeightInfo::record_relay_root()
 		}
 
 		/// Record this block's relay parent; runs after `set_validation_data`.
@@ -193,6 +210,16 @@ pub mod pallet {
 				}
 				let _ = roots.try_push((number, root));
 			});
+		}
+
+		/// Total size of the two proofs, saturating (for weight and the size cap).
+		pub fn proof_bytes(relay_proof: &[Vec<u8>], rights_proof: &[Vec<u8>]) -> u32 {
+			relay_proof
+				.iter()
+				.chain(rights_proof.iter())
+				.fold(0usize, |acc, node| acc.saturating_add(node.len()))
+				.try_into()
+				.unwrap_or(u32::MAX)
 		}
 
 		/// Storage key of `Paras::Heads(para_id)` in relay-chain state.
@@ -234,7 +261,7 @@ pub mod pallet {
 		/// entry on the CCRMS chain.
 		///
 		/// Key format: `Twox128(pallet) ++ Twox128(storage) ++ Blake2_128Concat(key1) ++ Blake2_128Concat(key2)`
-		fn content_rights_key(
+		pub(crate) fn content_rights_key(
 			storage_name: &[u8],
 			content_id: u32,
 			who: &T::AccountId,
@@ -282,6 +309,10 @@ pub mod pallet {
 			content_id: u32,
 			who: &T::AccountId,
 		) -> Result<(Option<Vec<u8>>, u32), Error<T>> {
+			ensure!(
+				Self::proof_bytes(&relay_proof, &rights_proof) <= MAX_PROOF_BYTES,
+				Error::<T>::ProofTooLarge
+			);
 			let (state_root, rights_block) = Self::rights_state(relay_block, relay_proof)?;
 			let key = Self::content_rights_key(storage_name, content_id, who);
 			Ok((Self::read_proof_value(&state_root, rights_proof, &key)?, rights_block))
@@ -295,7 +326,7 @@ pub mod pallet {
 		/// Verify that `who` owns `content_id` on CCRMS, as of the CCRMS block
 		/// included at `relay_block`.
 		#[pallet::call_index(0)]
-		#[pallet::weight(<T as Config>::VerifierWeightInfo::verify_ownership())]
+		#[pallet::weight(<T as Config>::VerifierWeightInfo::verify_ownership(Pallet::<T>::proof_bytes(relay_proof, rights_proof)))]
 		pub fn verify_ownership(
 			origin: OriginFor<T>,
 			relay_block: u32,
@@ -325,7 +356,7 @@ pub mod pallet {
 		/// Verify `who`'s subscription to `content_id`. Active means the proven
 		/// CCRMS block is before the subscription's expiry block.
 		#[pallet::call_index(1)]
-		#[pallet::weight(<T as Config>::VerifierWeightInfo::verify_subscription())]
+		#[pallet::weight(<T as Config>::VerifierWeightInfo::verify_subscription(Pallet::<T>::proof_bytes(relay_proof, rights_proof)))]
 		pub fn verify_subscription(
 			origin: OriginFor<T>,
 			relay_block: u32,
@@ -354,7 +385,7 @@ pub mod pallet {
 
 		/// Verify `who`'s pay-per-view balance for `content_id`.
 		#[pallet::call_index(2)]
-		#[pallet::weight(<T as Config>::VerifierWeightInfo::verify_view_pack())]
+		#[pallet::weight(<T as Config>::VerifierWeightInfo::verify_view_pack(Pallet::<T>::proof_bytes(relay_proof, rights_proof)))]
 		pub fn verify_view_pack(
 			origin: OriginFor<T>,
 			relay_block: u32,
@@ -380,34 +411,5 @@ pub mod pallet {
 			});
 			Ok(())
 		}
-	}
-}
-
-// --------------- Weights ---------------
-
-use frame::prelude::*;
-
-/// Weight information for the rights-verifier pallet.
-pub trait WeightInfo {
-	fn verify_ownership() -> Weight;
-	fn verify_subscription() -> Weight;
-	fn verify_view_pack() -> Weight;
-}
-
-/// Placeholder weights (two proof verifications each); to be replaced by
-/// FRAME benchmarks (Finding L).
-pub struct SubstrateWeight<T>(core::marker::PhantomData<T>);
-
-impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	fn verify_ownership() -> Weight {
-		Weight::from_parts(200_000_000, 0).saturating_add(T::DbWeight::get().reads(1))
-	}
-
-	fn verify_subscription() -> Weight {
-		Weight::from_parts(200_000_000, 0).saturating_add(T::DbWeight::get().reads(1))
-	}
-
-	fn verify_view_pack() -> Weight {
-		Weight::from_parts(200_000_000, 0).saturating_add(T::DbWeight::get().reads(1))
 	}
 }

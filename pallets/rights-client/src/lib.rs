@@ -33,6 +33,22 @@ pub use pallet::*;
 
 pub mod weights;
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+/// Runtime hooks needed only by the benchmarks.
+#[cfg(feature = "runtime-benchmarks")]
+pub trait BenchmarkHelper<Origin> {
+	/// Make sending to the rights chain succeed (e.g. open an HRMP channel).
+	fn prepare_delivery();
+	/// A pallet-xcm response origin from `responder`.
+	fn response_origin(responder: polkadot_sdk::staging_xcm::latest::Location) -> Origin;
+}
+
 #[frame::pallet]
 pub mod pallet {
 	use alloc::vec;
@@ -114,6 +130,9 @@ pub mod pallet {
 		type PalletId: Get<frame::deps::frame_support::PalletId>;
 		/// Weight information for extrinsics.
 		type ClientWeightInfo: crate::weights::WeightInfo;
+		/// Benchmark hooks.
+		#[cfg(feature = "runtime-benchmarks")]
+		type BenchmarkHelper: crate::BenchmarkHelper<OriginFor<Self>>;
 	}
 
 	#[pallet::pallet]

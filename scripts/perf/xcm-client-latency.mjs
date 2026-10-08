@@ -29,7 +29,7 @@
  * error and ParaB refunds the escrow (refunded = user's escrow returned).
  *
  * Usage:
- *   node scripts/perf/xcm-client-latency.mjs [paraA-ws] [paraB-ws] [--runs N] [--fail-runs F] [--gap S]
+ *   node scripts/perf/xcm-client-latency.mjs [paraA-ws] [paraB-ws] [--runs N] [--fail-runs F] [--gap S] [--verbose]
  *
  * Prerequisites: HRMP channels open between para 100 and para 200; sudo on both.
  * Output: scripts/perf/results/xcm-client-latency-results.json
@@ -58,27 +58,40 @@ const PRICES = { subscribe: 500000n, purchase_views: 100000n * 5n, purchase_owne
 const PARA_B_SOVEREIGN = '0x7369626cc8000000000000000000000000000000000000000000000000000000';
 const OUTPUT = 'scripts/perf/results/xcm-client-latency-results.json';
 
-function sendAndWait(api, tx, signer) {
+const VERBOSE = process.argv.includes('--verbose');
+const log = (...a) => { if (VERBOSE) console.log(`  [${new Date().toISOString().slice(11, 19)}]`, ...a); };
+
+// Resolves when the transaction is finalized; rejects on a dispatch error, on
+// Invalid/Dropped/Usurped pool status, or after TX_TIMEOUT_MS.
+const TX_TIMEOUT_MS = 180_000;
+function sendAndWait(api, tx, signer, what = 'tx') {
   return new Promise((resolve, reject) => {
     let settled = false;
+    const finish = (fn, v) => { if (!settled) { settled = true; clearTimeout(timer); fn(v); } };
+    const timer = setTimeout(() => finish(reject, new Error(`${what}: not in a block after ${TX_TIMEOUT_MS / 1000} s`)), TX_TIMEOUT_MS);
     tx.signAndSend(signer, ({ status, dispatchError, events }) => {
       if (settled) return;
+      if (status.isInvalid || status.isDropped || status.isUsurped) {
+        return finish(reject, new Error(`${what}: transaction ${status.type}`));
+      }
       if (dispatchError) {
-        settled = true;
         if (dispatchError.isModule) {
           const d = api.registry.findMetaError(dispatchError.asModule);
-          reject(new Error(`${d.section}.${d.name}`));
-        } else reject(new Error(dispatchError.toString()));
-        return;
+          return finish(reject, new Error(`${what}: ${d.section}.${d.name}`));
+        }
+        return finish(reject, new Error(`${what}: ${dispatchError.toString()}`));
       }
-      if (status.isInBlock) { settled = true; resolve({ blockHash: status.asInBlock, events }); }
-    }).catch((e) => { if (!settled) { settled = true; reject(e); } });
+      // Finalized, not just in a block: blocks on this single-collator testnet
+      // are sometimes discarded and re-authored (Finding F), so measurements and
+      // follow-up transactions start from a block that stays canonical.
+      if (status.isFinalized) finish(resolve, { blockHash: status.asFinalized, events });
+    }).catch((e) => finish(reject, new Error(`${what}: ${e.message}`)));
   });
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const num = async (api, hash) => (await api.rpc.chain.getHeader(hash)).number.toNumber();
 const ts = async (api, hash) => (await api.query.timestamp.now.at(hash)).toNumber();
-async function finalizedHash(api, n, timeoutMs = 300_000) {
+async function finalizedHash(api, n, timeoutMs = 120_000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const fin = await api.rpc.chain.getFinalizedHead();
@@ -101,12 +114,14 @@ function stats(xs) {
 }
 
 async function oneRun(apiA, apiB, alice, user, request, op, contentId, expectSuccess, label) {
-  await sendAndWait(apiB, apiB.tx.balances.transferKeepAlive(user.address, USER_FUNDS), alice);
+  log(`${label}: funding user on ParaB`);
+  await sendAndWait(apiB, apiB.tx.balances.transferKeepAlive(user.address, USER_FUNDS), alice, 'fund user');
   const userBefore = (await apiB.query.system.account(user.address)).data.free.toBigInt();
   const aHead = await num(apiA, await apiA.rpc.chain.getHeader().then((h) => h.hash));
 
+  log(`${label}: submitting rightsClient.request`);
   const { blockHash: bHash, events } = await sendAndWait(
-    apiB, apiB.tx.rightsClient.request(request, ESCROW), user);
+    apiB, apiB.tx.rightsClient.request(request, ESCROW), user, 'rightsClient.request');
   const bBlock = await num(apiB, bHash);
   const bTs = await ts(apiB, bHash);
   const sent = events.find(({ event }) => event.section === 'rightsClient' && event.method === 'RequestSent');
@@ -115,6 +130,7 @@ async function oneRun(apiA, apiB, alice, user, request, op, contentId, expectSuc
   // pallet_xcm::send_xcm emits no polkadotXcm.Sent; the client reports the topic itself.
   const messageId = field(sent.event, 'message_id').toHex();
   const r = { label, op, contentId, queryId, messageId, paraBBlock: bBlock, expectSuccess };
+  log(`${label}: request in ParaB #${bBlock}, query ${queryId}, message ${messageId}; following ParaA from #${aHead + 1}`);
 
   // Delivery on ParaA: the CrossChain* event for this beneficiary (success runs),
   // or the messageQueue.Processed event for this message ID (failure runs).
@@ -123,6 +139,11 @@ async function oneRun(apiA, apiB, alice, user, request, op, contentId, expectSuc
   for (let n = aHead + 1; n <= aHead + MAX_BLOCKS && r.paraABlocks === undefined; n++) {
     const h = await finalizedHash(apiA, n);
     const evs = await apiA.query.system.events.at(h);
+    if (VERBOSE && !expectSuccess) {
+      for (const { event } of evs) {
+        if (event.section === 'messageQueue' && event.method === 'Processed') log(`  ParaA #${n} Processed id ${field(event, 'id').toHex()} success ${field(event, 'success')}`);
+      }
+    }
     let hit = false, trapped = false;
     for (const { event } of evs) {
       if (event.section === 'polkadotXcm' && event.method === 'AssetsTrapped') trapped = true;
@@ -144,6 +165,7 @@ async function oneRun(apiA, apiB, alice, user, request, op, contentId, expectSuc
     }
   }
   if (r.paraABlocks === undefined) return { ...r, success: false, reason: `not delivered within ${MAX_BLOCKS} ParaA blocks` };
+  log(`${label}: processed on ParaA #${r.paraAEventBlock}; following ParaB for the report`);
 
   // Report on ParaB: rightsClient.OutcomeReported for this query.
   for (let n = bBlock + 1; n <= bBlock + MAX_BLOCKS && r.roundTripMs === undefined; n++) {

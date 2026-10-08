@@ -340,3 +340,22 @@ fn relay_root_window_deduplicates_and_expires() {
 		assert_eq!(crate::RelayRoots::<Test>::get().len(), 4);
 	});
 }
+
+/// Proofs larger than MAX_PROOF_BYTES in total are rejected before any hashing.
+#[test]
+fn oversized_proofs_are_rejected() {
+	new_test_ext().execute_with(|| {
+		let who: AccountId = 2;
+		let key = rights_key(b"Ownership", 0, &who);
+		let value = remote_types::OwnershipInfo { child_item_id: 1 }.encode();
+		let (relay_proof, mut rights_proof) = prove_entry(key, Some(value), 50);
+		rights_proof.push(vec![0u8; crate::MAX_PROOF_BYTES as usize]);
+
+		assert_noop!(
+			RightsVerifier::verify_ownership(
+				RuntimeOrigin::signed(1), RELAY_BLOCK, relay_proof, rights_proof, 0, who,
+			),
+			crate::Error::<Test>::ProofTooLarge
+		);
+	});
+}

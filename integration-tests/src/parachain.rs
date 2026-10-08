@@ -253,6 +253,18 @@ impl pallet_rights_client::Config for Runtime {
 	type Operator = ClientOperator;
 	type PalletId = ClientPalletId;
 	type ClientWeightInfo = pallet_rights_client::weights::SubstrateWeight<Runtime>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ClientBenchHelper;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct ClientBenchHelper;
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_rights_client::BenchmarkHelper<RuntimeOrigin> for ClientBenchHelper {
+	fn prepare_delivery() {}
+	fn response_origin(responder: Location) -> RuntimeOrigin {
+		pallet_xcm::Origin::Response(responder).into()
+	}
 }
 
 construct_runtime! {

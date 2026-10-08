@@ -427,6 +427,17 @@ impl pallet_rights_verifier::RelayStateSource for RelayParentFromValidationData 
 		cumulus_pallet_parachain_system::ValidationData::<Runtime>::get()
 			.map(|d| (d.relay_parent_number, d.relay_parent_storage_root))
 	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn set_for_benchmarks(number: u32, root: sp_core::H256) {
+		use cumulus_pallet_parachain_system::{
+			RelayChainState, RelaychainDataProvider, RelaychainStateProvider,
+		};
+		RelaychainDataProvider::<Runtime>::set_current_relay_chain_state(RelayChainState {
+			number,
+			state_root: root,
+		});
+	}
 }
 
 parameter_types! {
@@ -483,5 +494,21 @@ impl pallet_rights_client::Config for Runtime {
 	type Operator = ClientOperator;
 	type PalletId = ClientPalletId;
 	type ClientWeightInfo = pallet_rights_client::weights::SubstrateWeight<Runtime>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = RightsClientBenchmarkHelper;
+}
+
+/// Benchmark hooks for pallet-rights-client: an HRMP channel to CCRMS, and a
+/// pallet-xcm response origin.
+#[cfg(feature = "runtime-benchmarks")]
+pub struct RightsClientBenchmarkHelper;
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_rights_client::BenchmarkHelper<RuntimeOrigin> for RightsClientBenchmarkHelper {
+	fn prepare_delivery() {
+		cumulus_pallet_parachain_system::Pallet::<Runtime>::open_outbound_hrmp_channel_for_benchmarks_or_tests(100u32.into());
+	}
+	fn response_origin(responder: xcm::latest::Location) -> RuntimeOrigin {
+		pallet_xcm::Origin::Response(responder).into()
+	}
 }
 

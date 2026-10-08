@@ -18,6 +18,17 @@ frame = { workspace = true, features = ["experimental", "runtime"], default-feat
 scale-info = { features = ["derive"], workspace = true }
 polkadot-sdk = { workspace = true, features = ["pallet-xcm", "staging-xcm"], default-features = false }
 
+[dev-dependencies]
+polkadot-sdk = { workspace = true, features = [
+	"pallet-balances",
+	"pallet-xcm",
+	"staging-xcm",
+	"staging-xcm-builder",
+	"staging-xcm-executor",
+	"sp-io",
+	"sp-runtime",
+], default-features = true }
+
 [features]
 default = ["std"]
 runtime-benchmarks = ["frame/runtime-benchmarks", "polkadot-sdk/runtime-benchmarks"]

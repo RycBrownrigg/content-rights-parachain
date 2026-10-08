@@ -1,5 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 pub use pallet::*;
 
 pub mod types;
@@ -22,7 +24,7 @@ pub mod pallet {
 	use crate::types::*;
 	use crate::weights::WeightInfo as _;
 
-	type BalanceOf<T> =
+	pub type BalanceOf<T> =
 		<<T as Config>::PaymentCurrency as frame::traits::fungible::Inspect<
 			<T as frame_system::Config>::AccountId,
 		>>::Balance;
@@ -55,6 +57,10 @@ pub mod pallet {
 	pub const MAX_RENEWALS_PER_BLOCK: u32 = 10;
 	/// How many blocks ahead `enqueue_renewal` searches for a bucket with free space.
 	pub const MAX_RENEWAL_SLOT_SEARCH: u32 = 100;
+	/// Maximum royalty splits per content item (bound of `RoyaltySplits`). Payment
+	/// extrinsics are charged for this many up front and refunded to the actual
+	/// number after dispatch.
+	pub const MAX_ROYALTY_SPLITS: u32 = 10;
 
 	// --------------- Storage ---------------
 
@@ -134,7 +140,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		u32,
-		BoundedVec<RoyaltySplit, ConstU32<10>>,
+		BoundedVec<RoyaltySplit, ConstU32<MAX_ROYALTY_SPLITS>>,
 		ValueQuery,
 	>;
 
@@ -323,16 +329,12 @@ pub mod pallet {
 			let current_block: u32 = <frame_system::Pallet<T>>::block_number()
 				.try_into()
 				.unwrap_or(0u32);
-			let db = T::DbWeight::get();
 
-			// Read + clear this block's bucket.
-			let mut weight = db.reads_writes(1, 1);
 			let due = RenewalQueue::<T>::take(current_block);
+			let processed = due.len() as u32;
+			let mut max_splits: u32 = 0;
 
 			for (content_id, subscriber) in due.into_iter() {
-				// AutoRenewIndex + Subscriptions
-				weight = weight.saturating_add(db.reads(2));
-
 				// Auto-renew disabled since this entry was queued: drop it.
 				if !AutoRenewIndex::<T>::contains_key((content_id, &subscriber)) {
 					continue;
@@ -342,33 +344,22 @@ pub mod pallet {
 					Some(s) if s.auto_renew => s,
 					_ => {
 						AutoRenewIndex::<T>::remove((content_id, &subscriber));
-						weight = weight.saturating_add(db.writes(1));
 						continue;
 					},
 				};
 
 				// Extended manually since queued: re-queue at the new expiry.
 				if current_block < sub.expiry_block {
-					match Self::enqueue_renewal(content_id, &subscriber, sub.expiry_block) {
-						Ok(offset) => {
-							weight = weight
-								.saturating_add(db.reads_writes(offset as u64 + 1, 1));
-						},
-						Err(_) => {
-							Self::stop_auto_renew(
-								content_id,
-								&subscriber,
-								AutoRenewFailReason::RenewalQueueFull,
-							);
-							weight = weight.saturating_add(
-								db.reads_writes(MAX_RENEWAL_SLOT_SEARCH as u64, 2),
-							);
-						},
+					if Self::enqueue_renewal(content_id, &subscriber, sub.expiry_block).is_err() {
+						Self::stop_auto_renew(
+							content_id,
+							&subscriber,
+							AutoRenewFailReason::RenewalQueueFull,
+						);
 					}
 					continue;
 				}
 
-				weight = weight.saturating_add(db.reads(1)); // Contents
 				let content = match Contents::<T>::get(content_id) {
 					Some(c) => c,
 					None => {
@@ -377,18 +368,9 @@ pub mod pallet {
 							&subscriber,
 							AutoRenewFailReason::ContentNotFound,
 						);
-						weight = weight.saturating_add(db.writes(2));
 						continue;
 					},
 				};
-
-				// One transfer per royalty recipient plus the creator's remainder;
-				// each transfer reads and writes two accounts.
-				let splits = RoyaltySplits::<T>::decode_len(content_id).unwrap_or(0) as u64;
-				let transfers = splits.saturating_add(1);
-				weight = weight.saturating_add(
-					db.reads_writes(1 + 2 * transfers, 2 * transfers + 1),
-				);
 
 				// Atomic payment: all royalty transfers succeed, or none persist.
 				let paid = frame::deps::frame_support::storage::with_storage_layer(|| {
@@ -401,7 +383,8 @@ pub mod pallet {
 				});
 
 				match paid {
-					Ok(()) => {
+					Ok(splits) => {
+						max_splits = max_splits.max(splits);
 						let new_expiry = current_block.saturating_add(content.period_length);
 						Subscriptions::<T>::mutate(content_id, &subscriber, |sub_opt| {
 							if let Some(sub) = sub_opt {
@@ -414,22 +397,13 @@ pub mod pallet {
 							new_expiry_block: new_expiry,
 						});
 
-						match Self::enqueue_renewal(content_id, &subscriber, new_expiry) {
-							Ok(offset) => {
-								weight = weight
-									.saturating_add(db.reads_writes(offset as u64 + 1, 1));
-							},
-							Err(_) => {
-								// Renewed this period, but no slot for the next one.
-								Self::stop_auto_renew(
-									content_id,
-									&subscriber,
-									AutoRenewFailReason::RenewalQueueFull,
-								);
-								weight = weight.saturating_add(
-									db.reads_writes(MAX_RENEWAL_SLOT_SEARCH as u64, 2),
-								);
-							},
+						if Self::enqueue_renewal(content_id, &subscriber, new_expiry).is_err() {
+							// Renewed this period, but no slot for the next one.
+							Self::stop_auto_renew(
+								content_id,
+								&subscriber,
+								AutoRenewFailReason::RenewalQueueFull,
+							);
 						}
 					},
 					Err(_) => {
@@ -438,12 +412,14 @@ pub mod pallet {
 							&subscriber,
 							AutoRenewFailReason::InsufficientBalance,
 						);
-						weight = weight.saturating_add(db.writes(2));
 					},
 				}
 			}
 
-			weight
+			// Benchmarked worst case for `processed` entries whose content has up
+			// to `max_splits` royalty splits, each also searching the full window
+			// for its next slot (Finding L).
+			T::ContentRightsWeightInfo::on_initialize_renewals(processed, max_splits)
 		}
 	}
 
@@ -460,7 +436,7 @@ pub mod pallet {
 		}
 
 		/// Mint a child NFT under the content's collection and nest it under the parent.
-		fn mint_and_nest_child(
+		pub(crate) fn mint_and_nest_child(
 			creator: &T::AccountId,
 			owner: &T::AccountId,
 			collection_id: u32,
@@ -532,7 +508,7 @@ pub mod pallet {
 			beneficiary: &T::AccountId,
 			content_id: u32,
 			num_views: u32,
-		) -> DispatchResult {
+		) -> Result<u32, DispatchError> {
 			ensure!(num_views > 0, Error::<T>::ZeroViews);
 
 			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
@@ -541,7 +517,7 @@ pub mod pallet {
 				.ppv_price
 				.checked_mul(num_views as u128)
 				.ok_or(Error::<T>::InsufficientPayment)?;
-			Self::pay_with_royalties(payer, &content.creator, content_id, total_price)?;
+			let splits = Self::pay_with_royalties(payer, &content.creator, content_id, total_price)?;
 
 			if let Some(mut existing) = ViewPacks::<T>::get(content_id, beneficiary) {
 				existing.views_remaining = existing.views_remaining.saturating_add(num_views);
@@ -561,7 +537,7 @@ pub mod pallet {
 				);
 			}
 
-			Ok(())
+			Ok(splits)
 		}
 
 		/// Shared view-consumption logic for `consume_view` and `consume_view_for`:
@@ -599,14 +575,16 @@ pub mod pallet {
 		}
 
 		/// Transfer funds from buyer, distributing according to royalty splits.
-		/// If no splits are configured, 100% goes to the creator.
+		/// If no splits are configured, 100% goes to the creator. Returns the
+		/// number of splits, for post-dispatch weight correction.
 		fn pay_with_royalties(
 			from: &T::AccountId,
 			creator: &T::AccountId,
 			content_id: u32,
 			amount: u128,
-		) -> DispatchResult {
+		) -> Result<u32, DispatchError> {
 			let splits = RoyaltySplits::<T>::get(content_id);
+			let num_splits = splits.len() as u32;
 
 			if splits.is_empty() {
 				// No splits — 100% to creator (original behavior)
@@ -639,7 +617,7 @@ pub mod pallet {
 				}
 			}
 
-			Ok(())
+			Ok(num_splits)
 		}
 
 		/// Queue an auto-renewal for `at`, or the first block after it (within
@@ -827,8 +805,8 @@ pub mod pallet {
 
 		/// Subscribe to content. Pays the creator and mints a Subscription child NFT.
 		#[pallet::call_index(1)]
-		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::subscribe())]
-		pub fn subscribe(origin: OriginFor<T>, content_id: u32) -> DispatchResult {
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::subscribe(MAX_ROYALTY_SPLITS))]
+		pub fn subscribe(origin: OriginFor<T>, content_id: u32) -> DispatchResultWithPostInfo {
 			let subscriber = ensure_signed(origin)?;
 
 			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
@@ -837,7 +815,7 @@ pub mod pallet {
 				Error::<T>::SubscriptionAlreadyExists
 			);
 
-			Self::pay_with_royalties(&subscriber, &content.creator, content_id, content.subscription_price)?;
+			let splits = Self::pay_with_royalties(&subscriber, &content.creator, content_id, content.subscription_price)?;
 
 			let child_item_id = Self::mint_and_nest_child(
 				&content.creator,
@@ -868,13 +846,13 @@ pub mod pallet {
 				expiry_block,
 			});
 
-			Ok(())
+			Ok(Some(<T as Config>::ContentRightsWeightInfo::subscribe(splits)).into())
 		}
 
 		/// Renew an expired subscription.
 		#[pallet::call_index(2)]
-		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::renew_subscription())]
-		pub fn renew_subscription(origin: OriginFor<T>, content_id: u32) -> DispatchResult {
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::renew_subscription(MAX_ROYALTY_SPLITS))]
+		pub fn renew_subscription(origin: OriginFor<T>, content_id: u32) -> DispatchResultWithPostInfo {
 			let subscriber = ensure_signed(origin)?;
 
 			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
@@ -886,7 +864,7 @@ pub mod pallet {
 				.unwrap_or(0u32);
 			ensure!(current_block >= sub.expiry_block, Error::<T>::SubscriptionNotExpired);
 
-			Self::pay_with_royalties(&subscriber, &content.creator, content_id, content.subscription_price)?;
+			let splits = Self::pay_with_royalties(&subscriber, &content.creator, content_id, content.subscription_price)?;
 
 			let new_expiry = current_block.saturating_add(content.period_length);
 			Subscriptions::<T>::mutate(content_id, &subscriber, |maybe_sub| {
@@ -901,19 +879,19 @@ pub mod pallet {
 				new_expiry_block: new_expiry,
 			});
 
-			Ok(())
+			Ok(Some(<T as Config>::ContentRightsWeightInfo::renew_subscription(splits)).into())
 		}
 
 		/// Purchase a pay-per-view pack.
 		#[pallet::call_index(3)]
-		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::purchase_views())]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::purchase_views(MAX_ROYALTY_SPLITS))]
 		pub fn purchase_views(
 			origin: OriginFor<T>,
 			content_id: u32,
 			num_views: u32,
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			let buyer = ensure_signed(origin)?;
-			Self::do_purchase_views(&buyer, &buyer, content_id, num_views)?;
+			let splits = Self::do_purchase_views(&buyer, &buyer, content_id, num_views)?;
 
 			Self::deposit_event(Event::ViewPackPurchased {
 				content_id,
@@ -921,7 +899,7 @@ pub mod pallet {
 				views: num_views,
 			});
 
-			Ok(())
+			Ok(Some(<T as Config>::ContentRightsWeightInfo::purchase_views(splits)).into())
 		}
 
 		/// Consume one of the caller's own pay-per-view views. A content server that
@@ -936,8 +914,8 @@ pub mod pallet {
 
 		/// Purchase permanent ownership of content.
 		#[pallet::call_index(5)]
-		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::purchase_ownership())]
-		pub fn purchase_ownership(origin: OriginFor<T>, content_id: u32) -> DispatchResult {
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::purchase_ownership(MAX_ROYALTY_SPLITS))]
+		pub fn purchase_ownership(origin: OriginFor<T>, content_id: u32) -> DispatchResultWithPostInfo {
 			let buyer = ensure_signed(origin)?;
 
 			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
@@ -946,7 +924,7 @@ pub mod pallet {
 				Error::<T>::AlreadyOwned
 			);
 
-			Self::pay_with_royalties(&buyer, &content.creator, content_id, content.ownership_price)?;
+			let splits = Self::pay_with_royalties(&buyer, &content.creator, content_id, content.ownership_price)?;
 
 			let child_item_id = Self::mint_and_nest_child(
 				&content.creator,
@@ -963,7 +941,7 @@ pub mod pallet {
 				buyer,
 			});
 
-			Ok(())
+			Ok(Some(<T as Config>::ContentRightsWeightInfo::purchase_ownership(splits)).into())
 		}
 
 		/// Check whether a user has access to content (subscription, PPV, or ownership).
@@ -993,12 +971,12 @@ pub mod pallet {
 
 		/// Cross-chain subscribe: payer (origin) pays, beneficiary gets the subscription.
 		#[pallet::call_index(7)]
-		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::xcm_subscribe())]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::xcm_subscribe(MAX_ROYALTY_SPLITS))]
 		pub fn xcm_subscribe(
 			origin: OriginFor<T>,
 			content_id: u32,
 			beneficiary: T::AccountId,
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			let payer = ensure_signed(origin)?;
 
 			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
@@ -1007,7 +985,7 @@ pub mod pallet {
 				Error::<T>::SubscriptionAlreadyExists
 			);
 
-			Self::pay_with_royalties(&payer, &content.creator, content_id, content.subscription_price)?;
+			let splits = Self::pay_with_royalties(&payer, &content.creator, content_id, content.subscription_price)?;
 
 			let child_item_id = Self::mint_and_nest_child(
 				&content.creator,
@@ -1039,17 +1017,17 @@ pub mod pallet {
 				expiry_block,
 			});
 
-			Ok(())
+			Ok(Some(<T as Config>::ContentRightsWeightInfo::xcm_subscribe(splits)).into())
 		}
 
 		/// Cross-chain renew: payer (origin) pays, beneficiary's subscription is renewed.
 		#[pallet::call_index(8)]
-		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::xcm_renew_subscription())]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::xcm_renew_subscription(MAX_ROYALTY_SPLITS))]
 		pub fn xcm_renew_subscription(
 			origin: OriginFor<T>,
 			content_id: u32,
 			beneficiary: T::AccountId,
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			let payer = ensure_signed(origin)?;
 
 			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
@@ -1061,7 +1039,7 @@ pub mod pallet {
 				.unwrap_or(0u32);
 			ensure!(current_block >= sub.expiry_block, Error::<T>::SubscriptionNotExpired);
 
-			Self::pay_with_royalties(&payer, &content.creator, content_id, content.subscription_price)?;
+			let splits = Self::pay_with_royalties(&payer, &content.creator, content_id, content.subscription_price)?;
 
 			let new_expiry = current_block.saturating_add(content.period_length);
 			Subscriptions::<T>::mutate(content_id, &beneficiary, |maybe_sub| {
@@ -1077,20 +1055,20 @@ pub mod pallet {
 				new_expiry_block: new_expiry,
 			});
 
-			Ok(())
+			Ok(Some(<T as Config>::ContentRightsWeightInfo::xcm_renew_subscription(splits)).into())
 		}
 
 		/// Cross-chain purchase views: payer (origin) pays, beneficiary gets the view pack.
 		#[pallet::call_index(9)]
-		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::xcm_purchase_views())]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::xcm_purchase_views(MAX_ROYALTY_SPLITS))]
 		pub fn xcm_purchase_views(
 			origin: OriginFor<T>,
 			content_id: u32,
 			beneficiary: T::AccountId,
 			num_views: u32,
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			let payer = ensure_signed(origin)?;
-			Self::do_purchase_views(&payer, &beneficiary, content_id, num_views)?;
+			let splits = Self::do_purchase_views(&payer, &beneficiary, content_id, num_views)?;
 
 			Self::deposit_event(Event::CrossChainViewPackPurchased {
 				content_id,
@@ -1099,17 +1077,17 @@ pub mod pallet {
 				views: num_views,
 			});
 
-			Ok(())
+			Ok(Some(<T as Config>::ContentRightsWeightInfo::xcm_purchase_views(splits)).into())
 		}
 
 		/// Cross-chain purchase ownership: payer (origin) pays, beneficiary gets permanent access.
 		#[pallet::call_index(10)]
-		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::xcm_purchase_ownership())]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::xcm_purchase_ownership(MAX_ROYALTY_SPLITS))]
 		pub fn xcm_purchase_ownership(
 			origin: OriginFor<T>,
 			content_id: u32,
 			beneficiary: T::AccountId,
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			let payer = ensure_signed(origin)?;
 
 			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
@@ -1118,7 +1096,7 @@ pub mod pallet {
 				Error::<T>::AlreadyOwned
 			);
 
-			Self::pay_with_royalties(&payer, &content.creator, content_id, content.ownership_price)?;
+			let splits = Self::pay_with_royalties(&payer, &content.creator, content_id, content.ownership_price)?;
 
 			let child_item_id = Self::mint_and_nest_child(
 				&content.creator,
@@ -1136,7 +1114,7 @@ pub mod pallet {
 				payer,
 			});
 
-			Ok(())
+			Ok(Some(<T as Config>::ContentRightsWeightInfo::xcm_purchase_ownership(splits)).into())
 		}
 
 		/// Transfer permanent ownership to another account. The caller must own the content.
@@ -1257,7 +1235,7 @@ pub mod pallet {
 		/// Enable auto-renewal for a subscription. The subscriber's balance will be
 		/// automatically deducted when the subscription expires.
 		#[pallet::call_index(14)]
-		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::subscribe())]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::enable_auto_renew())]
 		pub fn enable_auto_renew(
 			origin: OriginFor<T>,
 			content_id: u32,
@@ -1304,7 +1282,7 @@ pub mod pallet {
 
 		/// Disable auto-renewal for a subscription.
 		#[pallet::call_index(15)]
-		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::subscribe())]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::disable_auto_renew())]
 		pub fn disable_auto_renew(
 			origin: OriginFor<T>,
 			content_id: u32,
@@ -1333,11 +1311,11 @@ pub mod pallet {
 		/// policy — pricing, royalty configuration, and content details — enabling
 		/// cross-chain consumers to understand the full rights policy.
 		#[pallet::call_index(16)]
-		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::check_access())]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::query_rights_metadata(MAX_ROYALTY_SPLITS))]
 		pub fn query_rights_metadata(
 			origin: OriginFor<T>,
 			content_id: u32,
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
 
 			let content = Contents::<T>::get(content_id).ok_or(Error::<T>::ContentNotFound)?;
@@ -1363,23 +1341,24 @@ pub mod pallet {
 				num_collaborators: splits.len() as u8,
 			};
 
+			let num_splits = metadata.num_collaborators as u32;
 			Self::deposit_event(Event::RightsMetadataQueried {
 				content_id,
 				metadata,
 			});
 
-			Ok(())
+			Ok(Some(<T as Config>::ContentRightsWeightInfo::query_rights_metadata(num_splits)).into())
 		}
 
 		/// Set royalty splits for content. Only the creator can call this.
 		/// Splits are in basis points (out of 10,000). The creator receives the
 		/// remainder after all splits are distributed. Total splits must be <= 10,000.
 		#[pallet::call_index(13)]
-		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::register_content())]
+		#[pallet::weight(<T as Config>::ContentRightsWeightInfo::set_royalty_splits(splits.len() as u32))]
 		pub fn set_royalty_splits(
 			origin: OriginFor<T>,
 			content_id: u32,
-			splits: BoundedVec<RoyaltySplit, ConstU32<10>>,
+			splits: BoundedVec<RoyaltySplit, ConstU32<MAX_ROYALTY_SPLITS>>,
 		) -> DispatchResult {
 			let caller = ensure_signed(origin)?;
 

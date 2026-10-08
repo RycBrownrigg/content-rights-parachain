@@ -44,6 +44,11 @@ impl crate::RelayStateSource for MockRelayState {
 	fn current() -> Option<(u32, polkadot_sdk::sp_core::H256)> {
 		MockRelayParent::get()
 	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn set_for_benchmarks(number: u32, root: polkadot_sdk::sp_core::H256) {
+		MockRelayParent::set(&Some((number, root)));
+	}
 }
 
 impl crate::Config for Test {

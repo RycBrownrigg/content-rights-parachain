@@ -37,3 +37,10 @@ polkadot-sdk = { workspace = true, features = [
 # Local pallets
 pallet-content-rights = { workspace = true, features = ["std"] }
 pallet-rights-client = { workspace = true, features = ["std"] }
+
+[features]
+runtime-benchmarks = [
+  "pallet-content-rights/runtime-benchmarks",
+  "pallet-rights-client/runtime-benchmarks",
+  "polkadot-sdk/runtime-benchmarks",
+]
