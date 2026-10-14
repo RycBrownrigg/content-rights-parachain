@@ -1,0 +1,84 @@
+2026-10-14 08:58:41 Initialized runtime log filter to 'INFO'
+2026-10-14 08:58:43 assembling new collators for new session 0 at #0
+2026-10-14 08:58:43 assembling new collators for new session 1 at #0
+2026-10-14 08:58:44 assembling new collators for new session 0 at #0
+2026-10-14 08:58:44 assembling new collators for new session 1 at #0
+Pallet: "pallet_rights_client", Extrinsic: "request", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `System::Account` (r:1 w:1)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `PolkadotXcm::QueryCounter` (r:1 w:1)
+Proof: `PolkadotXcm::QueryCounter` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
+Storage: `ParachainInfo::ParachainId` (r:1 w:0)
+Proof: `ParachainInfo::ParachainId` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
+Storage: `ParachainSystem::RelevantMessagingState` (r:1 w:0)
+Proof: `ParachainSystem::RelevantMessagingState` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
+Storage: `XcmpQueue::OutboundXcmpStatus` (r:1 w:1)
+Proof: `XcmpQueue::OutboundXcmpStatus` (`max_values`: Some(1), `max_size`: Some(1282), added: 1777, mode: `MaxEncodedLen`)
+Storage: `RightsClient::Pending` (r:0 w:1)
+Proof: `RightsClient::Pending` (`max_values`: None, `max_size`: Some(85), added: 2560, mode: `MaxEncodedLen`)
+Storage: `XcmpQueue::OutboundXcmpMessages` (r:0 w:1)
+Proof: `XcmpQueue::OutboundXcmpMessages` (`max_values`: None, `max_size`: Some(65570), added: 68045, mode: `MaxEncodedLen`)
+Storage: `PolkadotXcm::Queries` (r:0 w:1)
+Proof: `PolkadotXcm::Queries` (`max_values`: None, `max_size`: None, mode: `Measured`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       71
+              µs
+
+Reads = 5
+Writes = 6
+Recorded proof Size = 244
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       71
+              µs
+
+Reads = 5
+Writes = 6
+Recorded proof Size = 244
+
+Pallet: "pallet_rights_client", Extrinsic: "on_outcome", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `RightsClient::Pending` (r:1 w:1)
+Proof: `RightsClient::Pending` (`max_values`: None, `max_size`: Some(85), added: 2560, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:1 w:1)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       52
+              µs
+
+Reads = 2
+Writes = 2
+Recorded proof Size = 253
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       52
+              µs
+
+Reads = 2
+Writes = 2
+Recorded proof Size = 253
+
+Created file: "pallets/rights-client/src/weights.rs"
+2026-10-14 08:58:45 [  0 % ] Starting benchmark: pallet_rights_client::request
+2026-10-14 08:58:45 [ 50 % ] Starting benchmark: pallet_rights_client::on_outcome

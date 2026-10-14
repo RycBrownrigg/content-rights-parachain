@@ -1,0 +1,1733 @@
+2026-10-14 08:45:52 Initialized runtime log filter to 'INFO'
+2026-10-14 08:45:54 assembling new collators for new session 0 at #0
+2026-10-14 08:45:54 assembling new collators for new session 1 at #0
+2026-10-14 08:45:55 assembling new collators for new session 0 at #0
+2026-10-14 08:45:55 assembling new collators for new session 1 at #0
+2026-10-14 08:45:56 [  0 % ] Starting benchmark: pallet_content_rights::register_content
+2026-10-14 08:45:56 [  4 % ] Starting benchmark: pallet_content_rights::subscribe
+2026-10-14 08:45:58 [  8 % ] Starting benchmark: pallet_content_rights::renew_subscription
+2026-10-14 08:45:59 [ 12 % ] Starting benchmark: pallet_content_rights::purchase_views
+2026-10-14 08:46:01 [ 16 % ] Starting benchmark: pallet_content_rights::consume_view
+2026-10-14 08:46:01 [ 20 % ] Starting benchmark: pallet_content_rights::purchase_ownership
+2026-10-14 08:46:01 [ 20 % ] Running  benchmark: pallet_content_rights::purchase_ownership(1 args) 11/50 1/1
+2026-10-14 08:46:02 [ 25 % ] Starting benchmark: pallet_content_rights::check_access
+2026-10-14 08:46:02 [ 29 % ] Starting benchmark: pallet_content_rights::xcm_subscribe
+2026-10-14 08:46:04 [ 33 % ] Starting benchmark: pallet_content_rights::xcm_renew_subscription
+2026-10-14 08:46:06 [ 37 % ] Starting benchmark: pallet_content_rights::xcm_purchase_views
+2026-10-14 08:46:06 [ 37 % ] Running  benchmark: pallet_content_rights::xcm_purchase_views(1 args) 19/50 1/1
+2026-10-14 08:46:07 [ 41 % ] Starting benchmark: pallet_content_rights::xcm_purchase_ownership
+2026-10-14 08:46:09 [ 45 % ] Starting benchmark: pallet_content_rights::transfer_ownership
+2026-10-14 08:46:09 [ 50 % ] Starting benchmark: pallet_content_rights::xcm_transfer_ownership
+2026-10-14 08:46:09 [ 54 % ] Starting benchmark: pallet_content_rights::set_royalty_splits
+2026-10-14 08:46:10 [ 58 % ] Starting benchmark: pallet_content_rights::enable_auto_renew
+2026-10-14 08:46:10 [ 62 % ] Starting benchmark: pallet_content_rights::disable_auto_renew
+2026-10-14 08:46:10 [ 66 % ] Starting benchmark: pallet_content_rights::query_rights_metadata
+2026-10-14 08:46:10 [ 70 % ] Starting benchmark: pallet_content_rights::set_meter
+2026-10-14 08:46:11 [ 75 % ] Starting benchmark: pallet_content_rights::consume_view_for
+2026-10-14 08:46:11 [ 79 % ] Starting benchmark: pallet_content_rights::on_initialize_renewals
+2026-10-14 08:46:11 [ 79 % ] Running  benchmark: pallet_content_rights::on_initialize_renewals(2 args) 9/100 1/1
+2026-10-14 08:46:16 [ 79 % ] Running  benchmark: pallet_content_rights::on_initialize_renewals(2 args) 33/100 1/1
+2026-10-14 08:46:21 [ 79 % ] Running  benchmark: pallet_content_rights::on_initialize_renewals(2 args) 47/100 1/1
+2026-10-14 08:46:26 [ 79 % ] Running  benchmark: pallet_content_rights::on_initialize_renewals(2 args) 65/100 1/1
+2026-10-14 08:46:32 [ 79 % ] Running  benchmark: pallet_content_rights::on_initialize_renewals(2 args) 81/100 1/1
+2026-10-14 08:46:37 [ 79 % ] Running  benchmark: pallet_content_rights::on_initialize_renewals(2 args) 94/100 1/1
+2026-10-14 08:46:40 [ 83 % ] Starting benchmark: pallet_content_rights::scale_subscribe
+2026-10-14 08:46:43 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 7/50 1/1
+2026-10-14 08:46:49 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 12/50 1/1
+2026-10-14 08:46:54 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 15/50 1/1
+2026-10-14 08:47:02 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 18/50 1/1
+2026-10-14 08:47:08 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 20/50 1/1
+2026-10-14 08:47:15 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 22/50 1/1
+2026-10-14 08:47:22 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 24/50 1/1
+2026-10-14 08:47:30 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 26/50 1/1
+2026-10-14 08:47:38 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 28/50 1/1
+2026-10-14 08:47:46 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 30/50 1/1
+2026-10-14 08:47:56 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 32/50 1/1
+2026-10-14 08:48:05 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 34/50 1/1
+2026-10-14 08:48:16 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 36/50 1/1
+2026-10-14 08:48:22 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 37/50 1/1
+2026-10-14 08:48:28 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 38/50 1/1
+2026-10-14 08:48:34 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 39/50 1/1
+2026-10-14 08:48:39 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 40/50 1/1
+2026-10-14 08:48:45 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 41/50 1/1
+2026-10-14 08:48:51 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 42/50 1/1
+2026-10-14 08:48:58 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 43/50 1/1
+2026-10-14 08:49:04 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 44/50 1/1
+2026-10-14 08:49:11 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 45/50 1/1
+2026-10-14 08:49:17 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 46/50 1/1
+2026-10-14 08:49:25 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 47/50 1/1
+2026-10-14 08:49:32 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 48/50 1/1
+2026-10-14 08:49:40 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 49/50 1/1
+2026-10-14 08:49:47 [ 83 % ] Running  benchmark: pallet_content_rights::scale_subscribe(1 args) 50/50 1/1
+2026-10-14 08:49:47 [ 87 % ] Starting benchmark: pallet_content_rights::scale_check_access
+2026-10-14 08:49:54 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 9/50 1/1
+2026-10-14 08:50:00 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 13/50 1/1
+2026-10-14 08:50:06 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 16/50 1/1
+2026-10-14 08:50:13 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 19/50 1/1
+2026-10-14 08:50:19 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 21/50 1/1
+2026-10-14 08:50:26 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 23/50 1/1
+2026-10-14 08:50:33 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 25/50 1/1
+2026-10-14 08:50:40 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 27/50 1/1
+2026-10-14 08:50:48 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 29/50 1/1
+2026-10-14 08:50:57 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 31/50 1/1
+2026-10-14 08:51:08 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 33/50 1/1
+2026-10-14 08:51:18 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 35/50 1/1
+2026-10-14 08:51:23 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 36/50 1/1
+2026-10-14 08:51:28 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 37/50 1/1
+2026-10-14 08:51:33 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 38/50 1/1
+2026-10-14 08:51:39 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 39/50 1/1
+2026-10-14 08:51:45 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 40/50 1/1
+2026-10-14 08:51:51 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 41/50 1/1
+2026-10-14 08:51:57 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 42/50 1/1
+2026-10-14 08:52:02 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 43/50 1/1
+2026-10-14 08:52:08 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 44/50 1/1
+2026-10-14 08:52:14 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 45/50 1/1
+2026-10-14 08:52:21 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 46/50 1/1
+2026-10-14 08:52:27 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 47/50 1/1
+2026-10-14 08:52:34 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 48/50 1/1
+2026-10-14 08:52:42 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 49/50 1/1
+2026-10-14 08:52:49 [ 87 % ] Running  benchmark: pallet_content_rights::scale_check_access(1 args) 50/50 1/1
+2026-10-14 08:52:49 [ 91 % ] Starting benchmark: pallet_content_rights::scale_consume_view
+2026-10-14 08:52:54 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 9/50 1/1
+2026-10-14 08:53:01 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 13/50 1/1
+2026-10-14 08:53:07 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 16/50 1/1
+2026-10-14 08:53:15 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 19/50 1/1
+2026-10-14 08:53:21 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 21/50 1/1
+2026-10-14 08:53:27 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 23/50 1/1
+2026-10-14 08:53:34 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 25/50 1/1
+2026-10-14 08:53:41 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 27/50 1/1
+2026-10-14 08:53:49 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 29/50 1/1
+2026-10-14 08:53:58 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 31/50 1/1
+2026-10-14 08:54:07 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 33/50 1/1
+2026-10-14 08:54:17 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 35/50 1/1
+2026-10-14 08:54:27 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 37/50 1/1
+2026-10-14 08:54:32 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 38/50 1/1
+2026-10-14 08:54:38 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 39/50 1/1
+2026-10-14 08:54:44 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 40/50 1/1
+2026-10-14 08:54:49 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 41/50 1/1
+2026-10-14 08:54:55 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 42/50 1/1
+2026-10-14 08:55:01 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 43/50 1/1
+2026-10-14 08:55:08 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 44/50 1/1
+2026-10-14 08:55:14 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 45/50 1/1
+2026-10-14 08:55:20 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 46/50 1/1
+2026-10-14 08:55:27 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 47/50 1/1
+2026-10-14 08:55:33 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 48/50 1/1
+2026-10-14 08:55:40 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 49/50 1/1
+2026-10-14 08:55:47 [ 91 % ] Running  benchmark: pallet_content_rights::scale_consume_view(1 args) 50/50 1/1
+2026-10-14 08:55:47 [ 95 % ] Starting benchmark: pallet_content_rights::scale_transfer_ownership
+2026-10-14 08:55:52 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 9/50 1/1
+2026-10-14 08:55:58 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 13/50 1/1
+2026-10-14 08:56:03 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 16/50 1/1
+2026-10-14 08:56:11 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 19/50 1/1
+2026-10-14 08:56:16 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 21/50 1/1
+2026-10-14 08:56:22 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 23/50 1/1
+2026-10-14 08:56:28 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 25/50 1/1
+2026-10-14 08:56:35 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 27/50 1/1
+2026-10-14 08:56:43 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 29/50 1/1
+2026-10-14 08:56:51 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 31/50 1/1
+2026-10-14 08:57:00 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 33/50 1/1
+2026-10-14 08:57:09 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 35/50 1/1
+2026-10-14 08:57:19 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 37/50 1/1
+2026-10-14 08:57:24 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 38/50 1/1
+2026-10-14 08:57:29 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 39/50 1/1
+2026-10-14 08:57:34 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 40/50 1/1
+2026-10-14 08:57:40 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 41/50 1/1
+2026-10-14 08:57:45 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 42/50 1/1
+2026-10-14 08:57:51 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 43/50 1/1
+2026-10-14 08:57:57 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 44/50 1/1
+2026-10-14 08:58:03 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 45/50 1/1
+2026-10-14 08:58:09 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 46/50 1/1
+2026-10-14 08:58:15 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 47/50 1/1
+2026-10-14 08:58:22 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 48/50 1/1
+2026-10-14 08:58:28 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 49/50 1/1
+Pallet: "pallet_content_rights", Extrinsic: "register_content", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::NextContentId` (r:1 w:1)
+Proof: `ContentRights::NextContentId` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
+Storage: `Nfts::NextCollectionId` (r:1 w:1)
+Proof: `Nfts::NextCollectionId` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:1 w:1)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:1 w:1)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Contents` (r:0 w:1)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::NextItemId` (r:0 w:1)
+Proof: `ContentRights::NextItemId` (`max_values`: None, `max_size`: Some(24), added: 2499, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionRoleOf` (r:0 w:1)
+Proof: `Nfts::CollectionRoleOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionConfigOf` (r:0 w:1)
+Proof: `Nfts::CollectionConfigOf` (`max_values`: None, `max_size`: Some(73), added: 2548, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:1)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionAccount` (r:0 w:1)
+Proof: `Nfts::CollectionAccount` (`max_values`: None, `max_size`: Some(68), added: 2543, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       65
+              µs
+
+Reads = 5
+Writes = 11
+Recorded proof Size = 7
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       65
+              µs
+
+Reads = 5
+Writes = 11
+Recorded proof Size = 7
+
+Pallet: "pallet_content_rights", Extrinsic: "subscribe", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Subscriptions` (r:1 w:1)
+Proof: `ContentRights::Subscriptions` (`max_values`: None, `max_size`: Some(77), added: 2552, mode: `MaxEncodedLen`)
+Storage: `ContentRights::RoyaltySplits` (r:1 w:0)
+Proof: `ContentRights::RoyaltySplits` (`max_values`: None, `max_size`: Some(361), added: 2836, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:11 w:11)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `ContentRights::NextItemId` (r:1 w:1)
+Proof: `ContentRights::NextItemId` (`max_values`: None, `max_size`: Some(24), added: 2499, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:1 w:1)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionConfigOf` (r:1 w:0)
+Proof: `Nfts::CollectionConfigOf` (`max_values`: None, `max_size`: Some(73), added: 2548, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:1 w:1)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionRoleOf` (r:1 w:0)
+Proof: `Nfts::CollectionRoleOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
+Storage: `Nfts::Attribute` (r:1 w:1)
+Proof: `Nfts::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Parent` (r:0 w:1)
+Proof: `ContentRights::Parent` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:1)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=    134.5
+    + s     35.5
+              µs
+
+Reads = 11 + (1 * s)
+Writes = 9 + (1 * s)
+Recorded proof Size = 1012 + (52 * s)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    s   mean µs  sigma µs       %
+    0     136.8     1.012    0.7%
+    1     170.6      0.66    0.3%
+    2     205.5     0.538    0.2%
+    3     239.9     0.613    0.2%
+    4     275.8     0.731    0.2%
+    5     311.9     0.955    0.3%
+    6       347     0.759    0.2%
+    7     383.1     0.833    0.2%
+    8     419.8     0.887    0.2%
+    9     455.6     0.759    0.1%
+   10     460.9     0.943    0.2%
+
+Quality and confidence:
+param     error
+s         0.063
+
+Model:
+Time ~=      136
+    + s    35.11
+              µs
+
+Reads = 11 + (1 * s)
+Writes = 9 + (1 * s)
+Recorded proof Size = 1004 + (54 * s)
+
+Pallet: "pallet_content_rights", Extrinsic: "renew_subscription", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Subscriptions` (r:1 w:1)
+Proof: `ContentRights::Subscriptions` (`max_values`: None, `max_size`: Some(77), added: 2552, mode: `MaxEncodedLen`)
+Storage: `ContentRights::RoyaltySplits` (r:1 w:0)
+Proof: `ContentRights::RoyaltySplits` (`max_values`: None, `max_size`: Some(361), added: 2836, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:10 w:10)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       54
+    + s       36
+              µs
+
+2026-10-14 08:58:35 [ 95 % ] Running  benchmark: pallet_content_rights::scale_transfer_ownership(1 args) 50/50 1/1
+Reads = 4 + (1 * s)
+Writes = 2 + (1 * s)
+Recorded proof Size = 608 + (52 * s)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    s   mean µs  sigma µs       %
+    0     54.56     0.496    0.9%
+    1      90.7     0.458    0.5%
+    2     126.1     0.366    0.2%
+    3     161.3     0.485    0.3%
+    4     197.8     1.077    0.5%
+    5     232.7     0.769    0.3%
+    6       270     0.688    0.2%
+    7     305.9     0.527    0.1%
+    8     342.8     0.894    0.2%
+    9     379.7     1.274    0.3%
+   10     383.8     1.077    0.2%
+
+Quality and confidence:
+param     error
+s         0.065
+
+Model:
+Time ~=     55.1
+    + s    35.65
+              µs
+
+Reads = 4 + (1 * s)
+Writes = 2 + (1 * s)
+Recorded proof Size = 602 + (54 * s)
+
+Pallet: "pallet_content_rights", Extrinsic: "purchase_views", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::RoyaltySplits` (r:1 w:0)
+Proof: `ContentRights::RoyaltySplits` (`max_values`: None, `max_size`: Some(361), added: 2836, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:11 w:11)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `ContentRights::ViewPacks` (r:1 w:1)
+Proof: `ContentRights::ViewPacks` (`max_values`: None, `max_size`: Some(76), added: 2551, mode: `MaxEncodedLen`)
+Storage: `ContentRights::NextItemId` (r:1 w:1)
+Proof: `ContentRights::NextItemId` (`max_values`: None, `max_size`: Some(24), added: 2499, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:1 w:1)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionConfigOf` (r:1 w:0)
+Proof: `Nfts::CollectionConfigOf` (`max_values`: None, `max_size`: Some(73), added: 2548, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:1 w:1)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionRoleOf` (r:1 w:0)
+Proof: `Nfts::CollectionRoleOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
+Storage: `Nfts::Attribute` (r:1 w:1)
+Proof: `Nfts::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Parent` (r:0 w:1)
+Proof: `ContentRights::Parent` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:1)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=      134
+    + s    35.85
+              µs
+
+Reads = 11 + (1 * s)
+Writes = 9 + (1 * s)
+Recorded proof Size = 1012 + (52 * s)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    s   mean µs  sigma µs       %
+    0     133.3     0.458    0.3%
+    1       170      0.81    0.4%
+    2     204.9      0.82    0.4%
+    3       243     2.366    0.9%
+    4     277.1     1.781    0.6%
+    5     314.5     2.941    0.9%
+    6     356.7       4.5    1.2%
+    7     386.8     2.973    0.7%
+    8     419.9     1.264    0.3%
+    9     456.9     1.564    0.3%
+   10     459.5      0.67    0.1%
+
+Quality and confidence:
+param     error
+s         0.088
+
+Model:
+Time ~=    135.3
+    + s    35.62
+              µs
+
+Reads = 11 + (1 * s)
+Writes = 9 + (1 * s)
+Recorded proof Size = 1004 + (54 * s)
+
+Pallet: "pallet_content_rights", Extrinsic: "consume_view", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::ViewPacks` (r:1 w:1)
+Proof: `ContentRights::ViewPacks` (`max_values`: None, `max_size`: Some(76), added: 2551, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `Nfts::Attribute` (r:1 w:0)
+Proof: `Nfts::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:1 w:1)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:1 w:1)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:1 w:1)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemMetadataOf` (r:1 w:0)
+Proof: `Nfts::ItemMetadataOf` (`max_values`: None, `max_size`: Some(347), added: 2822, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Parent` (r:0 w:1)
+Proof: `ContentRights::Parent` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:1)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemPriceOf` (r:0 w:1)
+Proof: `Nfts::ItemPriceOf` (`max_values`: None, `max_size`: Some(89), added: 2564, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemAttributesApprovalsOf` (r:0 w:1)
+Proof: `Nfts::ItemAttributesApprovalsOf` (`max_values`: None, `max_size`: Some(1001), added: 3476, mode: `MaxEncodedLen`)
+Storage: `Nfts::PendingSwapOf` (r:0 w:1)
+Proof: `Nfts::PendingSwapOf` (`max_values`: None, `max_size`: Some(71), added: 2546, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       71
+              µs
+
+Reads = 8
+Writes = 10
+Recorded proof Size = 1292
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       71
+              µs
+
+Reads = 8
+Writes = 10
+Recorded proof Size = 1292
+
+Pallet: "pallet_content_rights", Extrinsic: "purchase_ownership", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Ownership` (r:1 w:1)
+Proof: `ContentRights::Ownership` (`max_values`: None, `max_size`: Some(72), added: 2547, mode: `MaxEncodedLen`)
+Storage: `ContentRights::RoyaltySplits` (r:1 w:0)
+Proof: `ContentRights::RoyaltySplits` (`max_values`: None, `max_size`: Some(361), added: 2836, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:11 w:11)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `ContentRights::NextItemId` (r:1 w:1)
+Proof: `ContentRights::NextItemId` (`max_values`: None, `max_size`: Some(24), added: 2499, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:1 w:1)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionConfigOf` (r:1 w:0)
+Proof: `Nfts::CollectionConfigOf` (`max_values`: None, `max_size`: Some(73), added: 2548, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:1 w:1)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionRoleOf` (r:1 w:0)
+Proof: `Nfts::CollectionRoleOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
+Storage: `Nfts::Attribute` (r:1 w:1)
+Proof: `Nfts::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Parent` (r:0 w:1)
+Proof: `ContentRights::Parent` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:1)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=    134.2
+    + s    35.55
+              µs
+
+Reads = 11 + (1 * s)
+Writes = 9 + (1 * s)
+Recorded proof Size = 1012 + (52 * s)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    s   mean µs  sigma µs       %
+    0     134.1     0.909    0.6%
+    1     170.4      1.06    0.6%
+    2     205.6         1    0.4%
+    3     240.3     0.964    0.4%
+    4       276     1.182    0.4%
+    5     311.7     1.277    0.4%
+    6     347.4     1.328    0.3%
+    7     383.7     1.345    0.3%
+    8       419     1.122    0.2%
+    9     456.5     1.531    0.3%
+   10     460.9     1.044    0.2%
+
+Quality and confidence:
+param     error
+s         0.065
+
+Model:
+Time ~=      135
+    + s    35.28
+              µs
+
+Reads = 11 + (1 * s)
+Writes = 9 + (1 * s)
+Recorded proof Size = 1004 + (54 * s)
+
+Pallet: "pallet_content_rights", Extrinsic: "check_access", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Ownership` (r:1 w:0)
+Proof: `ContentRights::Ownership` (`max_values`: None, `max_size`: Some(72), added: 2547, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Subscriptions` (r:1 w:0)
+Proof: `ContentRights::Subscriptions` (`max_values`: None, `max_size`: Some(77), added: 2552, mode: `MaxEncodedLen`)
+Storage: `ContentRights::ViewPacks` (r:1 w:0)
+Proof: `ContentRights::ViewPacks` (`max_values`: None, `max_size`: Some(76), added: 2551, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       20
+              µs
+
+Reads = 4
+Writes = 0
+Recorded proof Size = 374
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       20
+              µs
+
+Reads = 4
+Writes = 0
+Recorded proof Size = 374
+
+Pallet: "pallet_content_rights", Extrinsic: "xcm_subscribe", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Subscriptions` (r:1 w:1)
+Proof: `ContentRights::Subscriptions` (`max_values`: None, `max_size`: Some(77), added: 2552, mode: `MaxEncodedLen`)
+Storage: `ContentRights::RoyaltySplits` (r:1 w:0)
+Proof: `ContentRights::RoyaltySplits` (`max_values`: None, `max_size`: Some(361), added: 2836, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:11 w:11)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `ContentRights::NextItemId` (r:1 w:1)
+Proof: `ContentRights::NextItemId` (`max_values`: None, `max_size`: Some(24), added: 2499, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:1 w:1)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionConfigOf` (r:1 w:0)
+Proof: `Nfts::CollectionConfigOf` (`max_values`: None, `max_size`: Some(73), added: 2548, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:1 w:1)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionRoleOf` (r:1 w:0)
+Proof: `Nfts::CollectionRoleOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
+Storage: `Nfts::Attribute` (r:1 w:1)
+Proof: `Nfts::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Parent` (r:0 w:1)
+Proof: `ContentRights::Parent` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:1)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=    134.1
+    + s    35.71
+              µs
+
+Reads = 11 + (1 * s)
+Writes = 9 + (1 * s)
+Recorded proof Size = 1012 + (52 * s)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    s   mean µs  sigma µs       %
+    0     133.8     0.748    0.5%
+    1     169.6     0.545    0.3%
+    2     206.5     0.942    0.4%
+    3       242      1.66    0.6%
+    4       276     1.453    0.5%
+    5     311.4     1.248    0.4%
+    6     348.4     1.168    0.3%
+    7     385.3     2.025    0.5%
+    8     420.8     1.762    0.4%
+    9     457.5     2.049    0.4%
+   10     461.6     2.576    0.5%
+
+Quality and confidence:
+param     error
+s         0.069
+
+Model:
+Time ~=    134.9
+    + s    35.46
+              µs
+
+Reads = 11 + (1 * s)
+Writes = 9 + (1 * s)
+Recorded proof Size = 1004 + (54 * s)
+
+Pallet: "pallet_content_rights", Extrinsic: "xcm_renew_subscription", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Subscriptions` (r:1 w:1)
+Proof: `ContentRights::Subscriptions` (`max_values`: None, `max_size`: Some(77), added: 2552, mode: `MaxEncodedLen`)
+Storage: `ContentRights::RoyaltySplits` (r:1 w:0)
+Proof: `ContentRights::RoyaltySplits` (`max_values`: None, `max_size`: Some(361), added: 2836, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:10 w:10)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       55
+    + s    36.33
+              µs
+
+Reads = 4 + (1 * s)
+Writes = 2 + (1 * s)
+Recorded proof Size = 608 + (52 * s)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    s   mean µs  sigma µs       %
+    0     54.84     0.366    0.6%
+    1     90.46     0.498    0.5%
+    2     128.5     1.313    1.0%
+    3     163.9     1.718    1.0%
+    4     200.7     2.035    1.0%
+    5     236.7     1.628    0.6%
+    6       274     1.165    0.4%
+    7       311     1.984    0.6%
+    8     346.7      2.08    0.5%
+    9     383.4     3.088    0.8%
+   10       388     5.176    1.3%
+
+Quality and confidence:
+param     error
+s         0.072
+
+Model:
+Time ~=    55.84
+    + s    36.12
+              µs
+
+Reads = 4 + (1 * s)
+Writes = 2 + (1 * s)
+Recorded proof Size = 602 + (54 * s)
+
+Pallet: "pallet_content_rights", Extrinsic: "xcm_purchase_views", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::RoyaltySplits` (r:1 w:0)
+Proof: `ContentRights::RoyaltySplits` (`max_values`: None, `max_size`: Some(361), added: 2836, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:11 w:11)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `ContentRights::ViewPacks` (r:1 w:1)
+Proof: `ContentRights::ViewPacks` (`max_values`: None, `max_size`: Some(76), added: 2551, mode: `MaxEncodedLen`)
+Storage: `ContentRights::NextItemId` (r:1 w:1)
+Proof: `ContentRights::NextItemId` (`max_values`: None, `max_size`: Some(24), added: 2499, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:1 w:1)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionConfigOf` (r:1 w:0)
+Proof: `Nfts::CollectionConfigOf` (`max_values`: None, `max_size`: Some(73), added: 2548, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:1 w:1)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionRoleOf` (r:1 w:0)
+Proof: `Nfts::CollectionRoleOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
+Storage: `Nfts::Attribute` (r:1 w:1)
+Proof: `Nfts::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Parent` (r:0 w:1)
+Proof: `ContentRights::Parent` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:1)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=    136.2
+    + s    35.85
+              µs
+
+Reads = 11 + (1 * s)
+Writes = 9 + (1 * s)
+Recorded proof Size = 1012 + (52 * s)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    s   mean µs  sigma µs       %
+    0     135.8     1.113    0.8%
+    1     173.1     2.062    1.1%
+    2     207.9     1.957    0.9%
+    3     243.7      2.08    0.8%
+    4     278.8     1.959    0.7%
+    5     315.5     2.475    0.7%
+    6     358.7     8.753    2.4%
+    7     385.9     4.154    1.0%
+    8     426.8     3.971    0.9%
+    9     463.1     4.327    0.9%
+   10     468.3     2.968    0.6%
+
+Quality and confidence:
+param     error
+s         0.093
+
+Model:
+Time ~=    136.6
+    + s    35.92
+              µs
+
+Reads = 11 + (1 * s)
+Writes = 9 + (1 * s)
+Recorded proof Size = 1004 + (54 * s)
+
+Pallet: "pallet_content_rights", Extrinsic: "xcm_purchase_ownership", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Ownership` (r:1 w:1)
+Proof: `ContentRights::Ownership` (`max_values`: None, `max_size`: Some(72), added: 2547, mode: `MaxEncodedLen`)
+Storage: `ContentRights::RoyaltySplits` (r:1 w:0)
+Proof: `ContentRights::RoyaltySplits` (`max_values`: None, `max_size`: Some(361), added: 2836, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:11 w:11)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `ContentRights::NextItemId` (r:1 w:1)
+Proof: `ContentRights::NextItemId` (`max_values`: None, `max_size`: Some(24), added: 2499, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:1 w:1)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionConfigOf` (r:1 w:0)
+Proof: `Nfts::CollectionConfigOf` (`max_values`: None, `max_size`: Some(73), added: 2548, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:1 w:1)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionRoleOf` (r:1 w:0)
+Proof: `Nfts::CollectionRoleOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
+Storage: `Nfts::Attribute` (r:1 w:1)
+Proof: `Nfts::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Parent` (r:0 w:1)
+Proof: `ContentRights::Parent` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:1)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=      136
+    + s    35.75
+              µs
+
+Reads = 11 + (1 * s)
+Writes = 9 + (1 * s)
+Recorded proof Size = 1012 + (52 * s)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    s   mean µs  sigma µs       %
+    0     135.7     1.277    0.9%
+    1     171.5     1.471    0.8%
+    2     208.2     1.682    0.8%
+    3     243.5     1.675    0.6%
+    4     278.5     1.982    0.7%
+    5     313.9     2.102    0.6%
+    6     351.8     3.111    0.8%
+    7       390     4.176    1.0%
+    8     423.3     2.817    0.6%
+    9     459.5     3.316    0.7%
+   10     467.5       3.5    0.7%
+
+Quality and confidence:
+param     error
+s         0.072
+
+Model:
+Time ~=    136.5
+    + s    35.66
+              µs
+
+Reads = 11 + (1 * s)
+Writes = 9 + (1 * s)
+Recorded proof Size = 1004 + (54 * s)
+
+Pallet: "pallet_content_rights", Extrinsic: "transfer_ownership", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Ownership` (r:2 w:2)
+Proof: `ContentRights::Ownership` (`max_values`: None, `max_size`: Some(72), added: 2547, mode: `MaxEncodedLen`)
+Storage: `Nfts::Attribute` (r:2 w:1)
+Proof: `Nfts::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:2 w:2)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:2 w:2)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:1 w:1)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemMetadataOf` (r:1 w:0)
+Proof: `Nfts::ItemMetadataOf` (`max_values`: None, `max_size`: Some(347), added: 2822, mode: `MaxEncodedLen`)
+Storage: `ContentRights::NextItemId` (r:1 w:1)
+Proof: `ContentRights::NextItemId` (`max_values`: None, `max_size`: Some(24), added: 2499, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionConfigOf` (r:1 w:0)
+Proof: `Nfts::CollectionConfigOf` (`max_values`: None, `max_size`: Some(73), added: 2548, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionRoleOf` (r:1 w:0)
+Proof: `Nfts::CollectionRoleOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Parent` (r:0 w:2)
+Proof: `ContentRights::Parent` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:2)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemPriceOf` (r:0 w:1)
+Proof: `Nfts::ItemPriceOf` (`max_values`: None, `max_size`: Some(89), added: 2564, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemAttributesApprovalsOf` (r:0 w:1)
+Proof: `Nfts::ItemAttributesApprovalsOf` (`max_values`: None, `max_size`: Some(1001), added: 3476, mode: `MaxEncodedLen`)
+Storage: `Nfts::PendingSwapOf` (r:0 w:1)
+Proof: `Nfts::PendingSwapOf` (`max_values`: None, `max_size`: Some(71), added: 2546, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=      148
+              µs
+
+Reads = 15
+Writes = 17
+Recorded proof Size = 1384
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=      148
+              µs
+
+Reads = 15
+Writes = 17
+Recorded proof Size = 1384
+
+Pallet: "pallet_content_rights", Extrinsic: "xcm_transfer_ownership", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Ownership` (r:2 w:2)
+Proof: `ContentRights::Ownership` (`max_values`: None, `max_size`: Some(72), added: 2547, mode: `MaxEncodedLen`)
+Storage: `Nfts::Attribute` (r:2 w:1)
+Proof: `Nfts::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:2 w:2)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:2 w:2)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:1 w:1)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemMetadataOf` (r:1 w:0)
+Proof: `Nfts::ItemMetadataOf` (`max_values`: None, `max_size`: Some(347), added: 2822, mode: `MaxEncodedLen`)
+Storage: `ContentRights::NextItemId` (r:1 w:1)
+Proof: `ContentRights::NextItemId` (`max_values`: None, `max_size`: Some(24), added: 2499, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionConfigOf` (r:1 w:0)
+Proof: `Nfts::CollectionConfigOf` (`max_values`: None, `max_size`: Some(73), added: 2548, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionRoleOf` (r:1 w:0)
+Proof: `Nfts::CollectionRoleOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Parent` (r:0 w:2)
+Proof: `ContentRights::Parent` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:2)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemPriceOf` (r:0 w:1)
+Proof: `Nfts::ItemPriceOf` (`max_values`: None, `max_size`: Some(89), added: 2564, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemAttributesApprovalsOf` (r:0 w:1)
+Proof: `Nfts::ItemAttributesApprovalsOf` (`max_values`: None, `max_size`: Some(1001), added: 3476, mode: `MaxEncodedLen`)
+Storage: `Nfts::PendingSwapOf` (r:0 w:1)
+Proof: `Nfts::PendingSwapOf` (`max_values`: None, `max_size`: Some(71), added: 2546, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=      149
+              µs
+
+Reads = 15
+Writes = 17
+Recorded proof Size = 1384
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=      149
+              µs
+
+Reads = 15
+Writes = 17
+Recorded proof Size = 1384
+
+Pallet: "pallet_content_rights", Extrinsic: "set_royalty_splits", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::RoyaltySplits` (r:0 w:1)
+Proof: `ContentRights::RoyaltySplits` (`max_values`: None, `max_size`: Some(361), added: 2836, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       11
+    + s        0
+              µs
+
+Reads = 1 + (0 * s)
+Writes = 1 + (0 * s)
+Recorded proof Size = 362 + (0 * s)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    s   mean µs  sigma µs       %
+    0     11.36      0.48    4.2%
+    1     11.68     0.466    3.9%
+    2     11.48     0.499    4.3%
+    3      11.6     0.489    4.2%
+    4      11.4     0.489    4.2%
+    5     11.62     0.485    4.1%
+    6     11.68     0.466    3.9%
+    7      11.5       0.5    4.3%
+    8        11         0    0.0%
+    9      11.1       0.3    2.7%
+   10      11.2       0.4    3.5%
+
+Quality and confidence:
+param     error
+s         0.007
+
+Model:
+Time ~=    11.61
+    + s        0
+              µs
+
+Reads = 1 + (0 * s)
+Writes = 1 + (0 * s)
+Recorded proof Size = 362 + (0 * s)
+
+Pallet: "pallet_content_rights", Extrinsic: "enable_auto_renew", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Subscriptions` (r:1 w:1)
+Proof: `ContentRights::Subscriptions` (`max_values`: None, `max_size`: Some(77), added: 2552, mode: `MaxEncodedLen`)
+Storage: `ContentRights::RenewalQueue` (r:100 w:1)
+Proof: `ContentRights::RenewalQueue` (`max_values`: None, `max_size`: Some(373), added: 2848, mode: `MaxEncodedLen`)
+Storage: `ContentRights::AutoRenewIndex` (r:0 w:1)
+Proof: `ContentRights::AutoRenewIndex` (`max_values`: None, `max_size`: Some(53), added: 2528, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=      327
+              µs
+
+Reads = 102
+Writes = 3
+Recorded proof Size = 38181
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=      327
+              µs
+
+Reads = 102
+Writes = 3
+Recorded proof Size = 38181
+
+Pallet: "pallet_content_rights", Extrinsic: "disable_auto_renew", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Subscriptions` (r:1 w:1)
+Proof: `ContentRights::Subscriptions` (`max_values`: None, `max_size`: Some(77), added: 2552, mode: `MaxEncodedLen`)
+Storage: `ContentRights::AutoRenewIndex` (r:0 w:1)
+Proof: `ContentRights::AutoRenewIndex` (`max_values`: None, `max_size`: Some(53), added: 2528, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       13
+              µs
+
+Reads = 1
+Writes = 2
+Recorded proof Size = 299
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       13
+              µs
+
+Reads = 1
+Writes = 2
+Recorded proof Size = 299
+
+Pallet: "pallet_content_rights", Extrinsic: "query_rights_metadata", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::RoyaltySplits` (r:1 w:0)
+Proof: `ContentRights::RoyaltySplits` (`max_values`: None, `max_size`: Some(361), added: 2836, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       13
+    + s        0
+              µs
+
+Reads = 2 + (0 * s)
+Writes = 0 + (0 * s)
+Recorded proof Size = 407 + (34 * s)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    s   mean µs  sigma µs       %
+    0     12.34     0.473    3.8%
+    1      12.3     0.458    3.7%
+    2     12.26     0.438    3.5%
+    3     12.68     0.466    3.6%
+    4     12.74     0.438    3.4%
+    5     12.88     0.324    2.5%
+    6        13         0    0.0%
+    7     12.56     0.496    3.9%
+    8      12.8       0.4    3.1%
+    9     12.95     0.217    1.6%
+   10        13         0    0.0%
+
+Quality and confidence:
+param     error
+s         0.006
+
+Model:
+Time ~=    12.33
+    + s    0.069
+              µs
+
+Reads = 2 + (0 * s)
+Writes = 0 + (0 * s)
+Recorded proof Size = 406 + (34 * s)
+
+Pallet: "pallet_content_rights", Extrinsic: "set_meter", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Meters` (r:0 w:1)
+Proof: `ContentRights::Meters` (`max_values`: None, `max_size`: Some(52), added: 2527, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       11
+              µs
+
+Reads = 1
+Writes = 1
+Recorded proof Size = 362
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       11
+              µs
+
+Reads = 1
+Writes = 1
+Recorded proof Size = 362
+
+Pallet: "pallet_content_rights", Extrinsic: "consume_view_for", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Meters` (r:1 w:0)
+Proof: `ContentRights::Meters` (`max_values`: None, `max_size`: Some(52), added: 2527, mode: `MaxEncodedLen`)
+Storage: `ContentRights::ViewPacks` (r:1 w:1)
+Proof: `ContentRights::ViewPacks` (`max_values`: None, `max_size`: Some(76), added: 2551, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `Nfts::Attribute` (r:1 w:0)
+Proof: `Nfts::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:1 w:1)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:1 w:1)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:1 w:1)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemMetadataOf` (r:1 w:0)
+Proof: `Nfts::ItemMetadataOf` (`max_values`: None, `max_size`: Some(347), added: 2822, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Parent` (r:0 w:1)
+Proof: `ContentRights::Parent` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:1)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemPriceOf` (r:0 w:1)
+Proof: `Nfts::ItemPriceOf` (`max_values`: None, `max_size`: Some(89), added: 2564, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemAttributesApprovalsOf` (r:0 w:1)
+Proof: `Nfts::ItemAttributesApprovalsOf` (`max_values`: None, `max_size`: Some(1001), added: 3476, mode: `MaxEncodedLen`)
+Storage: `Nfts::PendingSwapOf` (r:0 w:1)
+Proof: `Nfts::PendingSwapOf` (`max_values`: None, `max_size`: Some(71), added: 2546, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       74
+              µs
+
+Reads = 9
+Writes = 10
+Recorded proof Size = 1366
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=       74
+              µs
+
+Reads = 9
+Writes = 10
+Recorded proof Size = 1366
+
+Pallet: "pallet_content_rights", Extrinsic: "on_initialize_renewals", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::RenewalQueue` (r:101 w:1)
+Proof: `ContentRights::RenewalQueue` (`max_values`: None, `max_size`: Some(373), added: 2848, mode: `MaxEncodedLen`)
+Storage: `ContentRights::AutoRenewIndex` (r:10 w:10)
+Proof: `ContentRights::AutoRenewIndex` (`max_values`: None, `max_size`: Some(53), added: 2528, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Subscriptions` (r:10 w:10)
+Proof: `ContentRights::Subscriptions` (`max_values`: None, `max_size`: Some(77), added: 2552, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::RoyaltySplits` (r:1 w:0)
+Proof: `ContentRights::RoyaltySplits` (`max_values`: None, `max_size`: Some(361), added: 2836, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:20 w:20)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=        0
+    + n      480
+    + s    310.3
+              µs
+
+Reads = 103 + (3 * n) + (1 * s)
+Writes = 1 + (3 * n) + (1 * s)
+Recorded proof Size = 38403 + (286 * n) + (172 * s)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    n     s   mean µs  sigma µs       %
+    0    10      7.36      0.48    6.5%
+    1    10       692     1.701    0.2%
+    2    10      1178     2.998    0.2%
+    3    10      1643     3.383    0.2%
+    4    10      2124     3.684    0.1%
+    5    10      2607      4.66    0.1%
+    6    10      3080      4.47    0.1%
+    7    10      3574     25.02    0.6%
+    8    10      4030      13.2    0.3%
+    9    10      4528        27    0.5%
+   10     0      2193     7.991    0.3%
+   10     1      2498     4.192    0.1%
+   10     2      2818     6.762    0.2%
+   10     3      3159     11.46    0.3%
+   10     4      3451      9.33    0.2%
+   10     5      3746     12.82    0.3%
+   10     6      4068     14.15    0.3%
+   10     7      4368      9.79    0.2%
+   10     8      4685     15.24    0.3%
+   10     9      5033     55.39    1.1%
+   10    10      4992     6.953    0.1%
+
+Quality and confidence:
+param     error
+n         3.095
+s         3.095
+
+Model:
+Time ~=        7
+    + n    320.7
+    + s    103.5
+              µs
+
+Reads = 54 + (8 * n) + (2 * s)
+Writes = 1 + (3 * n) + (1 * s)
+Recorded proof Size = 21267 + (1856 * n) + (703 * s)
+
+Pallet: "pallet_content_rights", Extrinsic: "scale_subscribe", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Subscriptions` (r:1 w:1)
+Proof: `ContentRights::Subscriptions` (`max_values`: None, `max_size`: Some(77), added: 2552, mode: `MaxEncodedLen`)
+Storage: `ContentRights::RoyaltySplits` (r:1 w:0)
+Proof: `ContentRights::RoyaltySplits` (`max_values`: None, `max_size`: Some(361), added: 2836, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:1 w:1)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `ContentRights::NextItemId` (r:1 w:1)
+Proof: `ContentRights::NextItemId` (`max_values`: None, `max_size`: Some(24), added: 2499, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:1 w:1)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionConfigOf` (r:1 w:0)
+Proof: `Nfts::CollectionConfigOf` (`max_values`: None, `max_size`: Some(73), added: 2548, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:1 w:1)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionRoleOf` (r:1 w:0)
+Proof: `Nfts::CollectionRoleOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
+Storage: `Nfts::Attribute` (r:1 w:1)
+Proof: `Nfts::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Parent` (r:0 w:1)
+Proof: `ContentRights::Parent` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:1)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=    162.7
+    + h    0.033
+              µs
+
+Reads = 11 + (0 * h)
+Writes = 9 + (0 * h)
+Recorded proof Size = 4296 + (0 * h)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    h   mean µs  sigma µs       %
+    0     131.6     2.537    1.9%
+   40       158     5.079    3.2%
+   81     148.8     1.077    0.7%
+  122     154.2     0.979    0.6%
+  163     157.3     1.187    0.7%
+  204     164.5     1.284    0.7%
+  244     167.1     2.808    1.6%
+  285       164     1.949    1.1%
+  326       162         1    0.6%
+  367     181.2     6.013    3.3%
+  408       187     5.983    3.1%
+  448     178.9     4.392    2.4%
+  489       176     3.435    1.9%
+  530     190.9     7.189    3.7%
+  571     179.9     3.726    2.0%
+  612     189.7     4.382    2.3%
+  653     195.5     6.682    3.4%
+  693     230.2     30.06   13.0%
+  734     209.4      5.18    2.4%
+  775     190.7     3.661    1.9%
+  816     205.6     9.221    4.4%
+  857     211.6     4.386    2.0%
+  897     206.2     6.675    3.2%
+  938     218.5     7.902    3.6%
+  979       212     10.31    4.8%
+ 1020     207.6     5.314    2.5%
+ 1061     205.5     4.522    2.2%
+ 1102     207.2     3.789    1.8%
+ 1142     209.2     5.617    2.6%
+ 1183     211.6     4.223    1.9%
+ 1224     208.7     7.861    3.7%
+ 1265     200.2     6.808    3.4%
+ 1306     207.7     4.473    2.1%
+ 1346     219.3     7.785    3.5%
+ 1387     200.1     5.682    2.8%
+ 1428     215.3     6.783    3.1%
+ 1469     218.4     5.083    2.3%
+ 1510     221.1     4.414    1.9%
+ 1551     199.2      4.77    2.3%
+ 1591       204     3.687    1.8%
+ 1632     213.6     6.232    2.9%
+ 1673     215.8     5.436    2.5%
+ 1714     210.3     4.648    2.2%
+ 1755     216.3     3.796    1.7%
+ 1795     207.8     3.059    1.4%
+ 1836     220.9      15.6    7.0%
+ 1877     219.2     8.726    3.9%
+ 1918       224     7.589    3.3%
+ 1959       216     5.865    2.7%
+ 2000     226.4     7.863    3.4%
+
+Quality and confidence:
+param     error
+h         0.001
+
+Model:
+Time ~=    164.6
+    + h    0.032
+              µs
+
+Reads = 11 + (0 * h)
+Writes = 9 + (0 * h)
+Recorded proof Size = 3951 + (1 * h)
+
+Pallet: "pallet_content_rights", Extrinsic: "scale_check_access", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Ownership` (r:1 w:0)
+Proof: `ContentRights::Ownership` (`max_values`: None, `max_size`: Some(72), added: 2547, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Subscriptions` (r:1 w:0)
+Proof: `ContentRights::Subscriptions` (`max_values`: None, `max_size`: Some(77), added: 2552, mode: `MaxEncodedLen`)
+Storage: `ContentRights::ViewPacks` (r:1 w:0)
+Proof: `ContentRights::ViewPacks` (`max_values`: None, `max_size`: Some(76), added: 2551, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=    36.33
+    + h    0.005
+              µs
+
+Reads = 4 + (0 * h)
+Writes = 0 + (0 * h)
+Recorded proof Size = 1551 + (0 * h)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    h   mean µs  sigma µs       %
+    0      18.1       0.3    1.6%
+   40      35.3     5.532   15.6%
+   81      30.2       2.4    7.9%
+  122      28.4     1.685    5.9%
+  163        42     1.788    4.2%
+  204      41.7     4.775   11.4%
+  244      39.6     2.289    5.7%
+  285      42.6     2.244    5.2%
+  326      33.3     2.325    6.9%
+  367      31.7     1.268    4.0%
+  408      37.9     2.165    5.7%
+  448      43.3     2.238    5.1%
+  489        44     5.477   12.4%
+  530      41.3     2.865    6.9%
+  571      38.4       2.2    5.7%
+  612        39     3.376    8.6%
+  653      34.9     1.445    4.1%
+  693      39.9      3.33    8.3%
+  734      39.7       2.1    5.2%
+  775      49.2     1.939    3.9%
+  816      46.7     2.193    4.6%
+  857      45.7     1.791    3.9%
+  897      44.6       2.2    4.9%
+  938      38.8     1.166    3.0%
+  979      39.2     3.682    9.3%
+ 1020      43.3     1.417    3.2%
+ 1061      44.1       1.7    3.8%
+ 1102      38.7     2.722    7.0%
+ 1142      44.8     2.891    6.4%
+ 1183      43.6     1.854    4.2%
+ 1224      48.7     1.791    3.6%
+ 1265      48.6     0.916    1.8%
+ 1306      46.5     1.024    2.2%
+ 1346      45.9      0.83    1.8%
+ 1387      46.4     1.685    3.6%
+ 1428      39.4     1.428    3.6%
+ 1469      39.4     1.428    3.6%
+ 1510      45.9     2.022    4.4%
+ 1551      47.3     1.004    2.1%
+ 1591      45.9      0.83    1.8%
+ 1632        47     1.183    2.5%
+ 1673      37.8     0.871    2.3%
+ 1714      44.4     1.496    3.3%
+ 1755        41     1.264    3.0%
+ 1795        44     1.183    2.6%
+ 1836      44.5     1.431    3.2%
+ 1877      45.6     0.916    2.0%
+ 1918      44.7     1.734    3.8%
+ 1959      47.4       1.8    3.7%
+ 2000      45.2       1.4    3.0%
+
+Quality and confidence:
+param     error
+h             0
+
+Model:
+Time ~=    35.54
+    + h    0.005
+              µs
+
+Reads = 4 + (0 * h)
+Writes = 0 + (0 * h)
+Recorded proof Size = 1448 + (0 * h)
+
+Pallet: "pallet_content_rights", Extrinsic: "scale_consume_view", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::ViewPacks` (r:1 w:1)
+Proof: `ContentRights::ViewPacks` (`max_values`: None, `max_size`: Some(76), added: 2551, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `Nfts::Attribute` (r:1 w:0)
+Proof: `Nfts::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:1 w:1)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:1 w:1)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:1 w:1)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemMetadataOf` (r:1 w:0)
+Proof: `Nfts::ItemMetadataOf` (`max_values`: None, `max_size`: Some(347), added: 2822, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Parent` (r:0 w:1)
+Proof: `ContentRights::Parent` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:1)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemPriceOf` (r:0 w:1)
+Proof: `Nfts::ItemPriceOf` (`max_values`: None, `max_size`: Some(89), added: 2564, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemAttributesApprovalsOf` (r:0 w:1)
+Proof: `Nfts::ItemAttributesApprovalsOf` (`max_values`: None, `max_size`: Some(1001), added: 3476, mode: `MaxEncodedLen`)
+Storage: `Nfts::PendingSwapOf` (r:0 w:1)
+Proof: `Nfts::PendingSwapOf` (`max_values`: None, `max_size`: Some(71), added: 2546, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=      114
+    + h     0.01
+              µs
+
+Reads = 8 + (0 * h)
+Writes = 10 + (0 * h)
+Recorded proof Size = 4453 + (0 * h)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    h   mean µs  sigma µs       %
+    0      80.7     7.349    9.1%
+   40      83.4     1.356    1.6%
+   81       118     8.124    6.8%
+  122     114.3     8.402    7.3%
+  163       119     5.366    4.5%
+  204     116.5     6.119    5.2%
+  244     104.4     6.575    6.2%
+  285     105.7       4.9    4.6%
+  326     112.2     4.019    3.5%
+  367     132.1     4.846    3.6%
+  408     134.5     5.518    4.1%
+  448     122.3     3.001    2.4%
+  489     114.2     7.756    6.7%
+  530       127     8.694    6.8%
+  571     129.3      4.98    3.8%
+  612     113.7     5.692    5.0%
+  653     119.5     8.523    7.1%
+  693       127     5.458    4.2%
+  734     128.1     6.363    4.9%
+  775       128     3.605    2.8%
+  816     123.7     3.976    3.2%
+  857     130.5     4.177    3.2%
+  897     127.9     3.884    3.0%
+  938     124.8     2.785    2.2%
+  979     125.4     6.343    5.0%
+ 1020     123.3     7.267    5.8%
+ 1061       109         2    1.8%
+ 1102       110     1.483    1.3%
+ 1142     116.4     3.006    2.5%
+ 1183     129.9       3.3    2.5%
+ 1224     137.6     4.673    3.3%
+ 1265     134.7     3.195    2.3%
+ 1306     141.6      6.59    4.6%
+ 1346     134.8       2.4    1.7%
+ 1387       113     2.144    1.8%
+ 1428     118.3     3.436    2.9%
+ 1469     132.7     6.512    4.9%
+ 1510       139      8.16    5.8%
+ 1551     134.7     4.172    3.0%
+ 1591     137.3         6    4.3%
+ 1632     130.4     4.386    3.3%
+ 1673     130.5     6.086    4.6%
+ 1714     133.3     3.067    2.3%
+ 1755     132.8     3.218    2.4%
+ 1795     129.5     5.142    3.9%
+ 1836       132     2.756    2.0%
+ 1877     128.9     5.008    3.8%
+ 1918     124.6     4.715    3.7%
+ 1959     121.1     2.624    2.1%
+ 2000     123.7     2.609    2.1%
+
+Quality and confidence:
+param     error
+h             0
+
+Model:
+Time ~=    111.6
+    + h    0.011
+              µs
+
+Reads = 8 + (0 * h)
+Writes = 10 + (0 * h)
+Recorded proof Size = 4096 + (1 * h)
+
+Pallet: "pallet_content_rights", Extrinsic: "scale_transfer_ownership", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
+Raw Storage Info
+========
+Storage: `ContentRights::Contents` (r:1 w:0)
+Proof: `ContentRights::Contents` (`max_values`: None, `max_size`: Some(274), added: 2749, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Ownership` (r:2 w:2)
+Proof: `ContentRights::Ownership` (`max_values`: None, `max_size`: Some(72), added: 2547, mode: `MaxEncodedLen`)
+Storage: `Nfts::Attribute` (r:2 w:1)
+Proof: `Nfts::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemConfigOf` (r:2 w:2)
+Proof: `Nfts::ItemConfigOf` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Collection` (r:1 w:1)
+Proof: `Nfts::Collection` (`max_values`: None, `max_size`: Some(84), added: 2559, mode: `MaxEncodedLen`)
+Storage: `Nfts::Item` (r:2 w:2)
+Proof: `Nfts::Item` (`max_values`: None, `max_size`: Some(861), added: 3336, mode: `MaxEncodedLen`)
+Storage: `System::Account` (r:1 w:1)
+Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemMetadataOf` (r:1 w:0)
+Proof: `Nfts::ItemMetadataOf` (`max_values`: None, `max_size`: Some(347), added: 2822, mode: `MaxEncodedLen`)
+Storage: `ContentRights::NextItemId` (r:1 w:1)
+Proof: `ContentRights::NextItemId` (`max_values`: None, `max_size`: Some(24), added: 2499, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionConfigOf` (r:1 w:0)
+Proof: `Nfts::CollectionConfigOf` (`max_values`: None, `max_size`: Some(73), added: 2548, mode: `MaxEncodedLen`)
+Storage: `Nfts::CollectionRoleOf` (r:1 w:0)
+Proof: `Nfts::CollectionRoleOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
+Storage: `ContentRights::Parent` (r:0 w:2)
+Proof: `ContentRights::Parent` (`max_values`: None, `max_size`: Some(48), added: 2523, mode: `MaxEncodedLen`)
+Storage: `Nfts::Account` (r:0 w:2)
+Proof: `Nfts::Account` (`max_values`: None, `max_size`: Some(88), added: 2563, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemPriceOf` (r:0 w:1)
+Proof: `Nfts::ItemPriceOf` (`max_values`: None, `max_size`: Some(89), added: 2564, mode: `MaxEncodedLen`)
+Storage: `Nfts::ItemAttributesApprovalsOf` (r:0 w:1)
+Proof: `Nfts::ItemAttributesApprovalsOf` (`max_values`: None, `max_size`: Some(1001), added: 3476, mode: `MaxEncodedLen`)
+Storage: `Nfts::PendingSwapOf` (r:0 w:1)
+Proof: `Nfts::PendingSwapOf` (`max_values`: None, `max_size`: Some(71), added: 2546, mode: `MaxEncodedLen`)
+
+Median Slopes Analysis
+========
+-- Extrinsic Time --
+
+Model:
+Time ~=    181.9
+    + h    0.023
+              µs
+
+Reads = 15 + (0 * h)
+Writes = 17 + (0 * h)
+Recorded proof Size = 5807 + (1 * h)
+
+Min Squares Analysis
+========
+-- Extrinsic Time --
+
+Data points distribution:
+    h   mean µs  sigma µs       %
+    0     145.4     0.489    0.3%
+   40     164.9       0.3    0.1%
+   81     170.5       0.5    0.2%
+  122     174.2     0.871    0.5%
+  163       175     0.894    0.5%
+  204     190.5     3.106    1.6%
+  244     197.8     4.093    2.0%
+  285     204.1     7.905    3.8%
+  326     197.8     4.707    2.3%
+  367     189.3     1.486    0.7%
+  408     193.8       1.4    0.7%
+  448     196.6     6.452    3.2%
+  489     197.9     3.858    1.9%
+  530     194.5     1.857    0.9%
+  571     194.5     3.956    2.0%
+  612     222.7     4.561    2.0%
+  653     202.3      5.04    2.4%
+  693     205.9     5.068    2.4%
+  734     205.6     3.527    1.7%
+  775     206.1     5.146    2.4%
+  816     198.7     2.794    1.4%
+  857     215.5     6.296    2.9%
+  897     201.9     1.044    0.5%
+  938     205.8     3.969    1.9%
+  979     205.2     1.886    0.9%
+ 1020     206.5     2.801    1.3%
+ 1061       208      3.13    1.5%
+ 1102     206.1     1.868    0.9%
+ 1142     214.2     8.795    4.1%
+ 1183     204.2     1.833    0.8%
+ 1224     219.1      6.22    2.8%
+ 1265     212.4      3.44    1.6%
+ 1306     214.7     4.405    2.0%
+ 1346     222.9     6.992    3.1%
+ 1387       215     1.264    0.5%
+ 1428     209.6     3.693    1.7%
+ 1469     217.5     3.232    1.4%
+ 1510     216.1      3.36    1.5%
+ 1551     211.1     2.022    0.9%
+ 1591     222.3     3.661    1.6%
+ 1632     221.5     3.041    1.3%
+ 1673     216.6     1.356    0.6%
+ 1714     220.9     3.014    1.3%
+ 1755     221.7     3.377    1.5%
+ 1795     217.8     3.709    1.7%
+ 1836     219.6     2.615    1.1%
+ 1877     226.1     2.844    1.2%
+ 1918     230.9     5.223    2.2%
+ 1959     226.8     4.728    2.0%
+ 2000     226.5     4.006    1.7%
+
+Quality and confidence:
+param     error
+h             0
+
+Model:
+Time ~=      181
+    + h    0.024
+              µs
+
+Reads = 15 + (0 * h)
+Writes = 17 + (0 * h)
+Recorded proof Size = 5214 + (2 * h)
+
+Created file: "pallets/content-rights/src/weights.rs"

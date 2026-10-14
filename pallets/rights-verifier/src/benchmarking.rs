@@ -16,7 +16,7 @@ use frame::prelude::*;
 use frame_system::RawOrigin;
 use polkadot_sdk::sp_core::H256;
 use polkadot_sdk::sp_runtime::traits::{BlakeTwo256, Header as _};
-use polkadot_sdk::sp_trie::{trie_types::TrieDBMutBuilderV1, MemoryDB, TrieMut};
+use polkadot_sdk::sp_trie::{trie_types::TrieDBMutBuilderV1, MemoryDB, RandomState, TrieMut};
 
 const RELAY_BLOCK: u32 = 1_000_000;
 const RIGHTS_BLOCK: u32 = 50;
@@ -28,7 +28,9 @@ const PAD_NODE: usize = 512;
 /// Build a trie from `entries`; returns its root and all its nodes (a valid,
 /// complete proof for any key in it).
 fn trie(entries: &[(Vec<u8>, Vec<u8>)]) -> (H256, Vec<Vec<u8>>) {
-	let mut db = MemoryDB::<BlakeTwo256>::default();
+	// `MemoryDB::default()` exists only with std; this is the same database
+	// (null node `[0]`) built the way sp-trie builds it without std.
+	let mut db = MemoryDB::<BlakeTwo256>::with_hasher(RandomState::default());
 	let mut root = H256::default();
 	{
 		let mut t = TrieDBMutBuilderV1::<BlakeTwo256>::new(&mut db, &mut root).build();
