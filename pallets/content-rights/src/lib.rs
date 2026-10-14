@@ -332,7 +332,8 @@ pub mod pallet {
 
 			let due = RenewalQueue::<T>::take(current_block);
 			let processed = due.len() as u32;
-			let mut max_splits: u32 = 0;
+			// Royalty-split transfers attempted across all renewals this block.
+			let mut split_payments: u32 = 0;
 
 			for (content_id, subscriber) in due.into_iter() {
 				// Auto-renew disabled since this entry was queued: drop it.
@@ -384,7 +385,7 @@ pub mod pallet {
 
 				match paid {
 					Ok(splits) => {
-						max_splits = max_splits.max(splits);
+						split_payments = split_payments.saturating_add(splits);
 						let new_expiry = current_block.saturating_add(content.period_length);
 						Subscriptions::<T>::mutate(content_id, &subscriber, |sub_opt| {
 							if let Some(sub) = sub_opt {
@@ -407,6 +408,8 @@ pub mod pallet {
 						}
 					},
 					Err(_) => {
+						// Rolled back part-way: charge as if every split ran.
+						split_payments = split_payments.saturating_add(MAX_ROYALTY_SPLITS);
 						Self::stop_auto_renew(
 							content_id,
 							&subscriber,
@@ -416,16 +419,27 @@ pub mod pallet {
 				}
 			}
 
-			// Benchmarked worst case for `processed` entries whose content has up
-			// to `max_splits` royalty splits, each also searching the full window
-			// for its next slot (Finding L).
-			T::ContentRightsWeightInfo::on_initialize_renewals(processed, max_splits)
+			// Benchmarked worst case for `processed` entries, each searching the
+			// full window for its next slot, plus the measured marginal cost of
+			// the split transfers actually made (Finding L).
+			Self::renewals_weight(processed, split_payments)
 		}
 	}
 
 	// --------------- Helpers ---------------
 
 	impl<T: Config> Pallet<T> {
+		/// Weight of an `on_initialize` that processed `n` renewals making `p`
+		/// royalty-split transfers in total. Both terms are measured inside the
+		/// hook; the split term is the marginal cost above zero splits, so the
+		/// charge follows the n x s product rather than an additive fit.
+		pub(crate) fn renewals_weight(n: u32, p: u32) -> Weight {
+			let base = T::ContentRightsWeightInfo::on_initialize_renewals(n);
+			let splits = T::ContentRightsWeightInfo::on_initialize_split_payments(p)
+				.saturating_sub(T::ContentRightsWeightInfo::on_initialize_split_payments(0));
+			base.saturating_add(splits)
+		}
+
 		/// Allocate the next collection ID (mirrors pallet-nfts' internal counter).
 		fn next_collection_id() -> Result<u32, DispatchError> {
 			pallet_nfts::NextCollectionId::<T>::try_mutate(|id| {

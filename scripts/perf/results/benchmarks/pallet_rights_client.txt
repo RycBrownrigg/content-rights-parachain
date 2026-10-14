@@ -1,8 +1,8 @@
-2026-10-14 08:58:41 Initialized runtime log filter to 'INFO'
-2026-10-14 08:58:43 assembling new collators for new session 0 at #0
-2026-10-14 08:58:43 assembling new collators for new session 1 at #0
-2026-10-14 08:58:44 assembling new collators for new session 0 at #0
-2026-10-14 08:58:44 assembling new collators for new session 1 at #0
+2026-10-14 13:11:08 Initialized runtime log filter to 'INFO'
+2026-10-14 13:11:10 assembling new collators for new session 0 at #0
+2026-10-14 13:11:10 assembling new collators for new session 1 at #0
+2026-10-14 13:11:11 assembling new collators for new session 0 at #0
+2026-10-14 13:11:11 assembling new collators for new session 1 at #0
 Pallet: "pallet_rights_client", Extrinsic: "request", Lowest values: [], Highest values: [], Steps: 50, Repeat: 20
 Raw Storage Info
 ========
@@ -80,5 +80,5 @@ Writes = 2
 Recorded proof Size = 253
 
 Created file: "pallets/rights-client/src/weights.rs"
-2026-10-14 08:58:45 [  0 % ] Starting benchmark: pallet_rights_client::request
-2026-10-14 08:58:45 [ 50 % ] Starting benchmark: pallet_rights_client::on_outcome
+2026-10-14 13:11:12 [  0 % ] Starting benchmark: pallet_rights_client::request
+2026-10-14 13:11:12 [ 50 % ] Starting benchmark: pallet_rights_client::on_outcome

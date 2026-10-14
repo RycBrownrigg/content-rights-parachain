@@ -7,8 +7,13 @@
 //!   view pack (all three maps read);
 //! - `consume_view`/`consume_view_for` consume the last view (NFT burn);
 //! - `enable_auto_renew` searches the full 100-block window for a slot;
-//! - `on_initialize_renewals` processes `n` due renewals with `s` splits each,
-//!   and every renewal then searches the full window and fails to re-queue.
+//! - `on_initialize_renewals` processes `n` due renewals, each on its own
+//!   content item with no splits, and every renewal then searches the full
+//!   window and fails to re-queue;
+//! - `on_initialize_split_payments` processes ten such renewals carrying `p`
+//!   royalty-split transfers in total (0..=100). The hook charges
+//!   `renewals(n) + split_payments(p) - split_payments(0)`, so the charge
+//!   follows the n x s product that a single additive (n, s) model misses.
 //!
 //! The `scale_*` benchmarks are measurements, not charged weights: they repeat
 //! an operation on a content item that already has `h` holders (0..=2,000),
@@ -30,6 +35,7 @@ const SEED: u32 = 0;
 /// existential deposit (runtime ED is 0.001 UNIT; this is 10 UNIT).
 const PRICE: u128 = 10_000_000_000_000;
 const MAX_HOLDERS: u32 = 2_000;
+const MAX_SPLIT_PAYMENTS: u32 = MAX_RENEWALS_PER_BLOCK * MAX_ROYALTY_SPLITS;
 
 fn fund<T: Config>(who: &T::AccountId) {
 	let pay = BalanceOf::<T>::max_value() / 100_000u32.into();
@@ -84,9 +90,15 @@ fn as_bytes32<T: Config>(who: &T::AccountId) -> [u8; 32] {
 
 /// `s` royalty splits of 10% each, to accounts that do not exist yet.
 fn set_splits<T: Config>(content_id: u32, s: u32) {
+	set_splits_from::<T>(content_id, s, 0);
+}
+
+/// As `set_splits`, with recipient indices starting at `offset`, so that
+/// different content items pay different (new) accounts.
+fn set_splits_from<T: Config>(content_id: u32, s: u32, offset: u32) {
 	let splits: Vec<RoyaltySplit> = (0..s)
 		.map(|i| RoyaltySplit {
-			recipient: as_bytes32::<T>(&account::<T::AccountId>("split", i, SEED)),
+			recipient: as_bytes32::<T>(&account::<T::AccountId>("split", offset + i, SEED)),
 			basis_points: 1_000,
 		})
 		.collect();
@@ -140,6 +152,36 @@ fn add_holders<T: Config>(content_id: u32, creator: &T::AccountId, h: u32, kind:
 				Ownership::<T>::insert(content_id, &who, OwnershipInfo { child_item_id: child }),
 		}
 	}
+}
+
+/// Queue `n` renewals due next block, each on its own content item, with `p`
+/// royalty splits spread as evenly as possible across them (at most 10 each,
+/// recipients new). Every bucket in the next window is full, so each renewal
+/// searches the whole window and fails to re-queue. Returns the due block.
+fn setup_renewals<T: Config>(n: u32, p: u32) -> u32 {
+	let period = T::MinAutoRenewPeriod::get().max(1);
+	let block = now::<T>().saturating_add(1);
+	let mut due: Vec<(u32, T::AccountId)> = Vec::new();
+	for i in 0..n {
+		let (content_id, _) = register::<T>(period);
+		let s = p / n + if i < p % n { 1 } else { 0 };
+		set_splits_from::<T>(content_id, s, i * MAX_ROYALTY_SPLITS);
+		let who = funded::<T>("renewer", i);
+		Pallet::<T>::subscribe(RawOrigin::Signed(who.clone()).into(), content_id)
+			.expect("subscribe");
+		Subscriptions::<T>::mutate(content_id, &who, |sub| {
+			if let Some(sub) = sub {
+				sub.expiry_block = block;
+				sub.auto_renew = true;
+			}
+		});
+		AutoRenewIndex::<T>::insert((content_id, &who), true);
+		due.push((content_id, who));
+	}
+	RenewalQueue::<T>::insert(block, BoundedVec::try_from(due).expect("n <= 10; qed"));
+	fill_buckets::<T>(u32::MAX, block.saturating_add(period), MAX_RENEWAL_SLOT_SEARCH);
+	set_block::<T>(block);
+	block
 }
 
 #[benchmarks]
@@ -379,32 +421,20 @@ mod benchmarks {
 	}
 
 	#[benchmark]
-	fn on_initialize_renewals(
-		n: Linear<0, MAX_RENEWALS_PER_BLOCK>,
-		s: Linear<0, MAX_ROYALTY_SPLITS>,
-	) {
-		let period = T::MinAutoRenewPeriod::get().max(1);
-		let (content_id, _) = register::<T>(period);
-		set_splits::<T>(content_id, s);
-		let block = now::<T>().saturating_add(1);
-		let mut due: Vec<(u32, T::AccountId)> = Vec::new();
-		for i in 0..n {
-			let who = funded::<T>("renewer", i);
-			Pallet::<T>::subscribe(RawOrigin::Signed(who.clone()).into(), content_id)
-				.expect("subscribe");
-			Subscriptions::<T>::mutate(content_id, &who, |sub| {
-				if let Some(sub) = sub {
-					sub.expiry_block = block;
-					sub.auto_renew = true;
-				}
-			});
-			AutoRenewIndex::<T>::insert((content_id, &who), true);
-			due.push((content_id, who));
+	fn on_initialize_renewals(n: Linear<0, MAX_RENEWALS_PER_BLOCK>) {
+		let block = setup_renewals::<T>(n, 0);
+
+		#[block]
+		{
+			Pallet::<T>::on_initialize(block.into());
 		}
-		RenewalQueue::<T>::insert(block, BoundedVec::try_from(due).expect("n <= 10; qed"));
-		// Worst case: every renewal searches the whole window for its next slot.
-		fill_buckets::<T>(content_id, block.saturating_add(period), MAX_RENEWAL_SLOT_SEARCH);
-		set_block::<T>(block);
+
+		assert!(RenewalQueue::<T>::get(block).is_empty());
+	}
+
+	#[benchmark]
+	fn on_initialize_split_payments(p: Linear<0, MAX_SPLIT_PAYMENTS>) {
+		let block = setup_renewals::<T>(MAX_RENEWALS_PER_BLOCK, p);
 
 		#[block]
 		{
