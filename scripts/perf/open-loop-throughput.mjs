@@ -117,11 +117,11 @@ async function fund(api, alice, addresses) {
   const CHUNK = 500;
   for (let i = 0; i < addresses.length; i += CHUNK) {
     const part = addresses.slice(i, i + CHUNK);
-    await Promise.all(part.map((addr) => {
-      const tx = api.tx.balances.transferKeepAlive(addr, FUND)
-        .sign(alice, { nonce: nonce++, era: 0, blockHash: api.genesisHash });
-      return api.rpc.author.submitExtrinsic(tx.toHex());
-    }));
+    const signed = [];
+    for (const addr of part) {
+      signed.push(await api.tx.balances.transferKeepAlive(addr, FUND).signAsync(alice, { nonce: nonce++, era: 0 }));
+    }
+    await Promise.all(signed.map((tx) => api.rpc.author.submitExtrinsic(tx.toHex())));
   }
   const deadline = Date.now() + 10 * 60_000;
   for (;;) {
@@ -202,13 +202,15 @@ async function runRate(api, alice, keyring, contentId, rate, limits) {
   console.log('  funding...');
   await fund(api, alice, pairs.map((p) => p.address));
 
+  // signAsync with an explicit nonce and era 0 (immortal) fills in the runtime
+  // version and genesis hash itself; an immortal era needs no block header.
   // Transaction k: account k % nAccounts, nonce floor(k / nAccounts), so each
   // account's next nonce is sent DURATION / PER_ACCOUNT seconds after the last.
   console.log('  pre-signing...');
   const txs = [];
   for (let k = 0; k < total; k++) {
     const pair = pairs[k % nAccounts];
-    const tx = buildCall(api, contentId).sign(pair, { nonce: Math.floor(k / nAccounts), era: 0, blockHash: api.genesisHash });
+    const tx = await buildCall(api, contentId).signAsync(pair, { nonce: Math.floor(k / nAccounts), era: 0 });
     txs.push({ hex: tx.toHex(), hash: tx.hash.toHex(), length: tx.encodedLength });
   }
 
@@ -339,9 +341,9 @@ async function main() {
   console.log(`Content ${contentId} registered`);
 
   // Declared (pre-dispatch) weight of one transaction, for the predicted capacity.
-  const probe = keyring.addFromUri(`//openloop/${OP}/${RUN_ID}/probe`);
-  const probeTx = buildCall(api, contentId).sign(probe, { nonce: 0, era: 0, blockHash: api.genesisHash });
-  const info = await api.call.transactionPaymentApi.queryInfo(probeTx.toHex(), probeTx.encodedLength);
+  // paymentInfo fake-signs for an existing account (as fee-report.mjs does);
+  // the declared weight does not depend on the signer.
+  const info = await buildCall(api, contentId).paymentInfo(alice);
   const declared = { refTime: info.weight.refTime.toBigInt(), proofSize: info.weight.proofSize.toBigInt() };
 
   const results = [];
@@ -356,7 +358,7 @@ async function main() {
 
   const charged = results.find((r) => r.sampleChargedWeight)?.sampleChargedWeight;
   const per = (limit, w) => (w > 0n ? Number(limit / w) : null);
-  const txLen = results[0]?.txLength ?? probeTx.encodedLength;
+  const txLen = results[0]?.txLength ?? 0;
   const predicted = {
     declaredWeight: { refTime: declared.refTime.toString(), proofSize: declared.proofSize.toString() },
     chargedWeight: charged ?? null,
@@ -364,7 +366,7 @@ async function main() {
     perBlockByDeclaredProofSize: per(limits.normalProofSize, declared.proofSize),
     perBlockByChargedRefTime: charged ? per(limits.normalRefTime, BigInt(charged.refTime)) : null,
     perBlockByChargedProofSize: charged ? per(limits.normalProofSize, BigInt(charged.proofSize)) : null,
-    perBlockByLength: Math.floor(maxLenNormal / txLen),
+    perBlockByLength: txLen ? Math.floor(maxLenNormal / txLen) : null,
   };
   const best = results.reduce((m, r) => (r.windowTps > (m?.windowTps ?? -1) ? r : m), null);
   const summary = {

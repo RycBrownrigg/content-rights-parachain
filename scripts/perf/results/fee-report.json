@@ -1,0 +1,146 @@
+{
+  "timestamp": "2026-10-15T20:22:48.031Z",
+  "ws": "ws://127.0.0.1:9990",
+  "priceUnits": 10,
+  "blockLimit": {
+    "refTime": "1399875000000",
+    "proofSize": "7340032"
+  },
+  "declared": {
+    "register_content": {
+      "refTime": "1655447000",
+      "proofSize": "15021",
+      "feeUnits": 0.006198877683,
+      "blockSharePct": 0.2046,
+      "maxPerBlock": 488
+    },
+    "subscribe": {
+      "refTime": "3275818833",
+      "proofSize": "41051",
+      "feeUnits": 0.009044383049,
+      "blockSharePct": 0.5593,
+      "maxPerBlock": 178
+    },
+    "renew_subscription": {
+      "refTime": "2327780081",
+      "proofSize": "40211",
+      "feeUnits": 0.00888478933,
+      "blockSharePct": 0.5478,
+      "maxPerBlock": 182
+    },
+    "purchase_views": {
+      "refTime": "3275907282",
+      "proofSize": "41051",
+      "feeUnits": 0.009084383049,
+      "blockSharePct": 0.5593,
+      "maxPerBlock": 178
+    },
+    "consume_view": {
+      "refTime": "1631447000",
+      "proofSize": "15021",
+      "feeUnits": 0.004098877683,
+      "blockSharePct": 0.2046,
+      "maxPerBlock": 488
+    },
+    "purchase_ownership": {
+      "refTime": "3283754686",
+      "proofSize": "41051",
+      "feeUnits": 0.009044383049,
+      "blockSharePct": 0.5593,
+      "maxPerBlock": 178
+    },
+    "check_access": {
+      "refTime": "480447000",
+      "proofSize": "14434",
+      "feeUnits": 0.003987352072,
+      "blockSharePct": 0.1966,
+      "maxPerBlock": 508
+    },
+    "transfer_ownership": {
+      "refTime": "2585447000",
+      "proofSize": "18357",
+      "feeUnits": 0.005052692739,
+      "blockSharePct": 0.2501,
+      "maxPerBlock": 399
+    },
+    "set_royalty_splits": {
+      "refTime": "497233825",
+      "proofSize": "14434",
+      "feeUnits": 0.007397352072,
+      "blockSharePct": 0.1966,
+      "maxPerBlock": 508
+    },
+    "enable_auto_renew": {
+      "refTime": "3553447000",
+      "proofSize": "296485",
+      "feeUnits": 0.057574933099,
+      "blockSharePct": 4.0393,
+      "maxPerBlock": 24
+    },
+    "disable_auto_renew": {
+      "refTime": "599447000",
+      "proofSize": "14237",
+      "feeUnits": 0.003949923545,
+      "blockSharePct": 0.194,
+      "maxPerBlock": 515
+    },
+    "query_rights_metadata": {
+      "refTime": "423596744",
+      "proofSize": "14521",
+      "feeUnits": 0.004003881421,
+      "blockSharePct": 0.1978,
+      "maxPerBlock": 505
+    },
+    "set_meter": {
+      "refTime": "497447000",
+      "proofSize": "14434",
+      "feeUnits": 0.004317352072,
+      "blockSharePct": 0.1966,
+      "maxPerBlock": 508
+    },
+    "consume_view_for": {
+      "refTime": "1660447000",
+      "proofSize": "15021",
+      "feeUnits": 0.004418877683,
+      "blockSharePct": 0.2046,
+      "maxPerBlock": 488
+    },
+    "xcm_subscribe": {
+      "refTime": "3279571198",
+      "proofSize": "41051",
+      "feeUnits": 0.009364383049,
+      "blockSharePct": 0.5593,
+      "maxPerBlock": 178
+    },
+    "xcm_purchase_views": {
+      "refTime": "3276007527",
+      "proofSize": "41051",
+      "feeUnits": 0.009404383049,
+      "blockSharePct": 0.5593,
+      "maxPerBlock": 178
+    },
+    "xcm_purchase_ownership": {
+      "refTime": "3283982666",
+      "proofSize": "41051",
+      "feeUnits": 0.009364383049,
+      "blockSharePct": 0.5593,
+      "maxPerBlock": 178
+    }
+  },
+  "actualFeeUnits": {
+    "register_content": 0.004971713979,
+    "set_royalty_splits_10": 0.007399460446,
+    "subscribe_s0": 0.004098824173,
+    "purchase_views_s0": 0.004138503394,
+    "consume_view_s0": 0.00409818265,
+    "check_access_s0": 0.003986376018,
+    "purchase_ownership_s0": 0.004097541093,
+    "transfer_ownership_s0": 0.00505066746,
+    "subscribe_s10": 0.009038978186,
+    "purchase_views_s10": 0.009078102737,
+    "consume_view_s10": 0.00409625935,
+    "check_access_s10": 0.003984528086,
+    "purchase_ownership_s10": 0.009035475254,
+    "transfer_ownership_s10": 0.00504831809
+  }
+}

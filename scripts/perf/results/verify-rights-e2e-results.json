@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-10-15T20:45:28.297Z",
+  "contentId": 5,
+  "purchaseBlock": 462,
+  "relayNumber": 528,
+  "relayHash": "0xedf036bf1c6c07cfcb1f558e384431994c62b4dfd1cac69077db2135bef3de09",
+  "ccrmsNumber": 464,
+  "ccrmsHash": "0xba0f70a590b88eb258c02fa0cd0f72784e5f05c0f63d0739aec1978e75fa8b69",
+  "relayProofBytes": 1332,
+  "rightsProofBytes": 921,
+  "verifyWallMs": 40046,
+  "bobResult": {
+    "isOwner": true,
+    "rightsBlock": 464
+  },
+  "charlieResult": {
+    "isOwner": false,
+    "rightsBlock": 464
+  },
+  "unknownResult": {
+    "error": "rightsVerifier.UnknownRelayBlock"
+  },
+  "checks": {
+    "bobIsOwner": true,
+    "charlieIsNotOwner": true,
+    "unrecordedRelayBlockRejected": true
+  },
+  "passed": true
+}

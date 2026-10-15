@@ -1,0 +1,305 @@
+{
+  "version": 3,
+  "timestamp": "2026-10-15T20:42:12.036Z",
+  "paraA": "ws://127.0.0.1:9990",
+  "paraB": "ws://127.0.0.1:9991",
+  "runs": 2,
+  "failRuns": 1,
+  "partial": false,
+  "contentIds": {
+    "subscribe": 2,
+    "purchase_views": 3,
+    "purchase_ownership": 4
+  },
+  "summary": {
+    "perOperation": {
+      "subscribe": {
+        "ok": 2,
+        "runs": 2,
+        "paraABlocks": {
+          "n": 2,
+          "mean": 5,
+          "sd": 0,
+          "median": 5,
+          "min": 5,
+          "max": 5
+        },
+        "deliverySec": {
+          "n": 2,
+          "mean": 24,
+          "sd": 8.48528137423857,
+          "median": 24,
+          "min": 18,
+          "max": 30
+        },
+        "roundTripSec": {
+          "n": 2,
+          "mean": 48,
+          "sd": 8.48528137423857,
+          "median": 48,
+          "min": 42,
+          "max": 54
+        }
+      },
+      "purchase_views": {
+        "ok": 2,
+        "runs": 2,
+        "paraABlocks": {
+          "n": 2,
+          "mean": 5.5,
+          "sd": 0.7071067811865476,
+          "median": 5.5,
+          "min": 5,
+          "max": 6
+        },
+        "deliverySec": {
+          "n": 2,
+          "mean": 21,
+          "sd": 4.242640687119285,
+          "median": 21,
+          "min": 18,
+          "max": 24
+        },
+        "roundTripSec": {
+          "n": 2,
+          "mean": 45,
+          "sd": 4.242640687119285,
+          "median": 45,
+          "min": 42,
+          "max": 48
+        }
+      },
+      "purchase_ownership": {
+        "ok": 2,
+        "runs": 2,
+        "paraABlocks": {
+          "n": 2,
+          "mean": 5.5,
+          "sd": 0.7071067811865476,
+          "median": 5.5,
+          "min": 5,
+          "max": 6
+        },
+        "deliverySec": {
+          "n": 2,
+          "mean": 27,
+          "sd": 4.242640687119285,
+          "median": 27,
+          "min": 24,
+          "max": 30
+        },
+        "roundTripSec": {
+          "n": 2,
+          "mean": 51,
+          "sd": 4.242640687119285,
+          "median": 51,
+          "min": 48,
+          "max": 54
+        }
+      }
+    },
+    "all": {
+      "ok": 6,
+      "runs": 6,
+      "paraABlocks": {
+        "n": 6,
+        "mean": 5.333333333333333,
+        "sd": 0.5163977794943223,
+        "median": 5,
+        "min": 5,
+        "max": 6
+      },
+      "deliverySec": {
+        "n": 6,
+        "mean": 24,
+        "sd": 5.366563145999495,
+        "median": 24,
+        "min": 18,
+        "max": 30
+      },
+      "roundTripSec": {
+        "n": 6,
+        "mean": 48,
+        "sd": 5.366563145999495,
+        "median": 48,
+        "min": 42,
+        "max": 54
+      },
+      "feeKept": {
+        "n": 6,
+        "mean": 100825119018,
+        "sd": 0,
+        "median": 100825119018,
+        "min": 100825119018,
+        "max": 100825119018
+      },
+      "anyTrapped": false
+    },
+    "failure": {
+      "ok": 1,
+      "runs": 1,
+      "refunded": 1,
+      "roundTripSec": {
+        "n": 1,
+        "mean": 42,
+        "sd": 0,
+        "median": 42,
+        "min": 42,
+        "max": 42
+      },
+      "anyTrapped": false
+    }
+  },
+  "results": {
+    "success": {
+      "subscribe": [
+        {
+          "label": "subscribe_1",
+          "op": "subscribe",
+          "contentId": 2,
+          "queryId": "0",
+          "messageId": "0xcf683136762540c8cd6edd3aa497f5c9ef499aa03d7a3e37aaf7b224a01f5362",
+          "paraBBlock": 312,
+          "expectSuccess": true,
+          "paraAEventBlock": 316,
+          "paraABlocks": 5,
+          "deliveryMs": 30000,
+          "sovereignSpent": "100825619018",
+          "feeKept": "100825119018",
+          "trapped": false,
+          "reported": true,
+          "paraBReportBlock": 320,
+          "roundTripMs": 54000,
+          "refunded": null,
+          "success": true
+        },
+        {
+          "label": "subscribe_2",
+          "op": "subscribe",
+          "contentId": 2,
+          "queryId": "1",
+          "messageId": "0x7ffa4b07dd789a8e897b6e329a549af832038e78ddb1acd32a66f805d07c4791",
+          "paraBBlock": 333,
+          "expectSuccess": true,
+          "paraAEventBlock": 337,
+          "paraABlocks": 5,
+          "deliveryMs": 18000,
+          "sovereignSpent": "100825619018",
+          "feeKept": "100825119018",
+          "trapped": false,
+          "reported": true,
+          "paraBReportBlock": 341,
+          "roundTripMs": 42000,
+          "refunded": null,
+          "success": true
+        }
+      ],
+      "purchase_views": [
+        {
+          "label": "purchase_views_1",
+          "op": "purchase_views",
+          "contentId": 3,
+          "queryId": "2",
+          "messageId": "0xfd7edfe1f790cfefea5f840a16bb8ae94a6ab84b9620018e05fb0ece0ab6a189",
+          "paraBBlock": 354,
+          "expectSuccess": true,
+          "paraAEventBlock": 358,
+          "paraABlocks": 6,
+          "deliveryMs": 24000,
+          "sovereignSpent": "100825619018",
+          "feeKept": "100825119018",
+          "trapped": false,
+          "reported": true,
+          "paraBReportBlock": 361,
+          "roundTripMs": 48000,
+          "refunded": null,
+          "success": true
+        },
+        {
+          "label": "purchase_views_2",
+          "op": "purchase_views",
+          "contentId": 3,
+          "queryId": "3",
+          "messageId": "0x5ea5af6ba79cdcccb96348dd25789c3357166f0d4abea94f00bfc53f755da9da",
+          "paraBBlock": 378,
+          "expectSuccess": true,
+          "paraAEventBlock": 382,
+          "paraABlocks": 5,
+          "deliveryMs": 18000,
+          "sovereignSpent": "100825619018",
+          "feeKept": "100825119018",
+          "trapped": false,
+          "reported": true,
+          "paraBReportBlock": 386,
+          "roundTripMs": 42000,
+          "refunded": null,
+          "success": true
+        }
+      ],
+      "purchase_ownership": [
+        {
+          "label": "purchase_ownership_1",
+          "op": "purchase_ownership",
+          "contentId": 4,
+          "queryId": "4",
+          "messageId": "0xe3e1c57d71ad03ea52e9be16bf434d1af87c66fee019d75ef5a5124d2ba83895",
+          "paraBBlock": 399,
+          "expectSuccess": true,
+          "paraAEventBlock": 403,
+          "paraABlocks": 6,
+          "deliveryMs": 24000,
+          "sovereignSpent": "100827119018",
+          "feeKept": "100825119018",
+          "trapped": false,
+          "reported": true,
+          "paraBReportBlock": 406,
+          "roundTripMs": 48000,
+          "refunded": null,
+          "success": true
+        },
+        {
+          "label": "purchase_ownership_2",
+          "op": "purchase_ownership",
+          "contentId": 4,
+          "queryId": "5",
+          "messageId": "0x675baf21455e24e1c237141fff4dc8e1edb9726f54fe334aae4a0cdf22d3f438",
+          "paraBBlock": 420,
+          "expectSuccess": true,
+          "paraAEventBlock": 424,
+          "paraABlocks": 5,
+          "deliveryMs": 30000,
+          "sovereignSpent": "100827119018",
+          "feeKept": "100825119018",
+          "trapped": false,
+          "reported": true,
+          "paraBReportBlock": 428,
+          "roundTripMs": 54000,
+          "refunded": null,
+          "success": true
+        }
+      ]
+    },
+    "failure": [
+      {
+        "label": "fail_1",
+        "op": "subscribe",
+        "contentId": 999999,
+        "queryId": "6",
+        "messageId": "0x0acf2e25f13d0fc80f4b471b7ea9e6f160d8a0ce9514571f8e49cecc090dc067",
+        "paraBBlock": 441,
+        "expectSuccess": false,
+        "paraAEventBlock": 445,
+        "paraABlocks": 5,
+        "deliveryMs": 18000,
+        "sovereignSpent": "105789947509",
+        "feeKept": "105789947509",
+        "trapped": false,
+        "reported": false,
+        "paraBReportBlock": 449,
+        "roundTripMs": 42000,
+        "refunded": true,
+        "success": true
+      }
+    ]
+  }
+}
