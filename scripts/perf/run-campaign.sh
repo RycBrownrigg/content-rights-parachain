@@ -5,6 +5,8 @@
 #
 #   bash scripts/perf/run-campaign.sh <relay-ws> [paraA-ws] [paraB-ws]
 #   QUICK=1 bash scripts/perf/run-campaign.sh <relay-ws>     # short smoke run
+#   ONLY=fee-report,open-loop-purchase-views bash scripts/perf/run-campaign.sh <relay-ws>
+#                                                            # run only these steps
 #
 # Each step's console output goes to scripts/perf/results/campaign/<step>.log and
 # its JSON to scripts/perf/results/ as before. A failing step does not stop the
@@ -33,6 +35,7 @@ fi
 declare -a NAMES STATUS
 step() {
   local name="$1"; shift
+  if [[ -n "${ONLY:-}" && ",$ONLY," != *",$name,"* ]]; then return; fi
   echo
   echo "=================== $name ==================="
   local t0=$SECONDS
@@ -45,10 +48,11 @@ step() {
   echo "commit $(git rev-parse --short HEAD)$(git diff --quiet || echo ' (dirty)')"
   echo "date   $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "host   $(sysctl -n machdep.cpu.brand_string 2>/dev/null || uname -m), $(( $(sysctl -n hw.memsize 2>/dev/null || echo 0) / 1073741824 )) GB"
-  echo "mode   $([[ "${QUICK:-0}" == 1 ]] && echo quick || echo full)"
+  echo "mode   $([[ "${QUICK:-0}" == 1 ]] && echo quick || echo full)${ONLY:+, only $ONLY}"
 } | tee "$LOG/environment.txt"
 
 preflight() {
+  if [[ -n "${ONLY:-}" && "$1" != start && ",$ONLY," != *",$1,"* ]]; then return; fi
   echo
   echo "=================== preflight ($1) ==================="
   node scripts/perf/preflight.mjs "$RELAY_WS" "$PARA_A_WS" "$PARA_B_WS" 2>&1 \

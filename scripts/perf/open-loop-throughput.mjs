@@ -37,12 +37,22 @@
  * ExtrinsicSuccess) and by the declared pre-dispatch weight, and the block
  * length limit divided by the transaction length.
  *
+ * Re-broadcast. On this testnet a CCRMS block is discarded and re-authored about
+ * once a minute (Finding F), and the node's pool does not always return the
+ * discarded block's transactions; later nonces from the same accounts then wait
+ * forever. Like a wallet, the client re-sends any accepted transaction not yet
+ * finalized after REBROADCAST seconds (same signed bytes, so it can be included
+ * at most once). It records how many re-sends the node accepted (the
+ * transaction had been dropped) and how many best-chain re-orgs it saw, so the
+ * effect is measured rather than hidden. --rebroadcast 0 turns this off.
+ *
  * The sweep stops after the first rate at which more than 20% of submitted
  * transactions are rejected or lost (that rate is kept), unless --no-stop.
  *
  * Usage:
  *   node scripts/perf/open-loop-throughput.mjs [paraA-ws] [--op purchase_views|check_access]
- *        [--rates 10,20,40,80,120,160,240] [--duration 60] [--drain 120] [--per-account 10] [--no-stop]
+ *        [--rates 10,20,40,80,120,160,240] [--duration 60] [--drain 120] [--per-account 10]
+ *        [--rebroadcast 18] [--no-stop]
  * Output: scripts/perf/results/open-loop-<op>.json
  */
 
@@ -51,7 +61,7 @@ import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { writeFileSync, mkdirSync } from 'fs';
 
 const args = process.argv.slice(2);
-const valueFlags = new Set(['--op', '--rates', '--duration', '--drain', '--per-account']);
+const valueFlags = new Set(['--op', '--rates', '--duration', '--drain', '--per-account', '--rebroadcast']);
 const positional = args.filter((a, i) => !a.startsWith('--') && !valueFlags.has(args[i - 1]));
 const flag = (name, dflt) => {
   const i = args.indexOf(`--${name}`);
@@ -63,6 +73,7 @@ const RATES = flag('rates', '10,20,40,80,120,160,240').split(',').map(Number);
 const DURATION = Number(flag('duration', 60));
 const DRAIN = Number(flag('drain', 120));
 const PER_ACCOUNT = Number(flag('per-account', 10));
+const REBROADCAST_S = Number(flag('rebroadcast', 18));
 const NO_STOP = args.includes('--no-stop');
 const STOP_LOSS = 0.2;
 
@@ -223,13 +234,40 @@ async function runRate(api, alice, keyring, contentId, rate, limits) {
   let accepted = 0;
   let sent = 0;
   const inflight = [];
+  // Best-chain re-orgs: a new best head at or below the highest seen so far.
+  let bestMax = 0;
+  let reorgs = 0;
+  const unsubBest = await api.rpc.chain.subscribeNewHeads((h) => {
+    const n = h.number.toNumber();
+    if (bestMax && n <= bestMax) reorgs++;
+    bestMax = Math.max(bestMax, n);
+  });
+  // Re-broadcast accepted transactions not finalized after REBROADCAST_S.
+  let rebroadcastAccepted = 0;
+  const rebroadcastErrors = new Map();
+  const rebroadcaster = REBROADCAST_S > 0 ? setInterval(() => {
+    const now = Date.now();
+    for (const rec of pending.values()) {
+      if (!rec.accepted || rec.block !== undefined || now - rec.lastSubmit < REBROADCAST_S * 1000) continue;
+      rec.lastSubmit = now;
+      rec.rebroadcasts++;
+      api.rpc.author.submitExtrinsic(rec.hex).then(
+        () => { rebroadcastAccepted++; },
+        (e) => {
+          const key = (e.message || String(e)).slice(0, 80);
+          rebroadcastErrors.set(key, (rebroadcastErrors.get(key) || 0) + 1);
+        },
+      );
+    }
+  }, 3000) : null;
+
   const t0 = Date.now();
   console.log('  sending...');
   while (sent < total) {
     const due = Math.min(total, Math.floor(((Date.now() - t0) / 1000) * rate) + 1);
     for (; sent < due; sent++) {
       const t = txs[sent];
-      const rec = { submit: Date.now() };
+      const rec = { submit: Date.now(), lastSubmit: Date.now(), hex: t.hex, rebroadcasts: 0 };
       pending.set(t.hash, rec);
       inflight.push(
         api.rpc.author.submitExtrinsic(t.hex).then(
@@ -255,8 +293,13 @@ async function runRate(api, alice, keyring, contentId, rate, limits) {
     if (included >= accepted || Date.now() > deadline) break;
     await sleep(3000);
   }
+  if (rebroadcaster) clearInterval(rebroadcaster);
   await sleep(1000);
   await stop();
+  unsubBest();
+  // Our transactions still in the node's pool at the end (lost but not dropped).
+  const poolHashes = new Set((await api.rpc.author.pendingExtrinsics()).map((x) => x.hash.toHex()));
+  const stillInPool = [...pending.entries()].filter(([h, r]) => r.block === undefined && poolHashes.has(h)).length;
 
   const recs = [...pending.values()];
   const inc = recs.filter((r) => r.block !== undefined);
@@ -287,6 +330,15 @@ async function runRate(api, alice, keyring, contentId, rate, limits) {
     includedFailed: failed.length,
     failReasons,
     lost,
+    stillInPool,
+    reorgs,
+    rebroadcast: {
+      afterSeconds: REBROADCAST_S,
+      sent: [...pending.values()].reduce((a, r) => a + r.rebroadcasts, 0),
+      acceptedByNode: rebroadcastAccepted,
+      errors: Object.fromEntries(rebroadcastErrors),
+      finalizedAfterRebroadcast: [...pending.values()].filter((r) => r.block !== undefined && r.rebroadcasts > 0).length,
+    },
     lossShare: Number(((rejected + lost) / total).toFixed(4)),
     windowTps: Number((inWindow / DURATION).toFixed(2)),
     overallTps: Number((inc.length / Math.max(1, (lastTs - t0) / 1000)).toFixed(2)),
@@ -314,6 +366,11 @@ async function runRate(api, alice, keyring, contentId, rate, limits) {
     `  window ${result.windowTps} tx/s, overall ${result.overallTps} tx/s; inclusion p50 ${result.latencyInclusionMs.p50} ms, p95 ${result.latencyInclusionMs.p95} ms; ` +
       `max ${result.blocks.oursPerBlock.max ?? 0}/block, ref_time p50 ${result.blocks.normalRefTimePct.p50 ?? 0}%, proof p50 ${result.blocks.normalProofSizePct.p50 ?? 0}%`,
   );
+  console.log(
+    `  re-orgs seen ${reorgs}; re-broadcasts ${result.rebroadcast.sent} (node accepted ${rebroadcastAccepted}, ` +
+      `finalized after re-broadcast ${result.rebroadcast.finalizedAfterRebroadcast}); still in pool ${stillInPool}`,
+  );
+  if (rebroadcastErrors.size) console.log(`  re-broadcast responses: ${JSON.stringify(result.rebroadcast.errors)}`);
   if (rejected) console.log(`  rejections: ${JSON.stringify(result.rejections)}`);
   if (failed.length) console.log(`  dispatch failures: ${JSON.stringify(failReasons)}`);
   return result;
@@ -384,12 +441,12 @@ async function main() {
   mkdirSync(OUTPUT_DIR, { recursive: true });
   writeFileSync(OUTPUT, JSON.stringify(summary, null, 2));
 
-  console.log('\n rate  offered  window  overall  ok/submitted  lost  rejected  incl p50/p95 ms  max/block');
+  console.log('\n rate  offered  window  overall  ok/submitted  lost  rejected  incl p50/p95 ms  max/block  reorgs  rebcast');
   for (const r of results) {
     console.log(
       ` ${String(r.offeredRate).padStart(4)}  ${String(r.offeredActual).padStart(7)}  ${String(r.windowTps).padStart(6)}  ${String(r.overallTps).padStart(7)}` +
         `  ${`${r.includedOk}/${r.submitted}`.padStart(12)}  ${String(r.lost).padStart(4)}  ${String(r.rejected).padStart(8)}` +
-        `  ${`${r.latencyInclusionMs.p50}/${r.latencyInclusionMs.p95}`.padStart(15)}  ${String(r.blocks.oursPerBlock.max ?? 0).padStart(9)}`,
+        `  ${`${r.latencyInclusionMs.p50}/${r.latencyInclusionMs.p95}`.padStart(15)}  ${String(r.blocks.oursPerBlock.max ?? 0).padStart(9)}  ${String(r.reorgs).padStart(6)}  ${String(r.rebroadcast.acceptedByNode).padStart(7)}`,
     );
   }
   console.log(`\nPredicted per block (normal class): declared ref_time ${predicted.perBlockByDeclaredRefTime}, ` +
