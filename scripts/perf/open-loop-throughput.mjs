@@ -455,9 +455,19 @@ async function main() {
   const info = await buildCall(api, contentId).paymentInfo(alice);
   const declared = { refTime: info.weight.refTime.toBigInt(), proofSize: info.weight.proofSize.toBigInt() };
 
+  // A rate that cannot be run (for example funding not finalized in time) ends
+  // the sweep but keeps the rates already measured, and is recorded as stoppedBy.
   const results = [];
+  let stoppedBy = null;
   for (const rate of RATES) {
-    const r = await runRate(api, alice, keyring, contentId, rate, limits);
+    let r;
+    try {
+      r = await runRate(api, alice, keyring, contentId, rate, limits);
+    } catch (e) {
+      stoppedBy = { offeredRate: rate, error: e.message };
+      console.log(`\nStopping: ${rate} tx/s could not be run: ${e.message}`);
+      break;
+    }
     results.push(r);
     if (!NO_STOP && r.lossShare > STOP_LOSS) {
       console.log(`\nStopping: ${(r.lossShare * 100).toFixed(1)}% rejected or lost at ${rate} tx/s`);
@@ -487,6 +497,7 @@ async function main() {
     predicted,
     peakWindowTps: best?.windowTps ?? null,
     peakAtOfferedRate: best?.offeredRate ?? null,
+    stoppedBy,
     results,
     generatedAt: new Date().toISOString(),
   };
