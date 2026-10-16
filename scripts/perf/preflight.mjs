@@ -9,7 +9,10 @@
  *   1. the finalized head advances within 60 s;
  *   2. the gap between best and finalized head is at most 10 blocks;
  * and on both parachains:
- *   3. a system.remark from //Alice is finalized within 120 s.
+ *   3. a system.remark from //Alice is finalized within 120 s. A remark can come
+ *      back Invalid when the collator discards the block holding it (Finding F,
+ *      once a minute); it is then sent again, up to three attempts in all. A
+ *      repeated remark is harmless.
  *
  * Usage: node scripts/perf/preflight.mjs <relay-ws> [paraA-ws] [paraB-ws]
  * Exits 0 if every check passes, 1 otherwise.
@@ -45,21 +48,31 @@ async function checkFinality(name, api) {
   return ok;
 }
 
-function remarkFinalized(name, api, alice) {
+async function remarkFinalized(name, api, alice) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1) await sleep(12_000);
+    const r = await remarkOnce(name, api, alice, attempt);
+    if (r.ok || !r.retry) return r.ok;
+  }
+  return false;
+}
+
+function remarkOnce(name, api, alice, attempt) {
   return new Promise((resolve) => {
     let done = false;
     const t0 = Date.now();
-    const finish = (ok, msg) => {
+    const finish = (ok, msg, retry = false) => {
       if (done) return;
       done = true;
       clearTimeout(timer);
-      console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}: remark ${msg}`);
-      resolve(ok);
+      const tag = ok ? 'OK  ' : retry && attempt < 3 ? 'RETRY' : 'FAIL';
+      console.log(`${tag} ${name}: remark ${msg}${attempt > 1 ? ` (attempt ${attempt})` : ''}`);
+      resolve({ ok, retry });
     };
     const timer = setTimeout(() => finish(false, 'not finalized within 120 s'), 120_000);
     api.tx.system.remark('0x' + Buffer.from(`preflight ${Date.now()}`).toString('hex'))
       .signAndSend(alice, ({ status, dispatchError }) => {
-        if (status.isInvalid || status.isDropped || status.isUsurped) return finish(false, `rejected: ${status.type}`);
+        if (status.isInvalid || status.isDropped || status.isUsurped) return finish(false, `rejected: ${status.type}`, true);
         if (status.isFinalized) {
           if (dispatchError) return finish(false, `failed: ${dispatchError.toString()}`);
           finish(true, `finalized in ${((Date.now() - t0) / 1000).toFixed(0)} s`);
