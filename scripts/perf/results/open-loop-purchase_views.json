@@ -23,339 +23,264 @@
     "perBlockByChargedProofSize": 94750,
     "perBlockByLength": 34192
   },
-  "peakWindowTps": 1.38,
-  "peakAtOfferedRate": 10,
+  "peakWindowTps": 97.58,
+  "peakAtOfferedRate": 160,
+  "stoppedBy": null,
   "results": [
     {
       "offeredRate": 10,
-      "offeredActual": 10,
+      "offeredActual": 10.01,
       "submitted": 600,
       "accepted": 600,
       "rejected": 0,
       "rejections": {},
-      "included": 83,
-      "includedOk": 83,
+      "included": 600,
+      "includedOk": 600,
       "includedFailed": 0,
       "failReasons": {},
-      "lost": 517,
+      "lost": 0,
       "stillInPool": 0,
       "reorgs": 0,
       "rebroadcast": {
         "afterSeconds": 18,
-        "sent": 4040,
+        "sent": 1188,
         "acceptedByNode": 0,
+        "resigned": 119,
+        "resignAccepted": 60,
+        "resignSkippedInBestChain": 1010,
+        "finalizedAfterResign": 60,
         "errors": {
-          "1012: Transaction is temporarily banned": 3583,
-          "1013: Transaction Already Imported: Any { .. }": 457
+          "1012: Transaction is temporarily banned": 1129,
+          "re-signed: 1014: Priority is too low: (279 vs 279): The transaction has too low p": 59,
+          "1010: Invalid Transaction: Transaction is outdated": 59
         },
-        "finalizedAfterRebroadcast": 83
+        "finalizedAfterRebroadcast": 600
       },
-      "lossShare": 0.8617,
-      "windowTps": 1.38,
-      "overallTps": 3.16,
+      "lossShare": 0,
+      "windowTps": 9.33,
+      "overallTps": 6.98,
       "latencyInclusionMs": {
-        "n": 83,
-        "mean": 22110,
-        "p50": 22093,
-        "p95": 25815,
-        "p99": 26236,
-        "max": 26236
+        "n": 600,
+        "mean": 11574,
+        "p50": 7943,
+        "p95": 26962,
+        "p99": 29366,
+        "max": 29930
       },
       "latencyFinalityMs": {
-        "n": 83,
-        "mean": 55417,
-        "p50": 55400,
-        "p95": 59122,
-        "p99": 59543,
-        "max": 59543
+        "n": 600,
+        "mean": 46063,
+        "p50": 43467,
+        "p95": 60692,
+        "p99": 63096,
+        "max": 63660
       },
       "blocks": {
-        "count": 27,
-        "withOurs": 1,
+        "count": 18,
+        "withOurs": 7,
         "intervalMs": {
-          "n": 26,
-          "mean": 6692,
+          "n": 17,
+          "mean": 6706,
           "p50": 6000,
           "p95": 18000,
           "p99": 18000,
           "max": 18000
         },
         "oursPerBlock": {
-          "n": 1,
-          "mean": 83,
-          "p50": 83,
-          "p95": 83,
-          "p99": 83,
-          "max": 83
+          "n": 7,
+          "mean": 86,
+          "p50": 60,
+          "p95": 160,
+          "p99": 160,
+          "max": 160
         },
         "normalRefTimePct": {
-          "n": 1,
+          "n": 7,
           "mean": 10,
-          "p50": 9.93,
-          "p95": 9.93,
-          "p99": 9.93,
-          "max": 9.93
+          "p50": 7.18,
+          "p95": 19.16,
+          "p99": 19.16,
+          "max": 19.16
         },
         "normalProofSizePct": {
-          "n": 1,
+          "n": 7,
           "mean": 0,
-          "p50": 0.31,
-          "p95": 0.31,
-          "p99": 0.31,
-          "max": 0.31
+          "p50": 0.28,
+          "p95": 0.4,
+          "p99": 0.4,
+          "max": 0.4
         },
         "lengthBytes": {
-          "n": 1,
-          "mean": 14394,
-          "p50": 14394,
-          "p95": 14394,
-          "p99": 14394,
-          "max": 14394
+          "n": 7,
+          "mean": 14560,
+          "p50": 11602,
+          "p95": 23103,
+          "p99": 23103,
+          "max": 23103
         }
       },
       "perBlock": [
         {
-          "number": 1352,
-          "ts": 1792167684000,
+          "number": 31,
+          "ts": 1792188048000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4848
+          "lengthBytes": 4702
         },
         {
-          "number": 1353,
-          "ts": 1792167690000,
+          "number": 32,
+          "ts": 1792188054000,
+          "extrinsics": 62,
+          "ours": 0,
+          "normalRefTime": "38964000000",
+          "normalProofSize": "16974",
+          "lengthBytes": 13580
+        },
+        {
+          "number": 33,
+          "ts": 1792188060000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4848
+          "lengthBytes": 4702
         },
         {
-          "number": 1354,
-          "ts": 1792167696000,
+          "number": 34,
+          "ts": 1792188066000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4848
+          "lengthBytes": 4702
         },
         {
-          "number": 1355,
-          "ts": 1792167702000,
+          "number": 35,
+          "ts": 1792188072000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4848
+          "lengthBytes": 4702
         },
         {
-          "number": 1356,
-          "ts": 1792167708000,
+          "number": 36,
+          "ts": 1792188090000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4848
+          "lengthBytes": 4702
         },
         {
-          "number": 1357,
-          "ts": 1792167726000,
+          "number": 37,
+          "ts": 1792188090000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4848
+          "lengthBytes": 4702
         },
         {
-          "number": 1358,
-          "ts": 1792167726000,
+          "number": 38,
+          "ts": 1792188096000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4848
+          "lengthBytes": 4702
         },
         {
-          "number": 1359,
-          "ts": 1792167732000,
+          "number": 39,
+          "ts": 1792188102000,
+          "extrinsics": 83,
+          "ours": 81,
+          "normalRefTime": "145498644522",
+          "normalProofSize": "18445",
+          "lengthBytes": 14018
+        },
+        {
+          "number": 40,
+          "ts": 1792188108000,
+          "extrinsics": 162,
+          "ours": 160,
+          "normalRefTime": "287404729920",
+          "normalProofSize": "30800",
+          "lengthBytes": 23103
+        },
+        {
+          "number": 41,
+          "ts": 1792188114000,
+          "extrinsics": 142,
+          "ours": 140,
+          "normalRefTime": "251479138680",
+          "normalProofSize": "31564",
+          "lengthBytes": 20803
+        },
+        {
+          "number": 42,
+          "ts": 1792188120000,
+          "extrinsics": 61,
+          "ours": 59,
+          "normalRefTime": "105980494158",
+          "normalProofSize": "22107",
+          "lengthBytes": 11487
+        },
+        {
+          "number": 43,
+          "ts": 1792188126000,
+          "extrinsics": 62,
+          "ours": 60,
+          "normalRefTime": "107776773720",
+          "normalProofSize": "22446",
+          "lengthBytes": 11602
+        },
+        {
+          "number": 44,
+          "ts": 1792188132000,
+          "extrinsics": 62,
+          "ours": 60,
+          "normalRefTime": "107776773720",
+          "normalProofSize": "22446",
+          "lengthBytes": 11602
+        },
+        {
+          "number": 45,
+          "ts": 1792188150000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4848
+          "lengthBytes": 4702
         },
         {
-          "number": 1360,
-          "ts": 1792167738000,
-          "extrinsics": 85,
-          "ours": 83,
-          "normalRefTime": "149091203646",
-          "normalProofSize": "24583",
-          "lengthBytes": 14394
-        },
-        {
-          "number": 1361,
-          "ts": 1792167744000,
+          "number": 46,
+          "ts": 1792188150000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4848
+          "lengthBytes": 4702
         },
         {
-          "number": 1362,
-          "ts": 1792167750000,
+          "number": 47,
+          "ts": 1792188156000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4848
+          "lengthBytes": 4702
         },
         {
-          "number": 1363,
-          "ts": 1792167756000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1364,
-          "ts": 1792167762000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1365,
-          "ts": 1792167768000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1366,
-          "ts": 1792167786000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1367,
-          "ts": 1792167786000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1368,
-          "ts": 1792167792000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1369,
-          "ts": 1792167798000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1370,
-          "ts": 1792167804000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1371,
-          "ts": 1792167810000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1372,
-          "ts": 1792167816000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1373,
-          "ts": 1792167822000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1374,
-          "ts": 1792167828000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1375,
-          "ts": 1792167846000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1376,
-          "ts": 1792167846000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1377,
-          "ts": 1792167852000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
-        },
-        {
-          "number": 1378,
-          "ts": 1792167858000,
-          "extrinsics": 2,
-          "ours": 0,
-          "normalRefTime": "0",
-          "normalProofSize": "0",
-          "lengthBytes": 4848
+          "number": 48,
+          "ts": 1792188162000,
+          "extrinsics": 42,
+          "ours": 40,
+          "normalRefTime": "71851182480",
+          "normalProofSize": "17000",
+          "lengthBytes": 9302
         }
       ],
       "sampleChargedWeight": {
@@ -363,7 +288,1399 @@
         "proofSize": "83"
       },
       "txLength": 115
+    },
+    {
+      "offeredRate": 20,
+      "offeredActual": 19.98,
+      "submitted": 1200,
+      "accepted": 1200,
+      "rejected": 0,
+      "rejections": {},
+      "included": 1200,
+      "includedOk": 1200,
+      "includedFailed": 0,
+      "failReasons": {},
+      "lost": 0,
+      "stillInPool": 0,
+      "reorgs": 0,
+      "rebroadcast": {
+        "afterSeconds": 18,
+        "sent": 2243,
+        "acceptedByNode": 2,
+        "resigned": 235,
+        "resignAccepted": 116,
+        "resignSkippedInBestChain": 1887,
+        "finalizedAfterResign": 116,
+        "errors": {
+          "1012: Transaction is temporarily banned": 2122,
+          "re-signed: 1014: Priority is too low: (279 vs 279): The transaction has too low p": 119,
+          "1010: Invalid Transaction: Transaction is outdated": 119
+        },
+        "finalizedAfterRebroadcast": 1200
+      },
+      "lossShare": 0,
+      "windowTps": 17.87,
+      "overallTps": 14.35,
+      "latencyInclusionMs": {
+        "n": 1200,
+        "mean": 11716,
+        "p50": 8311,
+        "p95": 26873,
+        "p99": 29299,
+        "max": 29871
+      },
+      "latencyFinalityMs": {
+        "n": 1200,
+        "mean": 45038,
+        "p50": 41617,
+        "p95": 61199,
+        "p99": 63625,
+        "max": 64197
+      },
+      "blocks": {
+        "count": 18,
+        "withOurs": 9,
+        "intervalMs": {
+          "n": 17,
+          "mean": 6706,
+          "p50": 6000,
+          "p95": 18000,
+          "p99": 18000,
+          "max": 18000
+        },
+        "oursPerBlock": {
+          "n": 9,
+          "mean": 133,
+          "p50": 125,
+          "p95": 333,
+          "p99": 333,
+          "max": 333
+        },
+        "normalRefTimePct": {
+          "n": 9,
+          "mean": 16,
+          "p50": 14.96,
+          "p95": 39.87,
+          "p99": 39.87,
+          "max": 39.87
+        },
+        "normalProofSizePct": {
+          "n": 9,
+          "mean": 1,
+          "p50": 0.6,
+          "p95": 0.9,
+          "p99": 0.9,
+          "max": 0.9
+        },
+        "lengthBytes": {
+          "n": 9,
+          "mean": 20042,
+          "p50": 19083,
+          "p95": 43004,
+          "p99": 43004,
+          "max": 43004
+        }
+      },
+      "perBlock": [
+        {
+          "number": 58,
+          "ts": 1792188228000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4705
+        },
+        {
+          "number": 59,
+          "ts": 1792188234000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4705
+        },
+        {
+          "number": 60,
+          "ts": 1792188240000,
+          "extrinsics": 122,
+          "ours": 0,
+          "normalRefTime": "77928000000",
+          "normalProofSize": "35063",
+          "lengthBytes": 22466
+        },
+        {
+          "number": 61,
+          "ts": 1792188246000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4705
+        },
+        {
+          "number": 62,
+          "ts": 1792188252000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4705
+        },
+        {
+          "number": 63,
+          "ts": 1792188270000,
+          "extrinsics": 9,
+          "ours": 7,
+          "normalRefTime": "12573956934",
+          "normalProofSize": "11457",
+          "lengthBytes": 5510
+        },
+        {
+          "number": 64,
+          "ts": 1792188270000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4706
+        },
+        {
+          "number": 65,
+          "ts": 1792188276000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4707
+        },
+        {
+          "number": 66,
+          "ts": 1792188282000,
+          "extrinsics": 127,
+          "ours": 125,
+          "normalRefTime": "224534945250",
+          "normalProofSize": "49047",
+          "lengthBytes": 19083
+        },
+        {
+          "number": 67,
+          "ts": 1792188288000,
+          "extrinsics": 248,
+          "ours": 246,
+          "normalRefTime": "441884772252",
+          "normalProofSize": "51117",
+          "lengthBytes": 32999
+        },
+        {
+          "number": 68,
+          "ts": 1792188294000,
+          "extrinsics": 335,
+          "ours": 333,
+          "normalRefTime": "598161094146",
+          "normalProofSize": "71024",
+          "lengthBytes": 43004
+        },
+        {
+          "number": 69,
+          "ts": 1792188300000,
+          "extrinsics": 120,
+          "ours": 118,
+          "normalRefTime": "211960988316",
+          "normalProofSize": "46299",
+          "lengthBytes": 18279
+        },
+        {
+          "number": 70,
+          "ts": 1792188306000,
+          "extrinsics": 120,
+          "ours": 118,
+          "normalRefTime": "211960988316",
+          "normalProofSize": "46299",
+          "lengthBytes": 18279
+        },
+        {
+          "number": 71,
+          "ts": 1792188312000,
+          "extrinsics": 127,
+          "ours": 125,
+          "normalRefTime": "224534945250",
+          "normalProofSize": "47388",
+          "lengthBytes": 19084
+        },
+        {
+          "number": 72,
+          "ts": 1792188330000,
+          "extrinsics": 5,
+          "ours": 3,
+          "normalRefTime": "5388838686",
+          "normalProofSize": "3472",
+          "lengthBytes": 5053
+        },
+        {
+          "number": 73,
+          "ts": 1792188330000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 74,
+          "ts": 1792188336000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 75,
+          "ts": 1792188342000,
+          "extrinsics": 127,
+          "ours": 125,
+          "normalRefTime": "224534945250",
+          "normalProofSize": "47388",
+          "lengthBytes": 19084
+        }
+      ],
+      "sampleChargedWeight": {
+        "refTime": "1796279562",
+        "proofSize": "83"
+      },
+      "txLength": 115
+    },
+    {
+      "offeredRate": 40,
+      "offeredActual": 39.92,
+      "submitted": 2400,
+      "accepted": 2400,
+      "rejected": 0,
+      "rejections": {},
+      "included": 2400,
+      "includedOk": 2400,
+      "includedFailed": 0,
+      "failReasons": {},
+      "lost": 0,
+      "stillInPool": 0,
+      "reorgs": 0,
+      "rebroadcast": {
+        "afterSeconds": 18,
+        "sent": 5489,
+        "acceptedByNode": 447,
+        "resigned": 679,
+        "resignAccepted": 508,
+        "resignSkippedInBestChain": 3837,
+        "finalizedAfterResign": 315,
+        "errors": {
+          "1012: Transaction is temporarily banned": 4516,
+          "re-signed: 1014: Priority is too low: (279 vs 279): The transaction has too low p": 171,
+          "1010: Invalid Transaction: Transaction is outdated": 526
+        },
+        "finalizedAfterRebroadcast": 2400
+      },
+      "lossShare": 0,
+      "windowTps": 25.23,
+      "overallTps": 26.14,
+      "latencyInclusionMs": {
+        "n": 2400,
+        "mean": 18046,
+        "p50": 11758,
+        "p95": 41344,
+        "p99": 43204,
+        "max": 43748
+      },
+      "latencyFinalityMs": {
+        "n": 2400,
+        "mean": 51542,
+        "p50": 46445,
+        "p95": 75749,
+        "p99": 78152,
+        "max": 78696
+      },
+      "blocks": {
+        "count": 19,
+        "withOurs": 8,
+        "intervalMs": {
+          "n": 18,
+          "mean": 6667,
+          "p50": 6000,
+          "p95": 18000,
+          "p99": 18000,
+          "max": 18000
+        },
+        "oursPerBlock": {
+          "n": 8,
+          "mean": 300,
+          "p50": 239,
+          "p95": 548,
+          "p99": 548,
+          "max": 548
+        },
+        "normalRefTimePct": {
+          "n": 8,
+          "mean": 36,
+          "p50": 28.62,
+          "p95": 65.62,
+          "p99": 65.62,
+          "max": 65.62
+        },
+        "normalProofSizePct": {
+          "n": 8,
+          "mean": 1,
+          "p50": 1.25,
+          "p95": 1.79,
+          "p99": 1.79,
+          "max": 1.79
+        },
+        "lengthBytes": {
+          "n": 8,
+          "mean": 39209,
+          "p50": 32194,
+          "p95": 67729,
+          "p99": 67729,
+          "max": 67729
+        }
+      },
+      "perBlock": [
+        {
+          "number": 86,
+          "ts": 1792188414000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 87,
+          "ts": 1792188420000,
+          "extrinsics": 242,
+          "ours": 0,
+          "normalRefTime": "155856000000",
+          "normalProofSize": "73519",
+          "lengthBytes": 40229
+        },
+        {
+          "number": 88,
+          "ts": 1792188426000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 89,
+          "ts": 1792188432000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 90,
+          "ts": 1792188450000,
+          "extrinsics": 167,
+          "ours": 165,
+          "normalRefTime": "296386127730",
+          "normalProofSize": "85577",
+          "lengthBytes": 23684
+        },
+        {
+          "number": 91,
+          "ts": 1792188450000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 92,
+          "ts": 1792188456000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 93,
+          "ts": 1792188462000,
+          "extrinsics": 399,
+          "ours": 397,
+          "normalRefTime": "713122986114",
+          "normalProofSize": "140914",
+          "lengthBytes": 50364
+        },
+        {
+          "number": 94,
+          "ts": 1792188468000,
+          "extrinsics": 167,
+          "ours": 165,
+          "normalRefTime": "296386127730",
+          "normalProofSize": "76112",
+          "lengthBytes": 23684
+        },
+        {
+          "number": 95,
+          "ts": 1792188474000,
+          "extrinsics": 550,
+          "ours": 548,
+          "normalRefTime": "984361199976",
+          "normalProofSize": "134821",
+          "lengthBytes": 67729
+        },
+        {
+          "number": 96,
+          "ts": 1792188480000,
+          "extrinsics": 241,
+          "ours": 239,
+          "normalRefTime": "429310815318",
+          "normalProofSize": "98936",
+          "lengthBytes": 32194
+        },
+        {
+          "number": 97,
+          "ts": 1792188486000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 98,
+          "ts": 1792188492000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 99,
+          "ts": 1792188510000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 100,
+          "ts": 1792188510000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 101,
+          "ts": 1792188516000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 102,
+          "ts": 1792188522000,
+          "extrinsics": 252,
+          "ours": 250,
+          "normalRefTime": "449069890500",
+          "normalProofSize": "100633",
+          "lengthBytes": 33459
+        },
+        {
+          "number": 103,
+          "ts": 1792188528000,
+          "extrinsics": 488,
+          "ours": 486,
+          "normalRefTime": "872991867132",
+          "normalProofSize": "113027",
+          "lengthBytes": 60599
+        },
+        {
+          "number": 104,
+          "ts": 1792188534000,
+          "extrinsics": 152,
+          "ours": 150,
+          "normalRefTime": "269441934300",
+          "normalProofSize": "54041",
+          "lengthBytes": 21959
+        }
+      ],
+      "sampleChargedWeight": {
+        "refTime": "1796279562",
+        "proofSize": "990"
+      },
+      "txLength": 115
+    },
+    {
+      "offeredRate": 80,
+      "offeredActual": 79.76,
+      "submitted": 4800,
+      "accepted": 4800,
+      "rejected": 0,
+      "rejections": {},
+      "included": 4800,
+      "includedOk": 4800,
+      "includedFailed": 0,
+      "failReasons": {},
+      "lost": 0,
+      "stillInPool": 0,
+      "reorgs": 0,
+      "rebroadcast": {
+        "afterSeconds": 18,
+        "sent": 14636,
+        "acceptedByNode": 2914,
+        "resigned": 716,
+        "resignAccepted": 347,
+        "resignSkippedInBestChain": 3163,
+        "finalizedAfterResign": 347,
+        "errors": {
+          "1010: Invalid Transaction: Transaction is outdated": 7009,
+          "1012: Transaction is temporarily banned": 3879,
+          "1013: Transaction Already Imported: Any { .. }": 834,
+          "re-signed: 1014: Priority is too low: (279 vs 279): The transaction has too low p": 369
+        },
+        "finalizedAfterRebroadcast": 4800
+      },
+      "lossShare": 0,
+      "windowTps": 51.97,
+      "overallTps": 47.48,
+      "latencyInclusionMs": {
+        "n": 4800,
+        "mean": 30018,
+        "p50": 24963,
+        "p95": 48777,
+        "p99": 53669,
+        "max": 56008
+      },
+      "latencyFinalityMs": {
+        "n": 4800,
+        "mean": 64564,
+        "p50": 59557,
+        "p95": 83675,
+        "p99": 87236,
+        "max": 89575
+      },
+      "blocks": {
+        "count": 21,
+        "withOurs": 9,
+        "intervalMs": {
+          "n": 20,
+          "mean": 6600,
+          "p50": 6000,
+          "p95": 18000,
+          "p99": 18000,
+          "max": 18000
+        },
+        "oursPerBlock": {
+          "n": 9,
+          "mean": 533,
+          "p50": 480,
+          "p95": 834,
+          "p99": 834,
+          "max": 834
+        },
+        "normalRefTimePct": {
+          "n": 9,
+          "mean": 64,
+          "p50": 57.48,
+          "p95": 99.87,
+          "p99": 99.87,
+          "max": 99.87
+        },
+        "normalProofSizePct": {
+          "n": 9,
+          "mean": 2,
+          "p50": 2.56,
+          "p95": 3.3,
+          "p99": 3.3,
+          "max": 3.3
+        },
+        "lengthBytes": {
+          "n": 9,
+          "mean": 66042,
+          "p50": 59909,
+          "p95": 100619,
+          "p99": 100619,
+          "max": 100619
+        }
+      },
+      "perBlock": [
+        {
+          "number": 111,
+          "ts": 1792188582000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 112,
+          "ts": 1792188588000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 113,
+          "ts": 1792188594000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 114,
+          "ts": 1792188600000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 115,
+          "ts": 1792188606000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 116,
+          "ts": 1792188612000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 117,
+          "ts": 1792188630000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 118,
+          "ts": 1792188630000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 119,
+          "ts": 1792188636000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 120,
+          "ts": 1792188642000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "260120",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 121,
+          "ts": 1792188648000,
+          "extrinsics": 368,
+          "ours": 366,
+          "normalRefTime": "657438319692",
+          "normalProofSize": "186163",
+          "lengthBytes": 46799
+        },
+        {
+          "number": 122,
+          "ts": 1792188654000,
+          "extrinsics": 479,
+          "ours": 477,
+          "normalRefTime": "856825351074",
+          "normalProofSize": "200986",
+          "lengthBytes": 59564
+        },
+        {
+          "number": 123,
+          "ts": 1792188660000,
+          "extrinsics": 482,
+          "ours": 480,
+          "normalRefTime": "862214189760",
+          "normalProofSize": "201839",
+          "lengthBytes": 59909
+        },
+        {
+          "number": 124,
+          "ts": 1792188666000,
+          "extrinsics": 486,
+          "ours": 484,
+          "normalRefTime": "869399308008",
+          "normalProofSize": "202299",
+          "lengthBytes": 60369
+        },
+        {
+          "number": 125,
+          "ts": 1792188672000,
+          "extrinsics": 479,
+          "ours": 477,
+          "normalRefTime": "856825351074",
+          "normalProofSize": "201068",
+          "lengthBytes": 59564
+        },
+        {
+          "number": 126,
+          "ts": 1792188690000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 127,
+          "ts": 1792188690000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 128,
+          "ts": 1792188696000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 129,
+          "ts": 1792188702000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "220699",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 130,
+          "ts": 1792188708000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "215206",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 131,
+          "ts": 1792188714000,
+          "extrinsics": 16,
+          "ours": 14,
+          "normalRefTime": "25147913868",
+          "normalProofSize": "21775",
+          "lengthBytes": 6318
+        }
+      ],
+      "sampleChargedWeight": {
+        "refTime": "1796279562",
+        "proofSize": "732"
+      },
+      "txLength": 115
+    },
+    {
+      "offeredRate": 120,
+      "offeredActual": 119.86,
+      "submitted": 7200,
+      "accepted": 7200,
+      "rejected": 0,
+      "rejections": {},
+      "included": 7200,
+      "includedOk": 7200,
+      "includedFailed": 0,
+      "failReasons": {},
+      "lost": 0,
+      "stillInPool": 0,
+      "reorgs": 0,
+      "rebroadcast": {
+        "afterSeconds": 18,
+        "sent": 17694,
+        "acceptedByNode": 1215,
+        "resigned": 70,
+        "resignAccepted": 70,
+        "resignSkippedInBestChain": 1963,
+        "finalizedAfterResign": 64,
+        "errors": {
+          "1013: Transaction Already Imported: Any { .. }": 2040,
+          "1012: Transaction is temporarily banned": 2033,
+          "1010: Invalid Transaction: Transaction is outdated": 12406
+        },
+        "finalizedAfterRebroadcast": 7200
+      },
+      "lossShare": 0,
+      "windowTps": 84.3,
+      "overallTps": 77.5,
+      "latencyInclusionMs": {
+        "n": 7200,
+        "mean": 19584,
+        "p50": 18631,
+        "p95": 43350,
+        "p99": 56080,
+        "max": 77744
+      },
+      "latencyFinalityMs": {
+        "n": 7200,
+        "mean": 53497,
+        "p50": 53565,
+        "p95": 76043,
+        "p99": 88913,
+        "max": 111831
+      },
+      "blocks": {
+        "count": 20,
+        "withOurs": 11,
+        "intervalMs": {
+          "n": 19,
+          "mean": 6632,
+          "p50": 6000,
+          "p95": 18000,
+          "p99": 18000,
+          "max": 18000
+        },
+        "oursPerBlock": {
+          "n": 11,
+          "mean": 655,
+          "p50": 834,
+          "p95": 834,
+          "p99": 834,
+          "max": 834
+        },
+        "normalRefTimePct": {
+          "n": 11,
+          "mean": 81,
+          "p50": 99.87,
+          "p95": 99.87,
+          "p99": 99.87,
+          "max": 99.87
+        },
+        "normalProofSizePct": {
+          "n": 11,
+          "mean": 4,
+          "p50": 3.67,
+          "p95": 5.94,
+          "p99": 5.94,
+          "max": 5.94
+        },
+        "lengthBytes": {
+          "n": 11,
+          "mean": 89669,
+          "p50": 100619,
+          "p95": 177164,
+          "p99": 177164,
+          "max": 177164
+        }
+      },
+      "perBlock": [
+        {
+          "number": 139,
+          "ts": 1792188768000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 140,
+          "ts": 1792188774000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 141,
+          "ts": 1792188780000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 142,
+          "ts": 1792188786000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 143,
+          "ts": 1792188792000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 144,
+          "ts": 1792188810000,
+          "extrinsics": 368,
+          "ours": 366,
+          "normalRefTime": "657438319692",
+          "normalProofSize": "261668",
+          "lengthBytes": 46799
+        },
+        {
+          "number": 145,
+          "ts": 1792188810000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 146,
+          "ts": 1792188816000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 147,
+          "ts": 1792188822000,
+          "extrinsics": 1295,
+          "ours": 573,
+          "normalRefTime": "1496836189026",
+          "normalProofSize": "467375",
+          "lengthBytes": 177164
+        },
+        {
+          "number": 148,
+          "ts": 1792188828000,
+          "extrinsics": 785,
+          "ours": 783,
+          "normalRefTime": "1406486897046",
+          "normalProofSize": "337267",
+          "lengthBytes": 94754
+        },
+        {
+          "number": 149,
+          "ts": 1792188834000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "326396",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 150,
+          "ts": 1792188840000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "281069",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 151,
+          "ts": 1792188846000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "298029",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 152,
+          "ts": 1792188852000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "303998",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 153,
+          "ts": 1792188870000,
+          "extrinsics": 120,
+          "ours": 118,
+          "normalRefTime": "211960988316",
+          "normalProofSize": "47506",
+          "lengthBytes": 18279
+        },
+        {
+          "number": 154,
+          "ts": 1792188870000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 155,
+          "ts": 1792188876000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 156,
+          "ts": 1792188882000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "288710",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 157,
+          "ts": 1792188888000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "280826",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 158,
+          "ts": 1792188894000,
+          "extrinsics": 358,
+          "ours": 356,
+          "normalRefTime": "639475524072",
+          "normalProofSize": "146824",
+          "lengthBytes": 45649
+        }
+      ],
+      "sampleChargedWeight": {
+        "refTime": "1796279562",
+        "proofSize": "267"
+      },
+      "txLength": 115
+    },
+    {
+      "offeredRate": 160,
+      "offeredActual": 159.82,
+      "submitted": 9600,
+      "accepted": 9600,
+      "rejected": 0,
+      "rejections": {},
+      "included": 9600,
+      "includedOk": 9600,
+      "includedFailed": 0,
+      "failReasons": {},
+      "lost": 0,
+      "stillInPool": 0,
+      "reorgs": 0,
+      "rebroadcast": {
+        "afterSeconds": 18,
+        "sent": 24341,
+        "acceptedByNode": 3757,
+        "resigned": 599,
+        "resignAccepted": 599,
+        "resignSkippedInBestChain": 1470,
+        "finalizedAfterResign": 599,
+        "errors": {
+          "1012: Transaction is temporarily banned": 2069,
+          "1010: Invalid Transaction: Transaction is outdated": 16926,
+          "1013: Transaction Already Imported: Any { .. }": 1589
+        },
+        "finalizedAfterRebroadcast": 9600
+      },
+      "lossShare": 0,
+      "windowTps": 97.58,
+      "overallTps": 95.6,
+      "latencyInclusionMs": {
+        "n": 9600,
+        "mean": 20336,
+        "p50": 10168,
+        "p95": 49631,
+        "p99": 60414,
+        "max": 68623
+      },
+      "latencyFinalityMs": {
+        "n": 9600,
+        "mean": 53409,
+        "p50": 44250,
+        "p95": 83239,
+        "p99": 93289,
+        "max": 103175
+      },
+      "blocks": {
+        "count": 21,
+        "withOurs": 14,
+        "intervalMs": {
+          "n": 20,
+          "mean": 6600,
+          "p50": 6000,
+          "p95": 18000,
+          "p99": 18000,
+          "max": 18000
+        },
+        "oursPerBlock": {
+          "n": 14,
+          "mean": 686,
+          "p50": 834,
+          "p95": 834,
+          "p99": 834,
+          "max": 834
+        },
+        "normalRefTimePct": {
+          "n": 14,
+          "mean": 82,
+          "p50": 99.87,
+          "p95": 99.87,
+          "p99": 99.87,
+          "max": 99.87
+        },
+        "normalProofSizePct": {
+          "n": 14,
+          "mean": 4,
+          "p50": 4.14,
+          "p95": 6.16,
+          "p99": 6.16,
+          "max": 6.16
+        },
+        "lengthBytes": {
+          "n": 14,
+          "mean": 83566,
+          "p50": 100619,
+          "p95": 100619,
+          "p99": 100619,
+          "max": 100619
+        }
+      },
+      "perBlock": [
+        {
+          "number": 167,
+          "ts": 1792188954000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 168,
+          "ts": 1792188960000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 169,
+          "ts": 1792188966000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 170,
+          "ts": 1792188972000,
+          "extrinsics": 962,
+          "ours": 0,
+          "normalRefTime": "623424000000",
+          "normalProofSize": "320979",
+          "lengthBytes": 146789
+        },
+        {
+          "number": 171,
+          "ts": 1792188990000,
+          "extrinsics": 711,
+          "ours": 709,
+          "normalRefTime": "1273562209458",
+          "normalProofSize": "485213",
+          "lengthBytes": 86244
+        },
+        {
+          "number": 172,
+          "ts": 1792188990000,
+          "extrinsics": 61,
+          "ours": 59,
+          "normalRefTime": "105980494158",
+          "normalProofSize": "126828",
+          "lengthBytes": 11493
+        },
+        {
+          "number": 173,
+          "ts": 1792188996000,
+          "extrinsics": 194,
+          "ours": 192,
+          "normalRefTime": "344885675904",
+          "normalProofSize": "275615",
+          "lengthBytes": 26789
+        },
+        {
+          "number": 174,
+          "ts": 1792189002000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "402294",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 175,
+          "ts": 1792189008000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "393096",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 176,
+          "ts": 1792189014000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "384310",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 177,
+          "ts": 1792189020000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "380564",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 178,
+          "ts": 1792189026000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "316041",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 179,
+          "ts": 1792189032000,
+          "extrinsics": 727,
+          "ours": 725,
+          "normalRefTime": "1302302682450",
+          "normalProofSize": "323473",
+          "lengthBytes": 88084
+        },
+        {
+          "number": 180,
+          "ts": 1792189050000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 181,
+          "ts": 1792189050000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 182,
+          "ts": 1792189056000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4708
+        },
+        {
+          "number": 183,
+          "ts": 1792189062000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "356374",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 184,
+          "ts": 1792189068000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "325981",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 185,
+          "ts": 1792189074000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "337846",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 186,
+          "ts": 1792189080000,
+          "extrinsics": 836,
+          "ours": 834,
+          "normalRefTime": "1498097154708",
+          "normalProofSize": "298670",
+          "lengthBytes": 100619
+        },
+        {
+          "number": 187,
+          "ts": 1792189086000,
+          "extrinsics": 411,
+          "ours": 409,
+          "normalRefTime": "734678340858",
+          "normalProofSize": "156504",
+          "lengthBytes": 51744
+        }
+      ],
+      "sampleChargedWeight": {
+        "refTime": "1796279562",
+        "proofSize": "8300"
+      },
+      "txLength": 115
     }
   ],
-  "generatedAt": "2026-10-16T16:24:52.877Z"
+  "generatedAt": "2026-10-16T22:18:42.269Z"
 }
