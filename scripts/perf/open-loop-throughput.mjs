@@ -37,14 +37,16 @@
  * ExtrinsicSuccess) and by the declared pre-dispatch weight, and the block
  * length limit divided by the transaction length.
  *
- * Re-broadcast. On this testnet a CCRMS block is discarded and re-authored about
- * once a minute (Finding F), and the node's pool does not always return the
- * discarded block's transactions; later nonces from the same accounts then wait
- * forever. Like a wallet, the client re-sends any accepted transaction not yet
- * finalized after REBROADCAST seconds (same signed bytes, so it can be included
- * at most once). It records how many re-sends the node accepted (the
- * transaction had been dropped) and how many best-chain re-orgs it saw, so the
- * effect is measured rather than hidden. --rebroadcast 0 turns this off.
+ * Re-broadcast. On this testnet the collator discards and re-authors its last
+ * blocks once a minute (Finding F). A transaction that was in a discarded block
+ * has been pruned from the pool and banned (its hash is refused for 30 min), so
+ * it is lost, and every later nonce from the same account waits behind it.
+ * Like a wallet, the client re-sends any accepted transaction not finalized
+ * after REBROADCAST seconds; if the node answers "temporarily banned", it signs
+ * the same call again with the same nonce (sr25519 signatures are randomized,
+ * so the hash differs) and sends that. One nonce can be included only once, so
+ * no operation can run twice. Re-sends, re-signings and re-orgs are recorded,
+ * so the effect is measured rather than hidden. --rebroadcast 0 turns it off.
  *
  * The sweep stops after the first rate at which more than 20% of submitted
  * transactions are rejected or lost (that rate is kept), unless --no-stop.
@@ -122,27 +124,35 @@ function send(api, tx, signer) {
 }
 
 // Fund `addresses` from `alice` with pre-signed transfers (consecutive nonces),
-// then wait until every account holds FUND in the finalized state.
+// then wait until every account holds FUND in the finalized state. Transfers
+// lost in a discarded block (Finding F) are signed again with fresh nonces
+// every 36 s; funding an account twice is harmless.
 async function fund(api, alice, addresses) {
-  let nonce = (await api.rpc.system.accountNextIndex(alice.address)).toNumber();
-  const CHUNK = 500;
-  for (let i = 0; i < addresses.length; i += CHUNK) {
-    const part = addresses.slice(i, i + CHUNK);
-    const signed = [];
-    for (const addr of part) {
-      signed.push(await api.tx.balances.transferKeepAlive(addr, FUND).signAsync(alice, { nonce: nonce++, era: 0 }));
+  const transfer = async (addrs) => {
+    let nonce = (await api.rpc.system.accountNextIndex(alice.address)).toNumber();
+    const CHUNK = 500;
+    for (let i = 0; i < addrs.length; i += CHUNK) {
+      const signed = [];
+      for (const addr of addrs.slice(i, i + CHUNK)) {
+        signed.push(await api.tx.balances.transferKeepAlive(addr, FUND).signAsync(alice, { nonce: nonce++, era: 0 }));
+      }
+      await Promise.all(signed.map((tx) => api.rpc.author.submitExtrinsic(tx.toHex()).catch(() => {})));
     }
-    await Promise.all(signed.map((tx) => api.rpc.author.submitExtrinsic(tx.toHex())));
-  }
+  };
+  await transfer(addresses);
   const deadline = Date.now() + 10 * 60_000;
-  for (;;) {
+  for (let poll = 1; ; poll++) {
+    await sleep(6000);
     const fin = await api.rpc.chain.getFinalizedHead();
     const at = await api.at(fin);
     const infos = await at.query.system.account.multi(addresses);
-    const funded = infos.filter((a) => a.data.free.toBigInt() >= FUND).length;
-    if (funded === addresses.length) return;
-    if (Date.now() > deadline) throw new Error(`funding: only ${funded}/${addresses.length} finalized after 10 min`);
-    await sleep(6000);
+    const unfunded = addresses.filter((_, i) => infos[i].data.free.toBigInt() < FUND);
+    if (!unfunded.length) return;
+    if (Date.now() > deadline) throw new Error(`funding: only ${addresses.length - unfunded.length}/${addresses.length} finalized after 10 min`);
+    if (poll % 6 === 0) {
+      console.log(`  re-sending ${unfunded.length} funding transfers`);
+      await transfer(unfunded);
+    }
   }
 }
 
@@ -168,6 +178,7 @@ async function follow(api, fromNumber, pending, blocks) {
           if (!rec || rec.block !== undefined) return;
           ours++;
           rec.block = next;
+          rec.foundHash = xt.hash.toHex();
           rec.blockTs = tsMs;
           rec.finalSeen = seenAt;
           const evs = events.filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.toNumber() === index);
@@ -222,10 +233,11 @@ async function runRate(api, alice, keyring, contentId, rate, limits) {
   for (let k = 0; k < total; k++) {
     const pair = pairs[k % nAccounts];
     const tx = await buildCall(api, contentId).signAsync(pair, { nonce: Math.floor(k / nAccounts), era: 0 });
-    txs.push({ hex: tx.toHex(), hash: tx.hash.toHex(), length: tx.encodedLength });
+    txs.push({ hex: tx.toHex(), hash: tx.hash.toHex(), length: tx.encodedLength, pair, nonce: Math.floor(k / nAccounts) });
   }
 
-  const pending = new Map();
+  const pending = new Map(); // tx hash -> record (a re-signed record has several hashes)
+  const records = [];
   const blocks = [];
   const startNumber = (await api.rpc.chain.getHeader(await api.rpc.chain.getFinalizedHead())).number.toNumber() + 1;
   const stop = await follow(api, startNumber, pending, blocks);
@@ -244,18 +256,43 @@ async function runRate(api, alice, keyring, contentId, rate, limits) {
   });
   // Re-broadcast accepted transactions not finalized after REBROADCAST_S.
   let rebroadcastAccepted = 0;
+  let resigned = 0;
+  let resignAccepted = 0;
   const rebroadcastErrors = new Map();
+  // "Banned" also answers a transaction that is in a best block not yet
+  // finalized, so re-sign only if the account's nonce at the best block shows
+  // this nonce unused, i.e. the block that held it was discarded.
+  let resignSkipped = 0;
+  const resign = async (rec) => {
+    try {
+      const { nonce } = await api.query.system.account(rec.pair.address);
+      if (nonce.toNumber() > rec.nonce) { resignSkipped++; return; }
+      const tx = await buildCall(api, contentId).signAsync(rec.pair, { nonce: rec.nonce, era: 0 });
+      const hash = tx.hash.toHex();
+      rec.hex = tx.toHex();
+      rec.hashes.push(hash);
+      pending.set(hash, rec);
+      resigned++;
+      await api.rpc.author.submitExtrinsic(rec.hex);
+      resignAccepted++;
+    } catch (e) {
+      const key = `re-signed: ${(e.message || String(e)).slice(0, 70)}`;
+      rebroadcastErrors.set(key, (rebroadcastErrors.get(key) || 0) + 1);
+    }
+  };
   const rebroadcaster = REBROADCAST_S > 0 ? setInterval(() => {
     const now = Date.now();
-    for (const rec of pending.values()) {
+    for (const rec of records) {
       if (!rec.accepted || rec.block !== undefined || now - rec.lastSubmit < REBROADCAST_S * 1000) continue;
       rec.lastSubmit = now;
       rec.rebroadcasts++;
       api.rpc.author.submitExtrinsic(rec.hex).then(
         () => { rebroadcastAccepted++; },
         (e) => {
-          const key = (e.message || String(e)).slice(0, 80);
+          const msg = e.message || String(e);
+          const key = msg.slice(0, 80);
           rebroadcastErrors.set(key, (rebroadcastErrors.get(key) || 0) + 1);
+          if (msg.includes('1012') && rec.block === undefined) resign(rec);
         },
       );
     }
@@ -267,8 +304,12 @@ async function runRate(api, alice, keyring, contentId, rate, limits) {
     const due = Math.min(total, Math.floor(((Date.now() - t0) / 1000) * rate) + 1);
     for (; sent < due; sent++) {
       const t = txs[sent];
-      const rec = { submit: Date.now(), lastSubmit: Date.now(), hex: t.hex, rebroadcasts: 0 };
+      const rec = {
+        submit: Date.now(), lastSubmit: Date.now(), hex: t.hex, hashes: [t.hash],
+        pair: t.pair, nonce: t.nonce, rebroadcasts: 0,
+      };
       pending.set(t.hash, rec);
+      records.push(rec);
       inflight.push(
         api.rpc.author.submitExtrinsic(t.hex).then(
           () => { accepted++; rec.accepted = true; },
@@ -289,7 +330,7 @@ async function runRate(api, alice, keyring, contentId, rate, limits) {
   // Drain: wait until every accepted transaction is finalized, or DRAIN seconds.
   const deadline = sendEnd + DRAIN * 1000;
   for (;;) {
-    const included = [...pending.values()].filter((r) => r.block !== undefined).length;
+    const included = records.filter((r) => r.block !== undefined).length;
     if (included >= accepted || Date.now() > deadline) break;
     await sleep(3000);
   }
@@ -299,9 +340,9 @@ async function runRate(api, alice, keyring, contentId, rate, limits) {
   unsubBest();
   // Our transactions still in the node's pool at the end (lost but not dropped).
   const poolHashes = new Set((await api.rpc.author.pendingExtrinsics()).map((x) => x.hash.toHex()));
-  const stillInPool = [...pending.entries()].filter(([h, r]) => r.block === undefined && poolHashes.has(h)).length;
+  const stillInPool = records.filter((r) => r.block === undefined && r.hashes.some((h) => poolHashes.has(h))).length;
 
-  const recs = [...pending.values()];
+  const recs = records;
   const inc = recs.filter((r) => r.block !== undefined);
   const okRecs = inc.filter((r) => r.ok);
   const failed = inc.filter((r) => r.ok === false);
@@ -334,10 +375,14 @@ async function runRate(api, alice, keyring, contentId, rate, limits) {
     reorgs,
     rebroadcast: {
       afterSeconds: REBROADCAST_S,
-      sent: [...pending.values()].reduce((a, r) => a + r.rebroadcasts, 0),
+      sent: records.reduce((a, r) => a + r.rebroadcasts, 0),
       acceptedByNode: rebroadcastAccepted,
+      resigned,
+      resignAccepted,
+      resignSkippedInBestChain: resignSkipped,
+      finalizedAfterResign: records.filter((r) => r.foundHash && r.foundHash !== r.hashes[0]).length,
       errors: Object.fromEntries(rebroadcastErrors),
-      finalizedAfterRebroadcast: [...pending.values()].filter((r) => r.block !== undefined && r.rebroadcasts > 0).length,
+      finalizedAfterRebroadcast: records.filter((r) => r.block !== undefined && r.rebroadcasts > 0).length,
     },
     lossShare: Number(((rejected + lost) / total).toFixed(4)),
     windowTps: Number((inWindow / DURATION).toFixed(2)),
@@ -367,8 +412,8 @@ async function runRate(api, alice, keyring, contentId, rate, limits) {
       `max ${result.blocks.oursPerBlock.max ?? 0}/block, ref_time p50 ${result.blocks.normalRefTimePct.p50 ?? 0}%, proof p50 ${result.blocks.normalProofSizePct.p50 ?? 0}%`,
   );
   console.log(
-    `  re-orgs seen ${reorgs}; re-broadcasts ${result.rebroadcast.sent} (node accepted ${rebroadcastAccepted}, ` +
-      `finalized after re-broadcast ${result.rebroadcast.finalizedAfterRebroadcast}); still in pool ${stillInPool}`,
+    `  re-orgs seen ${reorgs}; re-broadcasts ${result.rebroadcast.sent} (node accepted ${rebroadcastAccepted}); ` +
+      `re-signed ${resigned} (accepted ${resignAccepted}, finalized ${result.rebroadcast.finalizedAfterResign}); still in pool ${stillInPool}`,
   );
   if (rebroadcastErrors.size) console.log(`  re-broadcast responses: ${JSON.stringify(result.rebroadcast.errors)}`);
   if (rejected) console.log(`  rejections: ${JSON.stringify(result.rejections)}`);
@@ -392,7 +437,14 @@ async function main() {
 
   // Content item with a non-zero view price and no royalty splits.
   const hash = '0x' + Buffer.from(`open-loop-${RUN_ID}`).toString('hex').slice(0, 64).padEnd(64, '0');
-  const reg = await send(api, api.tx.contentRights.registerContent(hash, 'Open-loop', PRICE, PRICE, PRICE, 100), alice);
+  // Registered at most twice: a registration caught in a discarded block can come
+  // back Invalid; a second content item is harmless (the one reported is used).
+  const register = () => send(api, api.tx.contentRights.registerContent(hash, 'Open-loop', PRICE, PRICE, PRICE, 100), alice);
+  const reg = await register().catch(async (e) => {
+    console.log(`  registerContent: ${e.message}; trying once more`);
+    await sleep(12_000);
+    return register();
+  });
   if (reg.error) throw new Error(`registerContent: ${reg.error}`);
   const contentId = reg.events.find(({ event }) => event.method === 'ContentRegistered').event.data[0].toNumber();
   console.log(`Content ${contentId} registered`);
@@ -441,12 +493,12 @@ async function main() {
   mkdirSync(OUTPUT_DIR, { recursive: true });
   writeFileSync(OUTPUT, JSON.stringify(summary, null, 2));
 
-  console.log('\n rate  offered  window  overall  ok/submitted  lost  rejected  incl p50/p95 ms  max/block  reorgs  rebcast');
+  console.log('\n rate  offered  window  overall  ok/submitted  lost  rejected  incl p50/p95 ms  max/block  reorgs  resigned');
   for (const r of results) {
     console.log(
       ` ${String(r.offeredRate).padStart(4)}  ${String(r.offeredActual).padStart(7)}  ${String(r.windowTps).padStart(6)}  ${String(r.overallTps).padStart(7)}` +
         `  ${`${r.includedOk}/${r.submitted}`.padStart(12)}  ${String(r.lost).padStart(4)}  ${String(r.rejected).padStart(8)}` +
-        `  ${`${r.latencyInclusionMs.p50}/${r.latencyInclusionMs.p95}`.padStart(15)}  ${String(r.blocks.oursPerBlock.max ?? 0).padStart(9)}  ${String(r.reorgs).padStart(6)}  ${String(r.rebroadcast.acceptedByNode).padStart(7)}`,
+        `  ${`${r.latencyInclusionMs.p50}/${r.latencyInclusionMs.p95}`.padStart(15)}  ${String(r.blocks.oursPerBlock.max ?? 0).padStart(9)}  ${String(r.reorgs).padStart(6)}  ${String(r.rebroadcast.resigned).padStart(7)}`,
     );
   }
   console.log(`\nPredicted per block (normal class): declared ref_time ${predicted.perBlockByDeclaredRefTime}, ` +
