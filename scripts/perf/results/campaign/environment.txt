@@ -1,4 +1,4 @@
-commit 4900095 (dirty)
-date   2026-10-16T16:03:16Z
+commit 31497b9 (dirty)
+date   2026-10-16T19:48:43Z
 host   Apple M1 Max, 64 GB
-mode   full, only fee-report,open-loop-check-access,open-loop-purchase-views
+mode   full, only open-loop-check-access,open-loop-purchase-views

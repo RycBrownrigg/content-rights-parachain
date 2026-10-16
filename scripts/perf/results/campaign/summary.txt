@@ -1,3 +1,2 @@
-  fee-report                 exit 1, 846 s
-  open-loop-check-access     exit 1, 28 s
-  open-loop-purchase-views   exit 0, 294 s
+  open-loop-check-access     exit 0, 1351 s
+  open-loop-purchase-views   exit 1, 1760 s
