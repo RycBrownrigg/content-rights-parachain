@@ -1,21 +1,21 @@
 {
-  "timestamp": "2026-10-15T20:45:28.297Z",
-  "contentId": 5,
-  "purchaseBlock": 462,
-  "relayNumber": 528,
-  "relayHash": "0xedf036bf1c6c07cfcb1f558e384431994c62b4dfd1cac69077db2135bef3de09",
-  "ccrmsNumber": 464,
-  "ccrmsHash": "0xba0f70a590b88eb258c02fa0cd0f72784e5f05c0f63d0739aec1978e75fa8b69",
-  "relayProofBytes": 1332,
-  "rightsProofBytes": 921,
-  "verifyWallMs": 40046,
+  "timestamp": "2026-10-16T13:09:28.426Z",
+  "contentId": 2,
+  "purchaseBlock": 4574,
+  "relayNumber": 5123,
+  "relayHash": "0x61940a36f7c237a124aea7ebb5e8d2f550422d4a9b3f7ee83aed168ffea4e91d",
+  "ccrmsNumber": 4576,
+  "ccrmsHash": "0xd70bacc8949e678278893595db9592a4a1a8309938fb98bfe686bfb84ec61824",
+  "relayProofBytes": 1352,
+  "rightsProofBytes": 819,
+  "verifyWallMs": 56146,
   "bobResult": {
     "isOwner": true,
-    "rightsBlock": 464
+    "rightsBlock": 4576
   },
   "charlieResult": {
     "isOwner": false,
-    "rightsBlock": 464
+    "rightsBlock": 4576
   },
   "unknownResult": {
     "error": "rightsVerifier.UnknownRelayBlock"

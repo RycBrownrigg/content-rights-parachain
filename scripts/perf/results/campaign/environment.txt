@@ -1,4 +1,4 @@
-commit 8724da6
-date   2026-10-15T20:08:41Z
+commit c4d1e1a (dirty)
+date   2026-10-16T13:05:18Z
 host   Apple M1 Max, 64 GB
-mode   quick
+mode   full

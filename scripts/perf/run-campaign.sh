@@ -9,6 +9,12 @@
 # Each step's console output goes to scripts/perf/results/campaign/<step>.log and
 # its JSON to scripts/perf/results/ as before. A failing step does not stop the
 # others; the summary at the end lists each step's exit status.
+#
+# Before the first step and before each open-loop step, scripts/perf/preflight.mjs
+# checks that finality is advancing on all three chains and that a transaction
+# from //Alice is finalized on both parachains. If it fails, the campaign stops:
+# results from a network with stalled finality are not CCRMS results. Start each
+# campaign on a freshly spawned network.
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -42,14 +48,32 @@ step() {
   echo "mode   $([[ "${QUICK:-0}" == 1 ]] && echo quick || echo full)"
 } | tee "$LOG/environment.txt"
 
+preflight() {
+  echo
+  echo "=================== preflight ($1) ==================="
+  node scripts/perf/preflight.mjs "$RELAY_WS" "$PARA_A_WS" "$PARA_B_WS" 2>&1 \
+    | grep -v -e REGISTRY -e API/INIT | tee "$LOG/preflight-$1.log"
+  if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+    NAMES+=("preflight-$1"); STATUS+=("FAILED: campaign stopped")
+    summary
+    exit 1
+  fi
+}
+summary() {
+  echo
+  echo "=================== summary ==================="
+  for i in "${!NAMES[@]}"; do printf '  %-26s %s\n' "${NAMES[$i]}" "${STATUS[$i]}"; done | tee "$LOG/summary.txt"
+}
+
+preflight start
 step fee-report node scripts/perf/fee-report.mjs "$PARA_A_WS"
 step xcm-client-latency node scripts/perf/xcm-client-latency.mjs "$PARA_A_WS" "$PARA_B_WS" --runs "$RUNS" --fail-runs "$FAIL_RUNS"
 step verify-rights-e2e node scripts/verify-rights-e2e.mjs "$RELAY_WS" "$PARA_A_WS" "$PARA_B_WS"
+preflight open-loop-check-access
 step open-loop-check-access node scripts/perf/open-loop-throughput.mjs "$PARA_A_WS" --op check_access \
   --rates "$RATES" --duration "$DURATION" --drain "$DRAIN"
+preflight open-loop-purchase-views
 step open-loop-purchase-views node scripts/perf/open-loop-throughput.mjs "$PARA_A_WS" --op purchase_views \
   --rates "$RATES" --duration "$DURATION" --drain "$DRAIN"
 
-echo
-echo "=================== summary ==================="
-for i in "${!NAMES[@]}"; do printf '  %-26s %s\n' "${NAMES[$i]}" "${STATUS[$i]}"; done | tee "$LOG/summary.txt"
+summary
