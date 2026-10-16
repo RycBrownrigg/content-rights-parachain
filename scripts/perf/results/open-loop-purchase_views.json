@@ -1,7 +1,7 @@
 {
   "op": "purchase_views",
   "ws": "ws://127.0.0.1:9990",
-  "durationS": 20,
+  "durationS": 60,
   "perAccount": 10,
   "limits": {
     "normalRefTime": "1500000000000",
@@ -15,181 +15,343 @@
     },
     "chargedWeight": {
       "refTime": "1796279562",
-      "proofSize": "2081"
+      "proofSize": "385"
     },
     "perBlockByDeclaredRefTime": 457,
     "perBlockByDeclaredProofSize": 191,
     "perBlockByChargedRefTime": 835,
-    "perBlockByChargedProofSize": 3779,
+    "perBlockByChargedProofSize": 20426,
     "perBlockByLength": 34192
   },
-  "peakWindowTps": 36.65,
-  "peakAtOfferedRate": 40,
+  "peakWindowTps": 1.47,
+  "peakAtOfferedRate": 10,
   "results": [
     {
-      "offeredRate": 40,
-      "offeredActual": 39.92,
-      "submitted": 800,
-      "accepted": 800,
+      "offeredRate": 10,
+      "offeredActual": 10,
+      "submitted": 600,
+      "accepted": 600,
       "rejected": 0,
       "rejections": {},
-      "included": 800,
-      "includedOk": 800,
+      "included": 88,
+      "includedOk": 88,
       "includedFailed": 0,
       "failReasons": {},
-      "lost": 0,
-      "lossShare": 0,
-      "windowTps": 36.65,
-      "overallTps": 32.91,
+      "lost": 512,
+      "lossShare": 0.8533,
+      "windowTps": 1.47,
+      "overallTps": 2.27,
       "latencyInclusionMs": {
-        "n": 800,
-        "mean": 3089,
-        "p50": 3161,
-        "p95": 5696,
-        "p99": 5902,
-        "max": 5954
+        "n": 88,
+        "mean": 34380,
+        "p50": 34327,
+        "p95": 38341,
+        "p99": 38754,
+        "max": 38754
       },
       "latencyFinalityMs": {
-        "n": 800,
-        "mean": 36868,
-        "p50": 36808,
-        "p95": 40445,
-        "p99": 40848,
-        "max": 40964
+        "n": 88,
+        "mean": 67132,
+        "p50": 67079,
+        "p95": 71093,
+        "p99": 71506,
+        "max": 71506
       },
       "blocks": {
-        "count": 9,
-        "withOurs": 5,
+        "count": 27,
+        "withOurs": 1,
         "intervalMs": {
-          "n": 8,
-          "mean": 6750,
+          "n": 26,
+          "mean": 6692,
           "p50": 6000,
           "p95": 18000,
           "p99": 18000,
           "max": 18000
         },
         "oursPerBlock": {
-          "n": 5,
-          "mean": 160,
-          "p50": 239,
-          "p95": 241,
-          "p99": 241,
-          "max": 241
+          "n": 1,
+          "mean": 88,
+          "p50": 88,
+          "p95": 88,
+          "p99": 88,
+          "max": 88
         },
         "normalRefTimePct": {
-          "n": 5,
-          "mean": 19,
-          "p50": 28.62,
-          "p95": 28.86,
-          "p99": 28.86,
-          "max": 28.86
+          "n": 1,
+          "mean": 11,
+          "p50": 10.53,
+          "p95": 10.53,
+          "p99": 10.53,
+          "max": 10.53
         },
         "normalProofSizePct": {
-          "n": 5,
+          "n": 1,
           "mean": 0,
-          "p50": 0.55,
-          "p95": 0.6,
-          "p99": 0.6,
-          "max": 0.6
+          "p50": 0.29,
+          "p95": 0.29,
+          "p99": 0.29,
+          "max": 0.29
         },
         "lengthBytes": {
-          "n": 5,
-          "mean": 22439,
-          "p50": 31524,
-          "p95": 31754,
-          "p99": 31754,
-          "max": 31754
+          "n": 1,
+          "mean": 14949,
+          "p50": 14949,
+          "p95": 14949,
+          "p99": 14949,
+          "max": 14949
         }
       },
       "perBlock": [
         {
-          "number": 8,
-          "ts": 1792111866000,
+          "number": 947,
+          "ts": 1792164984000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4038
+          "lengthBytes": 4828
         },
         {
-          "number": 9,
-          "ts": 1792111884000,
+          "number": 948,
+          "ts": 1792164990000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4038
+          "lengthBytes": 4828
         },
         {
-          "number": 10,
-          "ts": 1792111884000,
+          "number": 949,
+          "ts": 1792164996000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4038
+          "lengthBytes": 4828
         },
         {
-          "number": 11,
-          "ts": 1792111890000,
+          "number": 950,
+          "ts": 1792165002000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4038
+          "lengthBytes": 4828
         },
         {
-          "number": 12,
-          "ts": 1792111896000,
-          "extrinsics": 15,
-          "ours": 13,
-          "normalRefTime": "23351634306",
-          "normalProofSize": "6277",
-          "lengthBytes": 5533
+          "number": 951,
+          "ts": 1792165008000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
         },
         {
-          "number": 13,
-          "ts": 1792111902000,
-          "extrinsics": 243,
-          "ours": 241,
-          "normalRefTime": "432903374442",
-          "normalProofSize": "43393",
-          "lengthBytes": 31754
+          "number": 952,
+          "ts": 1792165026000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
         },
         {
-          "number": 14,
-          "ts": 1792111908000,
-          "extrinsics": 242,
-          "ours": 240,
-          "normalRefTime": "431107094880",
-          "normalProofSize": "47378",
-          "lengthBytes": 31639
+          "number": 953,
+          "ts": 1792165026000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
         },
         {
-          "number": 15,
-          "ts": 1792111914000,
-          "extrinsics": 241,
-          "ours": 239,
-          "normalRefTime": "429310815318",
-          "normalProofSize": "47263",
-          "lengthBytes": 31524
+          "number": 954,
+          "ts": 1792165032000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
         },
         {
-          "number": 16,
-          "ts": 1792111920000,
-          "extrinsics": 69,
-          "ours": 67,
-          "normalRefTime": "120350730654",
-          "normalProofSize": "25484",
-          "lengthBytes": 11744
+          "number": 955,
+          "ts": 1792165038000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 956,
+          "ts": 1792165044000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 957,
+          "ts": 1792165050000,
+          "extrinsics": 90,
+          "ours": 88,
+          "normalRefTime": "158072601456",
+          "normalProofSize": "23470",
+          "lengthBytes": 14949
+        },
+        {
+          "number": 958,
+          "ts": 1792165056000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 959,
+          "ts": 1792165062000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 960,
+          "ts": 1792165068000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 961,
+          "ts": 1792165086000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 962,
+          "ts": 1792165086000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 963,
+          "ts": 1792165092000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 964,
+          "ts": 1792165098000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 965,
+          "ts": 1792165104000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 966,
+          "ts": 1792165110000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 967,
+          "ts": 1792165116000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 968,
+          "ts": 1792165122000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 969,
+          "ts": 1792165128000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 970,
+          "ts": 1792165146000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 971,
+          "ts": 1792165146000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 972,
+          "ts": 1792165152000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
+        },
+        {
+          "number": 973,
+          "ts": 1792165158000,
+          "extrinsics": 2,
+          "ours": 0,
+          "normalRefTime": "0",
+          "normalProofSize": "0",
+          "lengthBytes": 4828
         }
       ],
       "sampleChargedWeight": {
         "refTime": "1796279562",
-        "proofSize": "2081"
+        "proofSize": "385"
       },
       "txLength": 115
     }
   ],
-  "generatedAt": "2026-10-16T00:52:38.757Z"
+  "generatedAt": "2026-10-16T15:39:52.297Z"
 }

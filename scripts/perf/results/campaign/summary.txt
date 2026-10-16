@@ -1,5 +1,5 @@
-  fee-report                 exit 1, 5 s
-  xcm-client-latency         exit 1, 6 s
-  verify-rights-e2e          exit 0, 238 s
-  open-loop-check-access     exit 0, 254 s
-  open-loop-purchase-views   exit 1, 642 s
+  fee-report                 exit 1, 597 s
+  xcm-client-latency         exit 0, 4918 s
+  verify-rights-e2e          exit 0, 216 s
+  open-loop-check-access     exit 0, 303 s
+  open-loop-purchase-views   exit 0, 302 s
