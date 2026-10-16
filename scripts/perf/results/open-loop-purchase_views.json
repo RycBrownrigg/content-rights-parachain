@@ -15,15 +15,15 @@
     },
     "chargedWeight": {
       "refTime": "1796279562",
-      "proofSize": "385"
+      "proofSize": "83"
     },
     "perBlockByDeclaredRefTime": 457,
     "perBlockByDeclaredProofSize": 191,
     "perBlockByChargedRefTime": 835,
-    "perBlockByChargedProofSize": 20426,
+    "perBlockByChargedProofSize": 94750,
     "perBlockByLength": 34192
   },
-  "peakWindowTps": 1.47,
+  "peakWindowTps": 1.38,
   "peakAtOfferedRate": 10,
   "results": [
     {
@@ -33,29 +33,41 @@
       "accepted": 600,
       "rejected": 0,
       "rejections": {},
-      "included": 88,
-      "includedOk": 88,
+      "included": 83,
+      "includedOk": 83,
       "includedFailed": 0,
       "failReasons": {},
-      "lost": 512,
-      "lossShare": 0.8533,
-      "windowTps": 1.47,
-      "overallTps": 2.27,
+      "lost": 517,
+      "stillInPool": 0,
+      "reorgs": 0,
+      "rebroadcast": {
+        "afterSeconds": 18,
+        "sent": 4040,
+        "acceptedByNode": 0,
+        "errors": {
+          "1012: Transaction is temporarily banned": 3583,
+          "1013: Transaction Already Imported: Any { .. }": 457
+        },
+        "finalizedAfterRebroadcast": 83
+      },
+      "lossShare": 0.8617,
+      "windowTps": 1.38,
+      "overallTps": 3.16,
       "latencyInclusionMs": {
-        "n": 88,
-        "mean": 34380,
-        "p50": 34327,
-        "p95": 38341,
-        "p99": 38754,
-        "max": 38754
+        "n": 83,
+        "mean": 22110,
+        "p50": 22093,
+        "p95": 25815,
+        "p99": 26236,
+        "max": 26236
       },
       "latencyFinalityMs": {
-        "n": 88,
-        "mean": 67132,
-        "p50": 67079,
-        "p95": 71093,
-        "p99": 71506,
-        "max": 71506
+        "n": 83,
+        "mean": 55417,
+        "p50": 55400,
+        "p95": 59122,
+        "p99": 59543,
+        "max": 59543
       },
       "blocks": {
         "count": 27,
@@ -70,288 +82,288 @@
         },
         "oursPerBlock": {
           "n": 1,
-          "mean": 88,
-          "p50": 88,
-          "p95": 88,
-          "p99": 88,
-          "max": 88
+          "mean": 83,
+          "p50": 83,
+          "p95": 83,
+          "p99": 83,
+          "max": 83
         },
         "normalRefTimePct": {
           "n": 1,
-          "mean": 11,
-          "p50": 10.53,
-          "p95": 10.53,
-          "p99": 10.53,
-          "max": 10.53
+          "mean": 10,
+          "p50": 9.93,
+          "p95": 9.93,
+          "p99": 9.93,
+          "max": 9.93
         },
         "normalProofSizePct": {
           "n": 1,
           "mean": 0,
-          "p50": 0.29,
-          "p95": 0.29,
-          "p99": 0.29,
-          "max": 0.29
+          "p50": 0.31,
+          "p95": 0.31,
+          "p99": 0.31,
+          "max": 0.31
         },
         "lengthBytes": {
           "n": 1,
-          "mean": 14949,
-          "p50": 14949,
-          "p95": 14949,
-          "p99": 14949,
-          "max": 14949
+          "mean": 14394,
+          "p50": 14394,
+          "p95": 14394,
+          "p99": 14394,
+          "max": 14394
         }
       },
       "perBlock": [
         {
-          "number": 947,
-          "ts": 1792164984000,
+          "number": 1352,
+          "ts": 1792167684000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 948,
-          "ts": 1792164990000,
+          "number": 1353,
+          "ts": 1792167690000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 949,
-          "ts": 1792164996000,
+          "number": 1354,
+          "ts": 1792167696000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 950,
-          "ts": 1792165002000,
+          "number": 1355,
+          "ts": 1792167702000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 951,
-          "ts": 1792165008000,
+          "number": 1356,
+          "ts": 1792167708000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 952,
-          "ts": 1792165026000,
+          "number": 1357,
+          "ts": 1792167726000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 953,
-          "ts": 1792165026000,
+          "number": 1358,
+          "ts": 1792167726000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 954,
-          "ts": 1792165032000,
+          "number": 1359,
+          "ts": 1792167732000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 955,
-          "ts": 1792165038000,
+          "number": 1360,
+          "ts": 1792167738000,
+          "extrinsics": 85,
+          "ours": 83,
+          "normalRefTime": "149091203646",
+          "normalProofSize": "24583",
+          "lengthBytes": 14394
+        },
+        {
+          "number": 1361,
+          "ts": 1792167744000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 956,
-          "ts": 1792165044000,
+          "number": 1362,
+          "ts": 1792167750000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 957,
-          "ts": 1792165050000,
-          "extrinsics": 90,
-          "ours": 88,
-          "normalRefTime": "158072601456",
-          "normalProofSize": "23470",
-          "lengthBytes": 14949
-        },
-        {
-          "number": 958,
-          "ts": 1792165056000,
+          "number": 1363,
+          "ts": 1792167756000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 959,
-          "ts": 1792165062000,
+          "number": 1364,
+          "ts": 1792167762000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 960,
-          "ts": 1792165068000,
+          "number": 1365,
+          "ts": 1792167768000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 961,
-          "ts": 1792165086000,
+          "number": 1366,
+          "ts": 1792167786000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 962,
-          "ts": 1792165086000,
+          "number": 1367,
+          "ts": 1792167786000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 963,
-          "ts": 1792165092000,
+          "number": 1368,
+          "ts": 1792167792000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 964,
-          "ts": 1792165098000,
+          "number": 1369,
+          "ts": 1792167798000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 965,
-          "ts": 1792165104000,
+          "number": 1370,
+          "ts": 1792167804000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 966,
-          "ts": 1792165110000,
+          "number": 1371,
+          "ts": 1792167810000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 967,
-          "ts": 1792165116000,
+          "number": 1372,
+          "ts": 1792167816000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 968,
-          "ts": 1792165122000,
+          "number": 1373,
+          "ts": 1792167822000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 969,
-          "ts": 1792165128000,
+          "number": 1374,
+          "ts": 1792167828000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 970,
-          "ts": 1792165146000,
+          "number": 1375,
+          "ts": 1792167846000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 971,
-          "ts": 1792165146000,
+          "number": 1376,
+          "ts": 1792167846000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 972,
-          "ts": 1792165152000,
+          "number": 1377,
+          "ts": 1792167852000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         },
         {
-          "number": 973,
-          "ts": 1792165158000,
+          "number": 1378,
+          "ts": 1792167858000,
           "extrinsics": 2,
           "ours": 0,
           "normalRefTime": "0",
           "normalProofSize": "0",
-          "lengthBytes": 4828
+          "lengthBytes": 4848
         }
       ],
       "sampleChargedWeight": {
         "refTime": "1796279562",
-        "proofSize": "385"
+        "proofSize": "83"
       },
       "txLength": 115
     }
   ],
-  "generatedAt": "2026-10-16T15:39:52.297Z"
+  "generatedAt": "2026-10-16T16:24:52.877Z"
 }

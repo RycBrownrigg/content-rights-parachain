@@ -27,24 +27,7 @@ const UNIT = 10n ** 12n;
 const PRICE = 10n * UNIT;
 const OUTPUT = 'scripts/perf/results/fee-report.json';
 
-// On this testnet a CCRMS block is discarded and re-authored about once a
-// minute (Finding F); a transaction caught in one can come back Invalid or
-// Dropped although nothing is wrong with it. Such a transaction is signed again
-// (fresh nonce) and re-sent, up to three times, 12 s apart. Dispatch errors are
-// never retried. The fee is read from the attempt that was finalized.
-async function send(api, tx, signer) {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      return await sendOnce(api, tx, signer);
-    } catch (e) {
-      if (attempt >= 3 || !/^(Invalid|Dropped|Usurped)$/.test(e.message)) throw e;
-      console.log(`  (pool status ${e.message}; re-sending, attempt ${attempt + 1})`);
-      await new Promise((r) => setTimeout(r, 12_000));
-    }
-  }
-}
-
-function sendOnce(api, tx, signer) {
+function send(api, tx, signer) {
   return new Promise((resolve, reject) => {
     let done = false;
     const finish = (fn, v) => { if (!done) { done = true; clearTimeout(t); fn(v); } };
