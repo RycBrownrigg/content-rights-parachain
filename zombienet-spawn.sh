@@ -38,6 +38,7 @@ TEMP_CONFIG="${TEMP_CONFIG}.toml"
 trap "rm -f '$TEMP_CONFIG'" EXIT
 sed -e "s|polkadot-sdk/target/release|${PROJECT_ROOT}/polkadot-sdk/target/release|g" \
     -e "s|target/release/parachain-template-node|${PROJECT_ROOT}/target/release/parachain-template-node|g" \
+    -e "s|\"scripts/|\"${PROJECT_ROOT}/scripts/|g" \
     "$CONFIG_ARG" > "$TEMP_CONFIG"
 PARACHAIN_BIN="${PROJECT_ROOT}/target/release/parachain-template-node"
 echo "Parachain binary (must exist for chain spec + collator): $PARACHAIN_BIN"
